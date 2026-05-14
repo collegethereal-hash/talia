@@ -59,7 +59,7 @@ export const RelationshipTimer = () => {
           const nextIndex = (modes.indexOf(mode) + 1) % modes.length;
           setMode(modes[nextIndex]);
         }}
-        className="absolute top-4 right-4 p-2 rounded-xl bg-lumina-lavender/10 text-lumina-lavender hover:bg-lumina-lavender/20 transition-all opacity-0 group-hover:opacity-100 z-10"
+        className="absolute top-4 right-4 p-2 rounded-xl bg-talia-lavender/10 text-talia-lavender hover:bg-talia-lavender/20 transition-all opacity-0 group-hover:opacity-100 z-10"
       >
         <RefreshCw size={16} className={mode !== 'classic' ? 'animate-spin-slow' : ''} />
       </button>
@@ -67,7 +67,7 @@ export const RelationshipTimer = () => {
       <motion.div
         animate={mode === 'beats' ? { scale: [1, 1.2, 1] } : { scale: [1, 1.1, 1] }}
         transition={{ repeat: Infinity, duration: mode === 'beats' ? 0.8 : 2 }}
-        className="text-lumina-lavender"
+        className="text-talia-lavender"
       >
         {mode === 'classic' && <Heart fill="currentColor" size={56} />}
         {mode === 'beats' && <Zap fill="currentColor" size={56} className="text-pink-500" />}
@@ -106,10 +106,10 @@ export const RelationshipTimer = () => {
                     <motion.div 
                       initial={{ scaleX: 0 }}
                       whileHover={{ scaleX: 1 }}
-                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-lumina-lavender/30 origin-left transition-transform"
+                      className="absolute -bottom-1 left-0 right-0 h-0.5 bg-talia-lavender/30 origin-left transition-transform"
                     />
                   </div>
-                  <span className="text-[8px] uppercase font-black tracking-[0.2em] text-foreground/20 mt-2 group-hover/item:text-lumina-lavender/40 transition-colors">
+                  <span className="text-[8px] uppercase font-black tracking-[0.2em] text-foreground/20 mt-2 group-hover/item:text-talia-lavender/40 transition-colors">
                     {item.label}
                   </span>
                 </div>
@@ -123,7 +123,7 @@ export const RelationshipTimer = () => {
               exit={{ opacity: 0, scale: 1.1 }}
               className="flex flex-col items-center"
             >
-              <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-lumina-lavender to-lumina-peach">
+              <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-talia-lavender to-talia-peach">
                 {altStats?.value}
               </span>
               <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-foreground/40 mt-1">

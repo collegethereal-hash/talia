@@ -3,17 +3,17 @@
 :root {
   --background: #fefce8;
   --foreground: #4a3728;
-  --lumina-lavender: #d8b4fe;
-  --lumina-peach: #ffedd5;
-  --lumina-sand: #fefce8;
+  --talia-lavender: #d8b4fe;
+  --talia-peach: #ffedd5;
+  --talia-sand: #fefce8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-lumina-lavender: var(--lumina-lavender);
-  --color-lumina-peach: var(--lumina-peach);
-  --color-lumina-sand: var(--lumina-sand);
+  --color-talia-lavender: var(--talia-lavender);
+  --color-talia-peach: var(--talia-peach);
+  --color-talia-sand: var(--talia-sand);
   
   --radius-xl: 1.5rem;
   --radius-2xl: 2rem;
@@ -30,8 +30,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', sans-serif;
-  background-image: radial-gradient(circle at top left, var(--lumina-lavender), transparent 40%),
-                    radial-gradient(circle at bottom right, var(--lumina-peach), transparent 40%);
+  background-image: radial-gradient(circle at top left, var(--talia-lavender), transparent 40%),
+                    radial-gradient(circle at bottom right, var(--talia-peach), transparent 40%);
   min-height: 100vh;
 }
 

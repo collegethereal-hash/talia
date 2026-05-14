@@ -230,8 +230,8 @@ function JournalContent() {
   };
 
   const filteredNotes = notes.filter(n => {
-    if (activeTab === 'me') return n.author === currentUser;
-    if (activeTab === 'partner') return n.author !== currentUser;
+    if (activeTab === 'Grinch') return n.author === 'Grinch';
+    if (activeTab === 'Cindy') return n.author === 'Cindy';
     return true;
   });
 
@@ -256,10 +256,10 @@ function JournalContent() {
         {/* Filter Tabs */}
         <div className="max-w-md mx-auto">
           <div className="flex p-2 bg-[#f5e6d3] rounded-[2rem] border-4 border-[#e6d5bc] shadow-lg">
-            {(['all', 'me', 'partner'] as const).map((tab) => (
+            {(['all', 'Grinch', 'Cindy'] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => setActiveTab(tab as any)}
                 className={cn(
                   "flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
                   activeTab === tab 
@@ -267,7 +267,7 @@ function JournalContent() {
                     : "text-[#8b7355] hover:text-[#5c4a33]"
                 )}
               >
-                {tab === 'all' ? 'Все' : tab === 'me' ? 'Мои' : 'Её'}
+                {tab === 'all' ? 'Все' : tab === 'Grinch' ? 'Гринч' : 'Синди'}
               </button>
             ))}
           </div>

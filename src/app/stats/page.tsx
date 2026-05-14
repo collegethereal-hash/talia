@@ -56,7 +56,7 @@ function PaliaCard({ children, title, icon: Icon, className }: { children: React
       
       {title && (
         <h3 className="text-lg font-serif font-bold mb-6 flex items-center gap-2 text-zinc-800/70 border-b border-zinc-200 pb-3">
-          {Icon && <Icon size={20} className="text-lumina-lavender" />}
+          {Icon && <Icon size={20} className="text-talia-lavender" />}
           {title}
         </h3>
       )}
@@ -109,7 +109,7 @@ function CountdownTimer() {
         { val: timeLeft.seconds, label: 'секунд' }
       ].map((item, i) => (
         <div key={item.label} className="text-center">
-          <div className="text-3xl md:text-5xl font-black text-lumina-lavender drop-shadow-sm font-serif">
+          <div className="text-3xl md:text-5xl font-black text-talia-lavender drop-shadow-sm font-serif">
             {String(item.val).padStart(2, '0')}
           </div>
           <div className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 mt-1">
@@ -127,7 +127,7 @@ export default function StatsPage() {
       <header className="text-center space-y-4">
         <h1 className="text-5xl font-serif font-bold text-foreground/90 tracking-tight">Архив воспоминаний</h1>
         <div className="flex items-center justify-center gap-2 text-foreground/40 italic font-medium">
-          <History size={18} className="text-lumina-lavender" />
+          <History size={18} className="text-talia-lavender" />
           <span>Наша история в деталях и цифрах</span>
         </div>
       </header>
@@ -142,7 +142,7 @@ export default function StatsPage() {
             </div>
             <CountdownTimer />
             <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
-              Следующий отчет: <span className="text-lumina-lavender">15 июня 2026</span>
+              Следующий отчет: <span className="text-talia-lavender">15 июня 2026</span>
             </p>
           </div>
         </PaliaCard>
@@ -190,7 +190,7 @@ export default function StatsPage() {
               
               return (
                 <div key={item.label} className="grid grid-cols-1 md:grid-cols-4 items-center gap-2 md:gap-6 group/item">
-                  <span className="text-sm font-bold text-zinc-600 group-hover/item:text-lumina-lavender transition-colors">{item.label}</span>
+                  <span className="text-sm font-bold text-zinc-600 group-hover/item:text-talia-lavender transition-colors">{item.label}</span>
                   <div className="col-span-3 space-y-2.5">
                     <div className="relative h-6 bg-zinc-100/50 rounded-xl overflow-hidden border border-black/5">
                       <motion.div 
@@ -343,21 +343,39 @@ export default function StatsPage() {
         </PaliaCard>
 
         {/* Favorite Stickers */}
-        <PaliaCard title="Любимые стикеры" icon={StickyNote} className="lg:col-span-2">
+        <PaliaCard title="Анализ эмоций (Топ-15)" icon={StickyNote} className="lg:col-span-2">
           <div className="space-y-8">
             <div>
-              <div className="text-[10px] font-bold text-[#8b5cf6] uppercase tracking-widest mb-4 ml-2">The Grinch</div>
-              <div className="flex gap-4 flex-wrap">
-                {['😍 48', '😎 33', '😴 31', '😁 28', '😋 26'].map(s => (
-                  <div key={s} className="px-4 py-2 bg-white rounded-xl border border-black/5 shadow-sm text-sm font-bold">{s}</div>
+              <div className="text-[10px] font-bold text-[#8b5cf6] uppercase tracking-[0.3em] mb-4 ml-2 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#8b5cf6]" />
+                Гринч
+              </div>
+              <div className="flex gap-3 flex-wrap">
+                {[
+                  { e: '😳', c: 252 }, { e: '⚔️', c: 136 }, { e: '😔', c: 88 }, { e: '😭', c: 44 }, { e: '❤️', c: 38 },
+                  { e: '⛓️', c: 27 }, { e: '😡', c: 13 }
+                ].map(s => (
+                  <div key={s.e} className="px-3 py-2 bg-white rounded-xl border border-black/5 shadow-sm text-sm font-bold flex items-center gap-2 group hover:border-[#8b5cf6]/30 transition-colors">
+                    <span className="text-lg">{s.e}</span>
+                    <span className="text-zinc-400 group-hover:text-[#8b5cf6] transition-colors">{s.c}</span>
+                  </div>
                 ))}
               </div>
             </div>
             <div>
-              <div className="text-[10px] font-bold text-[#10b981] uppercase tracking-widest mb-4 ml-2">Cindy Lou</div>
-              <div className="flex gap-4 flex-wrap">
-                {['😇 98', '🥺 86', '🥰 60', '😏 53', '😜 30'].map(s => (
-                  <div key={s} className="px-4 py-2 bg-white rounded-xl border border-black/5 shadow-sm text-sm font-bold">{s}</div>
+              <div className="text-[10px] font-bold text-[#10b981] uppercase tracking-[0.3em] mb-4 ml-2 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#10b981]" />
+                Синди Лу
+              </div>
+              <div className="flex gap-3 flex-wrap">
+                {[
+                  { e: '😳', c: 1423 }, { e: '😔', c: 691 }, { e: '😭', c: 286 }, { e: '😟', c: 196 }, { e: '😋', c: 118 },
+                  { e: '👎', c: 105 }, { e: '😛', c: 51 }
+                ].map(s => (
+                  <div key={s.e} className="px-3 py-2 bg-white rounded-xl border border-black/5 shadow-sm text-sm font-bold flex items-center gap-2 group hover:border-[#10b981]/30 transition-colors">
+                    <span className="text-lg">{s.e}</span>
+                    <span className="text-zinc-400 group-hover:text-[#10b981] transition-colors">{s.c}</span>
+                  </div>
                 ))}
               </div>
             </div>
@@ -384,40 +402,40 @@ export default function StatsPage() {
       {/* AI Opinion Footer */}
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex items-center gap-4 mb-2">
-          <div className="p-3 rounded-2xl bg-lumina-lavender/10 text-lumina-lavender">
+          <div className="p-3 rounded-2xl bg-talia-lavender/10 text-talia-lavender">
             <BrainCircuit size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-serif font-bold text-zinc-800">Мнение Lumina AI</h2>
+            <h2 className="text-2xl font-serif font-bold text-zinc-800">Мнение Talia AI</h2>
             <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Персональный разбор вашей истории</p>
           </div>
         </div>
 
-        <PaliaCard className="bg-gradient-to-br from-[#fdfaf3] to-white border border-lumina-lavender/10 shadow-xl">
-          <div className="space-y-6 text-zinc-600 leading-relaxed">
+        <PaliaCard className="bg-gradient-to-br from-[#fdfaf3] to-white border border-talia-lavender/10 shadow-xl">
+          <div className="space-y-6 text-zinc-700 leading-relaxed">
             <div className="flex gap-4">
-              <div className="mt-1 text-lumina-lavender"><Sparkle size={18} /></div>
-              <p className="text-sm md:text-base italic">
+              <div className="mt-1 text-talia-lavender"><Sparkle size={18} /></div>
+              <p className="text-sm md:text-lg italic font-bold text-zinc-800/90">
                 «Ваша переписка — это редкий пример идеального цифрового баланса. Статистика 51.2% на 48.8% говорит о том, что вы оба одинаково цените ваше общение и вкладываетесь в него всем сердцем. Вы не просто обмениваетесь словами, вы строите общий мир.»
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-zinc-100">
               <div className="space-y-3">
-                <h4 className="font-bold text-zinc-800 flex items-center gap-2">
-                  <Heart size={16} className="text-rose-400" />
+                <h4 className="font-black text-zinc-900 flex items-center gap-2 text-base">
+                  <Heart size={18} className="text-rose-400" />
                   Что я вижу
                 </h4>
-                <p className="text-xs md:text-sm">
-                  Невероятная нежность со стороны <span className="text-[#8b5cf6] font-bold">The Grinch</span> (в 3 раза больше теплых слов!) создает прочный фундамент, а <span className="text-[#10b981] font-bold">Cindy Lou</span> привносит в диалог живость через юмор и визуальные образы (почти вдвое больше смеха и фото).
+                <p className="text-sm md:text-base font-semibold leading-relaxed">
+                  Невероятная нежность со стороны <span className="text-[#8b5cf6] font-black underline decoration-2 underline-offset-4 decoration-[#8b5cf6]/20">Гринча</span> (в 3 раза больше теплых слов!) создает прочный фундамент, а <span className="text-[#10b981] font-black underline decoration-2 underline-offset-4 decoration-[#10b981]/20">Синди Лу</span> привносит в диалог живость через юмор и визуальные образы (почти вдвое больше смеха и фото).
                 </p>
               </div>
               <div className="space-y-3">
-                <h4 className="font-bold text-zinc-800 flex items-center gap-2">
-                  <Sparkles size={16} className="text-amber-400" />
+                <h4 className="font-black text-zinc-900 flex items-center gap-2 text-base">
+                  <Sparkles size={18} className="text-amber-400" />
                   Мой совет
                 </h4>
-                <p className="text-xs md:text-sm">
+                <p className="text-sm md:text-base font-semibold leading-relaxed">
                   Вы оба — выраженные "ночные совы". Эти часы затишья в полночь — ваше самое ценное время. Старайтесь беречь эти моменты тишины, когда мир затихает, и остаетесь только вы двое. Продолжайте в том же духе, вы — идеальная команда!
                 </p>
               </div>

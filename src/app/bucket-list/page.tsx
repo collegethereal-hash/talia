@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { 
   CheckSquare, Star, Trophy, Target, Plus, X, Edit3, Save, Trash2, Gift, 
   Sparkles, ChevronRight, MapPin, Calendar, ListChecks, ShieldCheck, 
-  Heart, User, Clock, CheckCircle2 
+  Heart, User, Clock, CheckCircle2, FlaskRound as Flask
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -344,8 +344,8 @@ export default function BucketListPage() {
                       </div>
                       <div className="flex items-center justify-between pt-4 border-t-2 border-[#fdfaf3]">
                         <div className="flex items-center gap-2 text-[10px] font-black text-[#8b7355] uppercase tracking-widest">
-                          <Trophy size={14} className="text-amber-500" />
-                          {quest.points} XP
+                          <Flask size={14} className="text-purple-500" />
+                          {quest.points} капель
                         </div>
                       </div>
                     </div>
@@ -380,7 +380,7 @@ export default function BucketListPage() {
         {/* Right Column: Reward Shop */}
         <div className="lg:col-span-4 space-y-8">
           <div className="flex items-center gap-4 border-b-4 border-[#e6d5bc] pb-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500 flex items-center justify-center text-white shadow-lg border-2 border-[#e6d5bc]">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500 flex items-center justify-center text-white shadow-lg border-2 border-[#e6d5bc]">
               <Gift size={24} />
             </div>
             <h2 className="text-2xl font-serif font-bold text-[#5c4a33]">Лавка Наград</h2>
@@ -391,9 +391,9 @@ export default function BucketListPage() {
             <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] z-0" />
 
             <div className="relative z-10 flex flex-col items-center justify-center p-6 bg-white border-4 border-[#e6d5bc] rounded-[2.5rem] shadow-xl mb-4">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8b7355] mb-2">Накопленное волшебство</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8b7355] mb-2">Накопленный эликсир</span>
               <div className="flex items-center gap-2">
-                <Star size={24} className="text-amber-500 animate-pulse" fill="currentColor" />
+                <Flask size={28} className="text-purple-500 animate-pulse" fill="currentColor" />
                 <span className="text-4xl font-serif font-bold text-[#5c4a33]">{currentXP}</span>
               </div>
             </div>
@@ -422,9 +422,9 @@ export default function BucketListPage() {
                         <h4 className="font-serif font-bold text-sm text-[#5c4a33] leading-tight">
                           {reward.title}
                         </h4>
-                        <div className="flex items-center gap-2 text-amber-600">
-                          <Trophy size={14} className="fill-amber-500/20" />
-                          <span className="text-[11px] font-black uppercase tracking-wider">{reward.cost} XP</span>
+                        <div className="flex items-center gap-2 text-purple-600">
+                          <Flask size={14} className="fill-purple-500/20" />
+                          <span className="text-[11px] font-black uppercase tracking-wider">{reward.cost} капель</span>
                         </div>
                       </div>
                     </div>
@@ -441,7 +441,7 @@ export default function BucketListPage() {
                               : "bg-[#f5e6d3] text-[#8b7355]/40 cursor-not-allowed shadow-none")
                       )}
                     >
-                      {reward.unlocked ? '✓ Получено' : (currentXP >= reward.cost ? 'Приобрести' : 'Нужно больше XP')}
+                      {reward.unlocked ? '✓ Получено' : (currentXP >= reward.cost ? 'Приобрести' : 'Нужно больше эликсира')}
                     </button>
                   </Card>
                 </motion.div>
@@ -504,16 +504,16 @@ export default function BucketListPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold text-foreground/30 px-2 text-[#8b7355]">Награда (XP)</label>
+                        <label className="text-[10px] uppercase font-bold text-foreground/30 px-2 text-[#8b7355]">Награда (Капли)</label>
                         <select 
                           value={editData.points}
                           onChange={e => setEditData({...editData, points: Number(e.target.value)})}
                           className="w-full bg-[#fdfaf3] border-2 border-[#e6d5bc] rounded-xl px-4 py-3 focus:ring-0 focus:border-[#5c4a33] transition-all font-bold text-[#5c4a33]"
                         >
-                          <option value={300}>300 XP (Легко)</option>
-                          <option value={500}>500 XP (Средне)</option>
-                          <option value={1000}>1000 XP (Сложно)</option>
-                          <option value={5000}>5000 XP (Легендарно)</option>
+                          <option value={300}>300 капель (Легко)</option>
+                          <option value={500}>500 капель (Средне)</option>
+                          <option value={1000}>1000 капель (Сложно)</option>
+                          <option value={5000}>5000 капель (Легендарно)</option>
                         </select>
                       </div>
                       <div className="space-y-1">
@@ -552,10 +552,10 @@ export default function BucketListPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="flex items-center gap-3 p-4 bg-zinc-50 rounded-2xl">
-                        <Trophy className="text-amber-500" size={20} />
+                        <Flask className="text-purple-500" size={20} />
                         <div>
                           <span className="block text-[8px] uppercase font-bold text-foreground/30">Награда</span>
-                          <span className="text-sm font-bold">{selectedQuest.points} XP</span>
+                          <span className="text-sm font-bold">{selectedQuest.points} капель</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 p-4 bg-zinc-50 rounded-2xl">

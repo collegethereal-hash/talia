@@ -45,7 +45,7 @@ const INITIAL_PROFILES: Record<string, ProfileData> = {
     status: 'В сети', 
     mood: '😊', 
     pref: 'Твое описание...',
-    avatarColor: 'bg-lumina-lavender',
+    avatarColor: 'bg-talia-lavender',
     categories: []
   },
   polina: { 
@@ -54,7 +54,7 @@ const INITIAL_PROFILES: Record<string, ProfileData> = {
     status: 'Отдыхает', 
     mood: '✨', 
     pref: 'Её описание...',
-    avatarColor: 'bg-lumina-peach',
+    avatarColor: 'bg-talia-peach',
     categories: []
   },
 };
@@ -244,7 +244,7 @@ export default function ProfilePage() {
             animate={{ y: '-10vh', opacity: 0, scale: 1.5 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 3, ease: "easeOut" }}
-            className="absolute text-lumina-peach pointer-events-none z-[60]"
+            className="absolute text-talia-peach pointer-events-none z-[60]"
             style={{ left: `${heart.x}%` }}
           >
             <Heart fill="currentColor" size={48} />
@@ -268,7 +268,7 @@ export default function ProfilePage() {
             <Card className="relative overflow-hidden p-8 border-none bg-white/60 hover:bg-white transition-all duration-500 shadow-xl group">
               <div className={cn(
                 "absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-10 blur-2xl group-hover:opacity-20 transition-opacity",
-                profile.id === 'me' ? "bg-lumina-lavender" : "bg-lumina-peach"
+                profile.id === 'me' ? "bg-talia-lavender" : "bg-talia-peach"
               )} />
               
               <div className="flex items-center gap-6">
@@ -288,7 +288,7 @@ export default function ProfilePage() {
               </div>
               <div className="mt-6 pt-6 border-t border-black/5">
                 <p className="text-sm italic text-foreground/60 line-clamp-1">"{profile.pref}"</p>
-                <div className="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-lumina-lavender">
+                <div className="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-talia-lavender">
                   <Info size={12} />
                   Нажми, чтобы узнать больше
                 </div>
@@ -429,7 +429,7 @@ export default function ProfilePage() {
                       {isEditing && (
                         <button 
                           onClick={() => addField(category.id)}
-                          className="p-4 border-2 border-dashed border-black/5 rounded-2xl flex items-center justify-center text-foreground/20 hover:text-lumina-lavender hover:border-lumina-lavender/30 transition-all"
+                          className="p-4 border-2 border-dashed border-black/5 rounded-2xl flex items-center justify-center text-foreground/20 hover:text-talia-lavender hover:border-talia-lavender/30 transition-all"
                         >
                           <Plus size={20} />
                         </button>
@@ -441,7 +441,7 @@ export default function ProfilePage() {
                 {isEditing && (
                   <button 
                     onClick={addCategory}
-                    className="w-full py-6 border-2 border-dashed border-black/5 rounded-[2rem] flex flex-col items-center gap-2 text-foreground/20 hover:text-lumina-lavender hover:border-lumina-lavender/30 transition-all"
+                    className="w-full py-6 border-2 border-dashed border-black/5 rounded-[2rem] flex flex-col items-center gap-2 text-foreground/20 hover:text-talia-lavender hover:border-talia-lavender/30 transition-all"
                   >
                     <Plus size={32} />
                     <span className="text-xs font-bold uppercase tracking-widest">Добавить категорию</span>
@@ -459,7 +459,7 @@ export default function ProfilePage() {
                       </button>
                       <button 
                         onClick={saveDetails}
-                        className="px-8 py-3 rounded-2xl bg-lumina-lavender text-white font-bold shadow-lg shadow-lumina-lavender/20 flex items-center gap-2"
+                        className="px-8 py-3 rounded-2xl bg-talia-lavender text-white font-bold shadow-lg shadow-talia-lavender/20 flex items-center gap-2"
                       >
                         <Save size={18} />
                         Сохранить
@@ -468,7 +468,7 @@ export default function ProfilePage() {
                   ) : (
                     <button 
                       onClick={startEditing}
-                      className="px-8 py-3 rounded-2xl bg-white border border-black/5 text-foreground/60 hover:text-lumina-lavender hover:border-lumina-lavender transition-all font-bold flex items-center gap-2"
+                      className="px-8 py-3 rounded-2xl bg-white border border-black/5 text-foreground/60 hover:text-talia-lavender hover:border-talia-lavender transition-all font-bold flex items-center gap-2"
                     >
                       <Edit3 size={18} />
                       Редактировать анкету
@@ -491,7 +491,7 @@ export default function ProfilePage() {
           </h2>
           <button 
             onClick={startCreateCapsule}
-            className="flex items-center gap-2 bg-lumina-lavender/10 text-lumina-lavender px-4 py-2 rounded-xl font-bold hover:bg-lumina-lavender/20 transition-all"
+            className="flex items-center gap-2 bg-talia-lavender/10 text-talia-lavender px-4 py-2 rounded-xl font-bold hover:bg-talia-lavender/20 transition-all"
           >
             <Plus size={18} />
             Создать
@@ -577,7 +577,7 @@ export default function ProfilePage() {
                       <input 
                         value={capsuleEditData.title}
                         onChange={e => setCapsuleEditData({...capsuleEditData, title: e.target.value})}
-                        className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-lumina-lavender/30 transition-all"
+                        className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-talia-lavender/30 transition-all"
                         placeholder="Назови капсулу..."
                       />
                     </div>
@@ -586,7 +586,7 @@ export default function ProfilePage() {
                       <input 
                         value={capsuleEditData.description}
                         onChange={e => setCapsuleEditData({...capsuleEditData, description: e.target.value})}
-                        className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-lumina-lavender/30 transition-all"
+                        className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-talia-lavender/30 transition-all"
                         placeholder="О чем это послание?"
                       />
                     </div>
@@ -596,7 +596,7 @@ export default function ProfilePage() {
                         type="date"
                         value={capsuleEditData.unlockDate}
                         onChange={e => setCapsuleEditData({...capsuleEditData, unlockDate: e.target.value})}
-                        className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-lumina-lavender/30 transition-all"
+                        className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-talia-lavender/30 transition-all"
                       />
                     </div>
                     <div className="space-y-1">
@@ -616,7 +616,7 @@ export default function ProfilePage() {
                             setCapsuleEditData({...capsuleEditData, content: e.target.value})
                           }
                         }}
-                        className="w-full h-48 bg-zinc-50 border-none rounded-2xl px-4 py-4 focus:ring-2 focus:ring-lumina-lavender/30 transition-all resize-none custom-scrollbar"
+                        className="w-full h-48 bg-zinc-50 border-none rounded-2xl px-4 py-4 focus:ring-2 focus:ring-talia-lavender/30 transition-all resize-none custom-scrollbar"
                         placeholder="Напиши то, что вы прочтете в будущем..."
                       />
                     </div>
@@ -630,7 +630,7 @@ export default function ProfilePage() {
                     </button>
                     <button 
                       onClick={saveCapsule}
-                      className="flex-1 py-3 rounded-xl bg-lumina-lavender text-white font-bold shadow-lg hover:scale-105 active:scale-95 transition-all"
+                      className="flex-1 py-3 rounded-xl bg-talia-lavender text-white font-bold shadow-lg hover:scale-105 active:scale-95 transition-all"
                     >
                       Запечатать
                     </button>
@@ -647,8 +647,8 @@ export default function ProfilePage() {
                         <h3 className="text-3xl font-serif font-bold text-foreground/80">{selectedCapsule.title}</h3>
                         <p className="text-foreground/50 italic">"{selectedCapsule.description}"</p>
                       </div>
-                      <div className="p-6 bg-lumina-peach/10 rounded-2xl border border-lumina-peach/20">
-                        <p className="text-sm font-medium text-lumina-peach">
+                      <div className="p-6 bg-talia-peach/10 rounded-2xl border border-talia-peach/20">
+                        <p className="text-sm font-medium text-talia-peach">
                           Эта капсула еще заперта. Она откроется через {
                             Math.ceil((new Date(selectedCapsule.unlockDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
                           } дней.
@@ -657,7 +657,7 @@ export default function ProfilePage() {
                       <div className="flex gap-4">
                         <button 
                           onClick={() => startEditCapsule(selectedCapsule)}
-                          className="flex-1 py-3 rounded-xl bg-white border border-zinc-100 text-zinc-400 font-bold hover:text-lumina-lavender transition-all flex items-center justify-center gap-2"
+                          className="flex-1 py-3 rounded-xl bg-white border border-zinc-100 text-zinc-400 font-bold hover:text-talia-lavender transition-all flex items-center justify-center gap-2"
                         >
                           <Edit3 size={18} />
                           Изменить
@@ -701,7 +701,7 @@ export default function ProfilePage() {
         <button 
           onClick={claimMail}
           disabled={isMailClaimed || !hasMail}
-          className="group relative px-16 py-8 rounded-[2.5rem] bg-lumina-lavender text-white font-bold text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all overflow-hidden flex items-center gap-6"
+          className="group relative px-16 py-8 rounded-[2.5rem] bg-talia-lavender text-white font-bold text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all overflow-hidden flex items-center gap-6"
         >
           <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
           <AnimatePresence mode="wait">
