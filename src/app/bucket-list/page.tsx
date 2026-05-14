@@ -353,6 +353,27 @@ export default function BucketListPage() {
                 </motion.div>
               ))}
             </AnimatePresence>
+
+            {/* Empty State */}
+            {activeQuests.length === 0 && (
+              <div className="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-6">
+                <div className="w-24 h-24 bg-[#fdfaf3] border-4 border-[#e6d5bc] rounded-[2rem] flex items-center justify-center text-[#8b7355] shadow-lg">
+                  <ListChecks size={48} />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-serif font-bold text-[#5c4a33]">Список приключений пуст</h3>
+                  <p className="text-[#8b7355] italic max-w-xs mx-auto">
+                    "Начните вашу историю с первого совместного квеста. Каждое приключение сближает!"
+                  </p>
+                </div>
+                <button 
+                  onClick={startCreate}
+                  className="bg-[#5c4a33] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 transition-all"
+                >
+                  Создать первый квест
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

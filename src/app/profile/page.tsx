@@ -533,6 +533,19 @@ export default function ProfilePage() {
               </motion.div>
             );
           })}
+
+          {/* Empty State */}
+          {capsules.length === 0 && (
+            <div className="col-span-full py-12 flex flex-col items-center justify-center text-center space-y-4 bg-white/30 rounded-[2.5rem] border-4 border-dashed border-black/5">
+              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-foreground/20 shadow-sm">
+                <Lock size={32} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-lg font-serif font-bold text-foreground/60">Капсул пока нет</p>
+                <p className="text-xs text-foreground/30 italic">"Оставьте послание себе в будущее, которое откроется только в особый день."</p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

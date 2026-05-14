@@ -361,6 +361,21 @@ function JournalContent() {
               </div>
             ))}
           </AnimatePresence>
+
+          {/* Empty State */}
+          {filteredNotes.length === 0 && (
+            <div className="col-span-full py-20 flex flex-col items-center justify-center text-center space-y-6">
+              <div className="w-24 h-24 bg-[#fdfaf3] border-4 border-[#e6d5bc] rounded-[2rem] flex items-center justify-center text-[#8b7355] shadow-lg">
+                <BookOpen size={48} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-serif font-bold text-[#5c4a33]">Летопись пока чиста</h3>
+                <p className="text-[#8b7355] italic max-w-xs mx-auto">
+                  "Поделитесь своими мыслями или чувствами. Каждая запись — это частичка вашей общей истории."
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
