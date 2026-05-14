@@ -41,82 +41,27 @@ interface TimeCapsule {
 const INITIAL_PROFILES: Record<string, ProfileData> = {
   me: { 
     id: 'me',
-    name: 'The Grinch', 
+    name: 'Гринч', 
     status: 'В сети', 
     mood: '😊', 
-    pref: 'Люблю кофе и магию кодинга',
+    pref: 'Твое описание...',
     avatarColor: 'bg-lumina-lavender',
-    categories: [
-      {
-        id: 'basic',
-        title: 'Базовое',
-        emoji: '🎁',
-        fields: [
-          { id: '1', label: 'День рождения', value: '15.06.2000' },
-          { id: '2', label: 'Дата знакомства', value: '17.03.2026' },
-        ]
-      },
-      {
-        id: 'favs',
-        title: 'Любимое',
-        emoji: '✨',
-        fields: [
-          { id: '3', label: 'Еда', value: 'Пицца, Паста' },
-          { id: '4', label: 'Музыка', value: 'Lo-fi, Rock' },
-        ]
-      }
-    ]
+    categories: []
   },
   polina: { 
     id: 'polina',
-    name: 'Cindy Lou', 
+    name: 'Синди Лу', 
     status: 'Отдыхает', 
     mood: '✨', 
-    pref: 'Обожаю весенние цветы',
+    pref: 'Её описание...',
     avatarColor: 'bg-lumina-peach',
-    categories: [
-      {
-        id: 'basic',
-        title: 'Базовое',
-        emoji: '🎁',
-        fields: [
-          { id: '1', label: 'День рождения', value: '20.08.2001' },
-          { id: '2', label: 'Дата знакомства', value: '17.03.2026' },
-        ]
-      },
-      {
-        id: 'favs',
-        title: 'Любимое',
-        emoji: '🌸',
-        fields: [
-          { id: '3', label: 'Еда', value: 'Суши, Лазанья' },
-          { id: '4', label: 'Музыка', value: 'Pop, Jazz' },
-        ]
-      }
-    ]
+    categories: []
   },
 };
 
 const EMOJI_LIST = ['🎁', '✨', '🌸', '🐱', '🐶', '🎵', '🍕', '✈️', '🏠', '📚', '🎬', '🎨', '🧸', '🌙'];
 
-const INITIAL_CAPSULES: TimeCapsule[] = [
-  { 
-    id: '1', 
-    title: 'Прочитать через год', 
-    description: 'Наше послание в будущее...', 
-    unlockDate: '2027-03-17', 
-    isLocked: true,
-    content: 'Привет из прошлого! Надеюсь, у нас все так же замечательно.'
-  },
-  { 
-    id: '2', 
-    title: 'Наше будущее', 
-    description: 'Мечты, которые обязательно сбудутся', 
-    unlockDate: '2028-01-01', 
-    isLocked: true,
-    content: 'Мы мечтали о домике у озера...'
-  },
-];
+const INITIAL_CAPSULES: TimeCapsule[] = [];
 
 export default function ProfilePage() {
   const [profiles, setProfiles] = useState(INITIAL_PROFILES);

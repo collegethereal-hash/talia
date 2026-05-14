@@ -26,34 +26,7 @@ interface Note {
   comments: Comment[];
 }
 
-const INITIAL_NOTES: Note[] = [
-  { 
-    id: 1, 
-    title: 'Утренние мысли', 
-    content: 'Сегодня проснулся и первым делом подумал о тебе, как ты там в Москве?', 
-    date: '13 мая 2026', 
-    author: 'Grinch', 
-    mood: '🌿',
-    likes: 5,
-    isLiked: false,
-    comments: [
-      { id: 101, author: 'Cindy', text: 'Я тоже очень скучаю! Жду нашей встречи ❤️', date: '13 мая 2026' }
-    ]
-  },
-  { 
-    id: 2, 
-    title: 'Маленькая радость', 
-    content: 'Купила те самые цветы, которые мы видели на фото. Они пахнут весной!', 
-    date: '12 мая 2026', 
-    author: 'Cindy', 
-    mood: '🌸',
-    likes: 8,
-    isLiked: true,
-    comments: [
-      { id: 102, author: 'Grinch', text: 'Они потрясающие, как и ты!', date: '12 мая 2026' }
-    ]
-  },
-];
+const INITIAL_NOTES: Note[] = [];
 
 function JournalContent() {
   const [currentUser, setCurrentUser] = useState<'Grinch' | 'Cindy' | null>(null);

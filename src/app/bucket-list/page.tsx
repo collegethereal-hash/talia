@@ -43,34 +43,7 @@ interface Reward {
   icon: string;
 }
 
-const INITIAL_QUESTS: Quest[] = [
-  { 
-    id: '1', 
-    title: 'Посмотреть все фильмы Ghibli', 
-    description: 'Устроить марафон аниме Миядзаки с какао и пледом.', 
-    completed: true, 
-    completedByGrinch: true,
-    completedByCindy: true,
-    points: 500, 
-    category: 'Кино',
-    categoryColor: CATEGORY_COLORS[1],
-    proposedBy: 'Cindy',
-    approvedByPartner: true
-  },
-  { 
-    id: '2', 
-    title: 'Посадить вместе дерево', 
-    description: 'Найти красивое место и оставить там свой след в природе.', 
-    completed: false, 
-    completedByGrinch: false,
-    completedByCindy: false,
-    points: 1000, 
-    category: 'Природа',
-    categoryColor: CATEGORY_COLORS[2],
-    proposedBy: 'Grinch',
-    approvedByPartner: true
-  },
-];
+const INITIAL_QUESTS: Quest[] = [];
 
 const INITIAL_REWARDS: Reward[] = [
   { id: 'r1', title: 'Селфи прямо сейчас', cost: 1000, unlocked: false, icon: '📸' },

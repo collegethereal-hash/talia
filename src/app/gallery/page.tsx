@@ -14,12 +14,7 @@ interface Moment {
   category: string;
 }
 
-const INITIAL_MOMENTS: Moment[] = [
-  { src: 'https://images.unsplash.com/photo-1516589174184-c685266e430c?w=800&q=80', caption: 'Наше первое свидание', date: '2026-03-17', rotate: -2, category: 'Свидания' },
-  { src: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=800&q=80', caption: 'Прогулка в парке', date: '2026-04-02', rotate: 3, category: 'Прогулки' },
-  { src: 'https://images.unsplash.com/photo-1522673607200-16488da65175?w=800&q=80', caption: 'Уютный вечер', date: '2026-04-15', rotate: -1, category: 'Дом' },
-  { src: 'https://images.unsplash.com/photo-1494774157365-9e04c6720e47?w=800&q=80', caption: 'Магия момента', date: '2026-05-01', rotate: 2, category: 'Свидания' },
-];
+const INITIAL_MOMENTS: Moment[] = [];
 
 const INITIAL_CATEGORIES = ['Все', 'Свидания', 'Прогулки', 'Дом', 'Путешествия'];
 
