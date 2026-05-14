@@ -35,6 +35,14 @@ interface Quest {
   location?: string;
 }
 
+interface Reward {
+  id: string;
+  title: string;
+  cost: number;
+  unlocked: boolean;
+  icon: string;
+}
+
 const INITIAL_QUESTS: Quest[] = [
   { 
     id: '1', 

@@ -9,7 +9,7 @@ import { useSearchParams } from 'next/navigation';
 
 interface Comment {
   id: number;
-  author: 'The Grinch' | 'Cindy Lou';
+  author: 'Grinch' | 'Cindy';
   text: string;
   date: string;
 }

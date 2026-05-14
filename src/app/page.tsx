@@ -5,7 +5,7 @@ import { WeatherWidget } from "@/components/WeatherWidget";
 import { PetHub } from "@/components/PetHub";
 import { Card } from "@/components/Card";
 import { AuthScreen, OnboardingScreen } from "@/components/AuthSystem";
-import { Sparkles, MessageCircle, Heart, Cookie, Timer, RefreshCw, BrainCircuit, Sparkle, Anchor, Waves } from "lucide-react";
+import { Sparkles, MessageCircle, Heart, Cookie, Timer, RefreshCw, BrainCircuit, Sparkle, Anchor, Waves, X, HelpCircle } from "lucide-react";
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/lib/utils";
