@@ -189,8 +189,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const refreshAll = useCallback(async () => {
-    setIsLoading(true);
+    // Only show global loading on the very first load if we have no profile data
+    if (Object.keys(profiles).length === 0) {
+      setIsLoading(true);
+    }
 
     const facts = [
       "В Швейцарии незаконно держать только одну морскую свинку. Эти животные так нуждаются в общении, что одиночество считается жестоким обращением. 🐹",
@@ -234,18 +236,19 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const day = new Date().getDate();
     setDailyCookie(cookies[day % cookies.length]);
 
-    await Promise.all([
-      refreshProfiles(),
-      refreshNotes(),
-      refreshMoments(),
-      refreshQuests(),
-      refreshCapsules(),
-      refreshWhispers(),
-      refreshArchi(),
-      refreshGalleryCategories()
-    ]);
+    // Fetch essentials first
+    await refreshProfiles();
     setIsLoading(false);
-  }, [refreshProfiles, refreshNotes, refreshMoments, refreshQuests, refreshCapsules, refreshArchi, refreshGalleryCategories]);
+
+    // Fetch everything else in the background without blocking the UI
+    refreshNotes();
+    refreshMoments();
+    refreshQuests();
+    refreshCapsules();
+    refreshArchi();
+    refreshGalleryCategories();
+    refreshWhispers();
+  }, [refreshProfiles, refreshNotes, refreshMoments, refreshQuests, refreshCapsules, refreshArchi, refreshGalleryCategories, refreshWhispers]);
 
   useEffect(() => {
     refreshAll();

@@ -7,8 +7,13 @@ import { Dog, Heart, Zap, Utensils, Droplets, X, Star, Settings2, Flame, Message
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 
-import { Canvas } from '@react-three/fiber';
-import { MagicPet3D } from './MagicPet3D';
+import dynamic from 'next/dynamic';
+
+const Canvas = dynamic(() => import('@react-three/fiber').then((mod) => mod.Canvas), { ssr: false });
+const MagicPet3D = dynamic(() => import('./MagicPet3D').then((mod) => mod.MagicPet3D), { 
+  ssr: false,
+  loading: () => <div className="w-full h-full flex items-center justify-center text-[#5c4a33] opacity-20"><Dog size={80} /></div>
+});
 
 type PetType = 'dog';
 
@@ -207,8 +212,6 @@ export const PetHub = () => {
     const timer = setInterval(updateThought, 90000); // Check every 1.5 minutes
     return () => clearInterval(timer);
   }, [state.hunger, state.thirst, state.happiness]);
-
-  // Handle streak loss if neglected
   useEffect(() => {
     const checkNeglect = () => {
       const isNeglected = state.hunger === 0 || state.thirst === 0 || state.happiness === 0;
