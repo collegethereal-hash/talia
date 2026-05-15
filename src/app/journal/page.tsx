@@ -17,7 +17,7 @@ interface Comment {
 }
 
 interface Note {
-  id: string; // Changed to string for UUID support
+  id: string; 
   title: string;
   content: string;
   date: string;
@@ -25,13 +25,14 @@ interface Note {
   mood?: string;
   likes: number;
   isLiked: boolean;
+  liked_by?: string[];
   comments: Comment[];
 }
 
 const INITIAL_NOTES: Note[] = [];
 
 function JournalContent() {
-  const { currentUser, notes, setNotes, refreshNotes } = useData();
+  const { currentUser, notes, setNotes, refreshNotes, refreshWhispers } = useData();
   const [activeTab, setActiveTab] = useState<'all' | 'Grinch' | 'Cindy'>('all');
   const [openCommentsId, setOpenCommentsId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
@@ -145,25 +146,60 @@ function JournalContent() {
     ctx.fill();
   };
 
+  const autoErase = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.globalCompositeOperation = 'destination-out';
+    
+    let radius = 0;
+    const maxRadius = Math.sqrt(canvas.width ** 2 + canvas.height ** 2);
+    
+    const animate = () => {
+      if (radius < maxRadius) {
+        ctx.beginPath();
+        // Create multiple random points for a more organic "magic" feel
+        for (let i = 0; i < 20; i++) {
+          const rx = Math.random() * canvas.width;
+          const ry = Math.random() * canvas.height;
+          ctx.arc(rx, ry, radius / 5, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        radius += 40;
+        requestAnimationFrame(animate);
+      } else {
+        // Final clear
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+    };
+    
+    animate();
+  };
+
   const sendWhisper = async () => {
     if (!whisperText.trim() || !currentUser) return;
     
     // Target is the partner
     const targetKey = currentUser === 'Grinch' ? 'whisper_for_cindy' : 'whisper_for_grinch';
+    const targetName = currentUser === 'Grinch' ? 'Cindy' : 'Grinch';
     console.log('DEBUG Whisper: Sending from', currentUser, 'to', targetKey);
     
-    const { error } = await supabase
+    // 1. Send active whisper (for scratch-off)
+    const { error: activeError } = await supabase
       .from('global_state')
       .upsert({
         key: targetKey,
-        value: { text: whisperText } // Wrap in object for better JSONB handling
+        value: { text: whisperText }
       });
 
-    if (error) {
-      console.error('DEBUG Whisper: Send error', error);
-      alert('Ошибка при отправке письма: ' + error.message);
+    if (activeError) {
+      console.error('DEBUG Whisper: Send error', activeError);
+      alert('Ошибка при отправке письма.');
     } else {
       console.log('DEBUG Whisper: Send SUCCESS');
+      // We no longer save to history here. It will be saved when read.
       setIsSent(true);
       setTimeout(() => {
         setIsSent(false);
@@ -173,23 +209,38 @@ function JournalContent() {
   };
 
   const toggleLike = async (id: string) => {
+    if (!currentUser) return;
     const note = notes.find(n => n.id === id);
     if (!note) return;
 
-    const newIsLiked = !note.isLiked;
-    const newLikes = newIsLiked ? note.likes + 1 : note.likes - 1;
+    const likedBy = note.liked_by || [];
+    const isLiked = likedBy.includes(currentUser);
+    
+    let newLikedBy;
+    if (isLiked) {
+      newLikedBy = likedBy.filter(u => u !== currentUser);
+    } else {
+      newLikedBy = [...likedBy, currentUser];
+    }
+
+    const newLikes = newLikedBy.length;
+    const newIsLiked = !isLiked;
 
     // Optimistic update
-    setNotes(notes.map(n => n.id === id ? { ...n, isLiked: newIsLiked, likes: newLikes } : n));
+    setNotes(notes.map(n => n.id === id ? { 
+      ...n, 
+      liked_by: newLikedBy, 
+      isLiked: newIsLiked, 
+      likes: newLikes 
+    } : n));
 
     const { error } = await supabase
       .from('journal_notes')
-      .update({ is_liked: newIsLiked, likes: newLikes })
+      .update({ liked_by: newLikedBy, likes: newLikes })
       .eq('id', id);
 
     if (error) {
       console.error('Error toggling like:', error);
-      // Revert on error
       refreshNotes();
     }
   };
@@ -240,7 +291,7 @@ function JournalContent() {
       author: currentUser,
       mood: selectedMood,
       likes: 0,
-      is_liked: false,
+      liked_by: [],
       comments: []
     };
     
@@ -255,7 +306,7 @@ function JournalContent() {
     } else if (data) {
       const mappedNote = {
         ...data,
-        isLiked: data.is_liked
+        isLiked: (data.liked_by || []).includes(currentUser)
       };
       setNotes([mappedNote, ...notes]);
       setNewNoteTitle("");
@@ -641,11 +692,11 @@ function JournalContent() {
                       {isWhisperPreview ? whisperText : receivedWhisper}
                     </p>
                     
-                    {/* Scratch Canvas - Now inside the scrollable area */}
+                    {/* Scratch Canvas */}
                     <canvas
                       ref={canvasRef}
                       width={800}
-                      height={1200} // Increased height for longer letters
+                      height={1200}
                       className="absolute inset-0 w-full h-full cursor-crosshair z-30 touch-none"
                       onMouseMove={handleScratch}
                       onTouchMove={handleScratch}
@@ -655,18 +706,36 @@ function JournalContent() {
                 
                 <div className="flex flex-col gap-3">
                   <button 
+                    onClick={autoErase}
+                    className="w-full py-4 rounded-2xl bg-[#5c4a33] text-[#fdfaf3] font-black uppercase tracking-widest text-[10px] hover:bg-[#4a3b29] transition-all flex items-center justify-center gap-2 shadow-lg group"
+                  >
+                    <Sparkles size={14} className="group-hover:animate-spin" />
+                    Магическое проявление
+                  </button>
+                  
+                  <button 
                     onClick={async () => {
                       setIsWhisperModalOpen(false);
-                      if (!isWhisperPreview && currentUser) {
-                        // Delete the letter from the mailbox after reading
+                      if (!isWhisperPreview && currentUser && receivedWhisper) {
                         const key = currentUser === 'Grinch' ? 'whisper_for_grinch' : 'whisper_for_cindy';
+                        
+                        // Save to history only now, when it's being closed/read
+                        await supabase
+                          .from('whisper_history')
+                          .insert({
+                            sender: currentUser === 'Grinch' ? 'Cindy' : 'Grinch',
+                            receiver: currentUser,
+                            content: receivedWhisper,
+                            created_at: new Date().toISOString()
+                          });
+
                         await supabase
                           .from('global_state')
                           .delete()
                           .eq('key', key);
                         
                         setReceivedWhisper("");
-                        // Clear the URL param
+                        refreshWhispers();
                         window.history.replaceState({}, '', window.location.pathname);
                       } else {
                         setIsWhisperPreview(false);
@@ -674,7 +743,7 @@ function JournalContent() {
                     }}
                     className="w-full py-4 rounded-2xl bg-[#f5e6d3] text-[#5c4a33] font-black uppercase tracking-widest text-[10px] hover:bg-[#e6d5bc] transition-all"
                   >
-                    Закрыть письмо
+                    Закрыть и сохранить в историю
                   </button>
                 </div>
               </div>

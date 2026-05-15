@@ -20,11 +20,13 @@ interface DataContextType {
   quests: any[];
   archiState: any;
   capsules: any[];
+  whispers: any[];
   isLoading: boolean;
   setNotes: React.Dispatch<React.SetStateAction<any[]>>;
   setMoments: React.Dispatch<React.SetStateAction<any[]>>;
   setQuests: React.Dispatch<React.SetStateAction<any[]>>;
   setCapsules: React.Dispatch<React.SetStateAction<any[]>>;
+  setWhispers: React.Dispatch<React.SetStateAction<any[]>>;
   setArchiState: React.Dispatch<React.SetStateAction<any>>;
   refreshAll: () => Promise<void>;
   refreshProfiles: () => Promise<void>;
@@ -33,6 +35,7 @@ interface DataContextType {
   refreshQuests: () => Promise<void>;
   refreshCapsules: () => Promise<void>;
   refreshArchi: () => Promise<void>;
+  refreshWhispers: () => Promise<void>;
   galleryCategories: string[];
   setGalleryCategories: React.Dispatch<React.SetStateAction<string[]>>;
   dailyFact: string;
@@ -48,6 +51,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [moments, setMoments] = useState<any[]>([]);
   const [quests, setQuests] = useState<any[]>([]);
   const [capsules, setCapsules] = useState<any[]>([]);
+  const [whispers, setWhispers] = useState<any[]>([]);
   const [archiState, setArchiState] = useState<any>(null);
   const [galleryCategories, setGalleryCategories] = useState<string[]>(['Все', 'Свидания', 'Прогулки', 'Дом', 'Путешествия']);
   const [dailyFact, setDailyFact] = useState("");
@@ -81,6 +85,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
           ...p,
           id,
           lastActive: p.last_active,
+          categories: p.categories || [],
           avatarColor: p.avatar_color || (id === 'Grinch' ? 'bg-talia-lavender' : 'bg-talia-peach')
         }; 
       });
@@ -145,6 +150,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       .eq('key', 'archi_state')
       .single();
     if (data) setArchiState(data.value);
+  }, []);
+
+  const refreshWhispers = useCallback(async () => {
+    const { data } = await supabase
+      .from('whisper_history')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setWhispers(data);
   }, []);
 
   const refreshCapsules = useCallback(async () => {
@@ -227,6 +240,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       refreshMoments(),
       refreshQuests(),
       refreshCapsules(),
+      refreshWhispers(),
       refreshArchi(),
       refreshGalleryCategories()
     ]);
@@ -273,10 +287,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <DataContext.Provider value={{ 
-      currentUser, profiles, notes, moments, quests, archiState, capsules, isLoading,
+      currentUser, profiles, notes, moments, quests, archiState, capsules, whispers, isLoading,
       galleryCategories, setGalleryCategories, dailyFact, dailyCookie,
-      setNotes, setMoments, setQuests, setArchiState, setCapsules,
-      refreshAll, refreshNotes, refreshMoments, refreshQuests, refreshArchi, refreshProfiles, refreshCapsules
+      setNotes, setMoments, setQuests, setArchiState, setCapsules, setWhispers,
+      refreshAll, refreshNotes, refreshMoments, refreshQuests, refreshArchi, refreshProfiles, refreshCapsules, refreshWhispers
     }}>
       {children}
     </DataContext.Provider>

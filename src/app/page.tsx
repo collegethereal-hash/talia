@@ -75,48 +75,19 @@ const BOTTLE_MESSAGES = [
 
 export default function Home() {
   const router = useRouter();
-  const { currentUser, dailyFact, dailyCookie } = useData();
+  const { dailyFact } = useData();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-
-  const [fortune, setFortune] = useState<string | null>(null);
-  const [isBreaking, setIsBreaking] = useState(false);
-  const [nextCookieTime, setNextCookieTime] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState("");
 
   const [bottleMessage, setBottleMessage] = useState<string | null>(null);
   const [isBottleOpen, setIsBottleOpen] = useState(false);
   const [hasUnreadBottle, setHasUnreadBottle] = useState(false);
 
   useEffect(() => {
-    // Auth check (Client-only)
     const auth = localStorage.getItem('lumina_auth');
     if (auth && !window.location.search.includes('reset')) {
       setIsAuthenticated(true);
     }
-    
-    // Fetch cookie state
-    const fetchCookie = async () => {
-      const { data } = await supabase.from('global_state').select('value').eq('key', 'fortune_state').single();
-      if (data && data.value) {
-        const state = data.value;
-        const now = new Date().getTime();
-        if (state.nextTime && state.nextTime > now) {
-          setFortune(state.fortune);
-          setNextCookieTime(state.nextTime);
-          
-          const distance = state.nextTime - now;
-          const h = Math.floor(distance / (1000 * 60 * 60));
-          const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-          const s = Math.floor((distance % (1000 * 60)) / 1000);
-          setTimeLeft(`${h}ч ${m}м ${s}с`);
-          return;
-        }
-      }
-      setFortune(null);
-      setNextCookieTime(null);
-    };
-    fetchCookie();
   }, []);
 
   useEffect(() => {
@@ -142,50 +113,6 @@ export default function Home() {
     };
     checkBottle();
   }, []);
-
-
-  useEffect(() => {
-    if (!nextCookieTime) return;
-
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      
-      // Cookie timer
-      if (nextCookieTime) {
-        const distance = nextCookieTime - now;
-        if (distance < 0) {
-          setFortune(null);
-          setNextCookieTime(null);
-        } else {
-          const h = Math.floor(distance / (1000 * 60 * 60));
-          const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-          const s = Math.floor((distance % (1000 * 60)) / 1000);
-          setTimeLeft(`${h}ч ${m}м ${s}с`);
-        }
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [nextCookieTime]);
-
-  const breakCookie = async () => {
-    setIsBreaking(true);
-    setTimeout(async () => {
-      const randomFortune = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
-      const nextTime = new Date().getTime() + 24 * 60 * 60 * 1000;
-      
-      setFortune(randomFortune);
-      setNextCookieTime(nextTime);
-      setIsBreaking(false);
-
-      await supabase.from('global_state').upsert({
-        key: 'fortune_state',
-        value: { fortune: randomFortune, nextTime: nextTime }
-      });
-    }, 800);
-  };
-
-
 
   const handleAuthComplete = (user: string) => {
     localStorage.setItem('lumina_auth', user);
@@ -334,81 +261,7 @@ export default function Home() {
           </div>
           
           <div className="md:col-span-1">
-            <Card delay={0.2} className="relative h-full flex flex-col items-center justify-between bg-[#fdfaf3] border-4 border-[#e6d5bc] shadow-2xl p-8 rounded-[2rem] overflow-hidden group">
-              {/* Header */}
-              <div className="w-full flex justify-between items-start">
-                <div className="text-left">
-                  <h3 className="text-2xl font-serif font-bold text-[#5c4a33]">Fortune</h3>
-                  <p className="text-[9px] font-black text-[#8b7355] uppercase tracking-widest">Печенье Talia</p>
-                </div>
-                <div className="w-10 h-10 rounded-xl bg-[#f5e6d3] flex items-center justify-center text-[#5c4a33] border-2 border-[#e6d5bc]">
-                  <Cookie size={20} />
-                </div>
-              </div>
-
-              {/* Center Content */}
-              <div className="relative py-4 flex flex-col items-center">
-                <AnimatePresence mode="wait">
-                  {!fortune ? (
-                    <motion.div
-                      key="cookie-visual"
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 1.2, opacity: 0 }}
-                      className="relative"
-                    >
-                      <motion.div
-                        animate={isBreaking ? { 
-                          rotate: [0, -10, 10, -10, 10, 0],
-                          scale: [1, 1.1, 0.9, 1.1, 1]
-                        } : { y: [0, -5, 0] }}
-                        transition={isBreaking ? { duration: 0.8 } : { duration: 4, repeat: Infinity }}
-                        className="w-24 h-24 bg-gradient-to-br from-amber-100 to-amber-200 rounded-[2rem] flex items-center justify-center text-amber-700 shadow-xl border-4 border-[#e6d5bc]"
-                      >
-                        <Cookie size={48} />
-                      </motion.div>
-                      <div className="absolute -inset-2 border-2 border-dashed border-[#e6d5bc] rounded-[2.5rem] animate-[spin_20s_linear_infinite]" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="fortune-text"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-white p-6 rounded-2xl border-4 border-[#e6d5bc] shadow-lg relative"
-                    >
-                      <Sparkles className="absolute -top-3 -right-3 text-amber-400" size={24} />
-                      <p className="text-sm text-[#5c4a33] italic leading-relaxed font-bold text-center">
-                        "{fortune}"
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Footer Button */}
-              <div className="w-full">
-                {!fortune ? (
-                  <button 
-                    onClick={breakCookie}
-                    disabled={isBreaking}
-                    className="w-full py-4 rounded-2xl bg-[#5c4a33] text-[#fdfaf3] font-black uppercase tracking-widest text-[10px] hover:bg-[#4a3b29] transition-all shadow-lg active:scale-95 disabled:opacity-50"
-                  >
-                    {isBreaking ? "Разламываю..." : "Разломить печенье"}
-                  </button>
-                ) : (
-                  <div className="flex flex-col items-center gap-1.5 py-2">
-                    <div className="flex items-center gap-2 px-4 py-1.5 bg-[#f5e6d3] rounded-full border-2 border-[#e6d5bc]">
-                      <Timer size={12} className="text-[#8b7355]" />
-                      <span className="text-[9px] font-black text-[#8b7355] uppercase tracking-widest">{timeLeft}</span>
-                    </div>
-                    <p className="text-[8px] text-[#8b7355]/60 font-bold uppercase">До следующего предсказания</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Texture Overlay */}
-              <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
-            </Card>
+            <FortuneCard />
           </div>
 
           <div className="md:col-span-3">
@@ -428,13 +281,162 @@ export default function Home() {
                 </div>
               </div>
               
-              {/* Texture Overlay */}
               <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
             </Card>
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+function FortuneCard() {
+  const [fortune, setFortune] = useState<string | null>(null);
+  const [isBreaking, setIsBreaking] = useState(false);
+  const [nextCookieTime, setNextCookieTime] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCookie = async () => {
+      const { data } = await supabase.from('global_state').select('value').eq('key', 'fortune_state').single();
+      if (data && data.value) {
+        const state = data.value;
+        const now = new Date().getTime();
+        if (state.nextTime && state.nextTime > now) {
+          setFortune(state.fortune);
+          setNextCookieTime(state.nextTime);
+        }
+      }
+      setIsLoading(false);
+    };
+    fetchCookie();
+  }, []);
+
+  useEffect(() => {
+    if (!nextCookieTime) return;
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = nextCookieTime - now;
+      
+      if (distance < 0) {
+        setFortune(null);
+        setNextCookieTime(null);
+        setTimeLeft("");
+      } else {
+        const h = Math.floor(distance / (1000 * 60 * 60));
+        const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((distance % (1000 * 60)) / 1000);
+        setTimeLeft(`${h}ч ${m}м ${s}с`);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [nextCookieTime]);
+
+  const breakCookie = async () => {
+    setIsBreaking(true);
+    setTimeout(async () => {
+      const randomFortune = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
+      const nextTime = new Date().getTime() + 24 * 60 * 60 * 1000;
+      
+      setFortune(randomFortune);
+      setNextCookieTime(nextTime);
+      setIsBreaking(false);
+
+      await supabase.from('global_state').upsert({
+        key: 'fortune_state',
+        value: { fortune: randomFortune, nextTime: nextTime }
+      });
+    }, 800);
+  };
+
+  return (
+    <Card delay={0.2} className="relative h-full flex flex-col items-center justify-between bg-[#fdfaf3] border-4 border-[#e6d5bc] shadow-2xl p-8 rounded-[2rem] overflow-hidden group">
+      <div className="w-full flex justify-between items-start">
+        <div className="text-left">
+          <h3 className="text-2xl font-serif font-bold text-[#5c4a33]">Fortune</h3>
+          <p className="text-[9px] font-black text-[#8b7355] uppercase tracking-widest">Печенье Talia</p>
+        </div>
+        <div className="w-10 h-10 rounded-xl bg-[#f5e6d3] flex items-center justify-center text-[#5c4a33] border-2 border-[#e6d5bc]">
+          <Cookie size={20} />
+        </div>
+      </div>
+
+      <div className="relative py-4 flex flex-col items-center">
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-4"
+            >
+              <RefreshCw className="animate-spin text-[#e6d5bc]" size={40} />
+              <p className="text-[10px] font-black uppercase text-[#8b7355] opacity-40">Загрузка судьбы...</p>
+            </motion.div>
+          ) : !fortune ? (
+            <motion.div
+              key="cookie-visual"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.2, opacity: 0 }}
+              className="relative"
+            >
+              <motion.div
+                animate={isBreaking ? { 
+                  rotate: [0, -10, 10, -10, 10, 0],
+                  scale: [1, 1.1, 0.9, 1.1, 1]
+                } : { y: [0, -5, 0] }}
+                transition={isBreaking ? { duration: 0.8 } : { duration: 4, repeat: Infinity }}
+                className="w-24 h-24 bg-gradient-to-br from-amber-100 to-amber-200 rounded-[2rem] flex items-center justify-center text-amber-700 shadow-xl border-4 border-[#e6d5bc]"
+              >
+                <Cookie size={48} />
+              </motion.div>
+              <div className="absolute -inset-2 border-2 border-dashed border-[#e6d5bc] rounded-[2.5rem] animate-[spin_20s_linear_infinite]" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="fortune-text"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white p-6 rounded-2xl border-4 border-[#e6d5bc] shadow-lg relative"
+            >
+              <Sparkles className="absolute -top-3 -right-3 text-amber-400" size={24} />
+              <p className="text-sm text-[#5c4a33] italic leading-relaxed font-bold text-center">
+                "{fortune}"
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="w-full">
+        {isLoading ? (
+          <div className="w-full py-4 rounded-2xl bg-[#e6d5bc]/30 border-2 border-dashed border-[#e6d5bc]" />
+        ) : !fortune ? (
+          <button 
+            onClick={breakCookie}
+            disabled={isBreaking}
+            className="w-full py-4 rounded-2xl bg-[#5c4a33] text-[#fdfaf3] font-black uppercase tracking-widest text-[10px] hover:bg-[#4a3b29] transition-all shadow-lg active:scale-95 disabled:opacity-50"
+          >
+            {isBreaking ? "Разламываю..." : "Разломить печенье"}
+          </button>
+        ) : (
+          <div className="flex flex-col items-center gap-1.5 py-2">
+            <div className="flex items-center gap-2 px-4 py-1.5 bg-[#f5e6d3] rounded-full border-2 border-[#e6d5bc]">
+              <Timer size={12} className="text-[#8b7355]" />
+              <span className="text-[9px] font-black text-[#8b7355] uppercase tracking-widest">{timeLeft}</span>
+            </div>
+            <p className="text-[8px] text-[#8b7355]/60 font-bold uppercase">До следующего предсказания</p>
+          </div>
+        )}
+      </div>
+
+      <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
+    </Card>
   );
 }
 

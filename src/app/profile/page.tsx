@@ -67,7 +67,7 @@ const EMOJI_LIST = ['🎁', '✨', '🌸', '🐱', '🐶', '🎵', '🍕', '✈�
 const INITIAL_CAPSULES: TimeCapsule[] = [];
 
 export default function ProfilePage() {
-  const { currentUser, profiles, capsules, setCapsules, refreshProfiles, refreshCapsules } = useData();
+  const { currentUser, profiles, capsules, whispers, setCapsules, setWhispers, refreshProfiles, refreshCapsules, refreshWhispers } = useData();
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   
   const [selectedCapsule, setSelectedCapsule] = useState<TimeCapsule | null>(null);
@@ -157,7 +157,7 @@ export default function ProfilePage() {
           mood: editData.mood,
           pref: editData.pref,
           avatar_color: editData.avatarColor,
-          categories: editData.categories
+          categories: editData.categories || []
         });
 
       if (error) {
@@ -253,7 +253,7 @@ export default function ProfilePage() {
         unlock_date: capsuleEditData.unlockDate || new Date().toISOString().split('T')[0],
         content: capsuleEditData.content || '',
         is_sealed: true,
-        author: selectedProfileId === 'me' ? 'Grinch' : 'Cindy'
+        author: (selectedProfileId === 'me' || selectedProfileId === 'Grinch') ? 'Grinch' : 'Cindy'
       };
 
       if (capsuleEditData.id) {
@@ -276,9 +276,11 @@ export default function ProfilePage() {
       await refreshCapsules();
       setIsCapsuleModalOpen(false);
       setIsEditingCapsule(false);
-    } catch (err) {
-      console.error('Error saving capsule:', err);
-      alert('Ошибка при сохранении капсулы.');
+    } catch (err: any) {
+      console.error('Detailed Error saving capsule:', err);
+      // Better error message
+      const msg = err?.message || JSON.stringify(err) || 'Неизвестная ошибка';
+      alert(`Ошибка при сохранении капсулы: ${msg}`);
     }
   };
 
@@ -292,8 +294,22 @@ export default function ProfilePage() {
       console.error('Error deleting capsule:', error);
       alert('Ошибка при удалении капсулы.');
     } else {
-      setCapsules(capsules.filter(c => c.id !== id));
+      await refreshCapsules();
       setIsCapsuleModalOpen(false);
+    }
+  };
+
+  const deleteWhisper = async (id: string) => {
+    const { error } = await supabase
+      .from('whisper_history')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting whisper:', error);
+      alert('Ошибка при удалении письма.');
+    } else {
+      await refreshWhispers();
     }
   };
 
@@ -677,6 +693,84 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <p className="text-2xl font-serif font-black text-[#5c4a33]">Архив пока пуст</p>
                 <p className="text-sm text-[#8b7355] italic max-w-xs mx-auto">"Оставьте послание себе в будущее, которое откроется в особый день."</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Whisper History Section */}
+      <section className="space-y-10 pt-16 relative z-10">
+        <div className="flex items-center justify-between border-b-8 border-[#e6d5bc] pb-6">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-[#5c4a33] text-amber-100 flex items-center justify-center shadow-2xl border-4 border-[#e6d5bc]">
+              <Mail size={32} />
+            </div>
+            <div>
+              <h2 className="text-4xl font-serif font-black text-[#5c4a33]">Архив шепотов</h2>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8b7355]">Наши тайные весточки сквозь время</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="columns-1 md:columns-2 gap-8 space-y-8 relative">
+          {whispers.map((whisper) => (
+            <motion.div
+              key={whisper.id}
+              whileHover={{ y: -5, rotate: [-1, 1, 0] }}
+              className="relative group break-inside-avoid mb-8"
+            >
+              <div className="p-1 bg-[#e6d5bc] rounded-[2.5rem] shadow-xl">
+                <div className="bg-[#fdfaf3] rounded-[2.2rem] p-8 border-4 border-[#e6d5bc] relative overflow-hidden flex flex-col gap-4">
+                  {/* Parchment texture */}
+                  <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
+                  
+                  <div className="flex justify-between items-start relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center border-2 border-[#e6d5bc] shadow-sm",
+                        whisper.sender === 'Grinch' ? "bg-[#5c4a33] text-amber-100" : "bg-[#5c4a33] text-blue-50"
+                      )}>
+                        {whisper.sender === 'Grinch' ? <Trees size={18} /> : <Moon size={18} />}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[#8b7355]">От кого: {whisper.sender === 'Grinch' ? 'Гринч' : 'Синди Лу'}</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[#8b7355]/40">{new Date(whisper.created_at).toLocaleDateString('ru-RU')}</p>
+                      </div>
+                    </div>
+                    
+                    {whisper.sender === currentUser && (
+                      <button 
+                        onClick={() => deleteWhisper(whisper.id)}
+                        className="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="relative z-10 py-2">
+                    <p className="text-xl font-serif italic text-[#5c4a33] leading-relaxed pl-4 border-l-4 border-[#e6d5bc]/50">
+                      "{whisper.content}"
+                    </p>
+                  </div>
+                  
+                  <div className="absolute top-4 right-4 opacity-10 rotate-12">
+                    <Sparkles size={40} />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+
+          {whispers.length === 0 && (
+            <div className="col-span-full py-16 flex flex-col items-center justify-center text-center space-y-6 bg-[#fdfaf3]/50 rounded-[3rem] border-8 border-dashed border-[#e6d5bc]/30">
+              <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-[#e6d5bc] shadow-inner border-4 border-[#e6d5bc]">
+                <Mail size={40} className="opacity-20" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-2xl font-serif font-black text-[#5c4a33]">История чиста</p>
+                <p className="text-sm text-[#8b7355] italic max-w-xs mx-auto">"Ваши тайные письма появятся здесь после отправки в дневнике."</p>
               </div>
             </div>
           )}

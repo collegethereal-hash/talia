@@ -6,7 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { 
   BarChart2, MessageSquare, History, Heart, Clock, Mic, StickyNote, 
   PenTool, Zap, Calendar, User, BrainCircuit, Sparkle, Sparkles, Timer,
-  Trees, Moon, BookOpen, ScrollText
+  Trees, Moon, BookOpen, ScrollText, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/lib/utils";
@@ -29,6 +29,49 @@ const COMPARISON_DATA = [
   { label: 'Искры Смеха', me: 393, polina: 777, meLabel: '393', polinaLabel: '777' },
   { label: 'Поиск Истины (?)', me: 1718, polina: 914, meLabel: '1718', polinaLabel: '914' },
 ];
+
+const STAT_EXPLANATIONS: Record<string, { title: string; desc: string; icon: any }> = {
+  'Послания': { 
+    title: 'Древние Послания', 
+    desc: 'Суммарное количество отправленных сообщений за все время нашего общения. Каждое слово — это кирпичик в фундаменте нашего маленького мира Talia.',
+    icon: MessageSquare 
+  },
+  'Слова Силы': { 
+    title: 'Слова Силы', 
+    desc: 'Общий объем текста и символов, которыми мы обменялись. Это масштаб нашей общей истории, написанной буква за буквой.',
+    icon: PenTool 
+  },
+  'Голос Сердца': { 
+    title: 'Голос Сердца', 
+    desc: 'Количество голосовых сообщений. Те драгоценные моменты, когда текст был бессилен передать всю глубину твоих интонаций и чувств.',
+    icon: Mic 
+  },
+  'Зеркальные Сферы': { 
+    title: 'Зеркальные Сферы', 
+    desc: 'Общие ссылки, видео и музыка, которыми мы делились. Отражение наших общих интересов, открытий и того, что нас вдохновляет.',
+    icon: Sparkle 
+  },
+  'Отражения (Фото)': { 
+    title: 'Отражения Души', 
+    desc: 'Все фотографии и картинки в нашей галерее. Застывшие мгновения счастья, которые мы сохранили навсегда как самые важные артефакты.',
+    icon: Sparkles 
+  },
+  'Тайные Знаки': { 
+    title: 'Тайные Знаки', 
+    desc: 'Реакции, эмодзи и стикеры. Наш уникальный язык жестов и эмоций, понятный только нам двоим без лишних слов.',
+    icon: ScrollText 
+  },
+  'Искры Смеха': { 
+    title: 'Искры Смеха', 
+    desc: 'Количество моментов, заставивших нас улыбнуться: мемы, шутки и смешные заметки. Самая яркая и чистая энергия нашей связи.',
+    icon: Zap 
+  },
+  'Поиск Истины (?)': { 
+    title: 'Поиск Истины', 
+    desc: 'Количество раз, когда мы возвращались к старым записям и фотографиям. Наше стремление не забывать самое важное и беречь прошлое.',
+    icon: BrainCircuit 
+  },
+};
 
 const MONTHLY_DATA = [
   { name: 'Март', me: 8000, polina: 8200 },
@@ -112,6 +155,8 @@ function CountdownTimer() {
 }
 
 export default function StatsPage() {
+  const [selectedStat, setSelectedStat] = useState<string | null>(null);
+
   return (
     <div className="max-w-7xl mx-auto px-4 pt-12 pb-32 space-y-20">
       <header className="text-center space-y-6">
@@ -205,7 +250,15 @@ export default function StatsPage() {
                 
                 return (
                   <div key={item.label} className="grid grid-cols-1 md:grid-cols-5 items-center gap-4 md:gap-10 group/item">
-                    <span className="text-sm font-black uppercase tracking-[0.2em] text-[#8b7355] group-hover/item:text-[#5c4a33] transition-colors col-span-1">{item.label}</span>
+                    <button 
+                      onClick={() => setSelectedStat(item.label)}
+                      className="text-left group/label flex items-center gap-2"
+                    >
+                      <span className="text-sm font-black uppercase tracking-[0.2em] text-[#8b7355] group-hover/label:text-[#5c4a33] transition-colors border-b-2 border-transparent group-hover/label:border-[#5c4a33] pb-1">
+                        {item.label}
+                      </span>
+                      <Info size={12} className="text-[#e6d5bc] group-hover/label:text-[#5c4a33] transition-colors" />
+                    </button>
                     <div className="col-span-4 space-y-4">
                       <div className="relative h-8 bg-white/50 rounded-2xl overflow-hidden border-2 border-[#e6d5bc] shadow-inner">
                         <motion.div 
@@ -346,7 +399,71 @@ export default function StatsPage() {
             </div>
           </div>
         </div>
-      </div>
     </div>
+
+      <StatExplanationModal 
+        isOpen={!!selectedStat}
+        statKey={selectedStat}
+        onClose={() => setSelectedStat(null)}
+      />
+    </div>
+  );
+}
+
+function StatExplanationModal({ isOpen, statKey, onClose }: { isOpen: boolean; statKey: string | null; onClose: () => void }) {
+  if (!statKey || !STAT_EXPLANATIONS[statKey]) return null;
+  const data = STAT_EXPLANATIONS[statKey];
+  const Icon = data.icon;
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-[#5c4a33]/60 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="relative w-full max-w-lg bg-[#fdfaf3] rounded-[3.5rem] border-8 border-[#e6d5bc] shadow-2xl overflow-hidden p-10 md:p-14 text-center space-y-8"
+          >
+            <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#f5e6d3] to-transparent -z-10" />
+            
+            <div className="w-24 h-24 bg-white rounded-[2.5rem] shadow-xl border-4 border-[#e6d5bc] flex items-center justify-center text-[#5c4a33] mx-auto relative group">
+              <Icon size={48} className="group-hover:rotate-12 transition-transform duration-500" />
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-100 rounded-full border-2 border-[#e6d5bc] flex items-center justify-center">
+                <Info size={16} />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-4xl font-serif font-black text-[#5c4a33]">{data.title}</h3>
+              <div className="p-8 bg-white rounded-[2.5rem] border-4 border-[#e6d5bc] shadow-inner relative overflow-hidden group">
+                <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] pointer-events-none" />
+                <p className="text-xl text-[#5c4a33] italic leading-relaxed font-serif font-medium">
+                  "{data.desc}"
+                </p>
+              </div>
+            </div>
+
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#8b7355] opacity-60">
+              Магия Talia хранит каждое мгновение вашей связи
+            </p>
+
+            <button 
+              onClick={onClose}
+              className="w-full py-5 rounded-2xl bg-[#5c4a33] text-[#fdfaf3] font-black uppercase tracking-widest text-xs shadow-xl hover:scale-105 active:scale-95 transition-all border-4 border-[#e6d5bc]"
+            >
+              Вернуться в архив
+            </button>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }
