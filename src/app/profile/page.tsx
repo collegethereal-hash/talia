@@ -253,7 +253,7 @@ export default function ProfilePage() {
         unlock_date: capsuleEditData.unlockDate || new Date().toISOString().split('T')[0],
         content: capsuleEditData.content || '',
         is_sealed: true,
-        author: (selectedProfileId === 'me' || selectedProfileId === 'Grinch') ? 'Grinch' : 'Cindy'
+        author: currentUser
       };
 
       if (capsuleEditData.id) {
