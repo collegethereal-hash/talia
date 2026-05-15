@@ -23,7 +23,7 @@ export const Navbar = () => {
       <motion.div 
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-white/80 backdrop-blur-xl px-4 md:px-10 py-4 rounded-[2.5rem] flex items-center justify-between shadow-2xl border-4 border-[#e6d5bc] relative overflow-hidden"
+        className="bg-white/80 backdrop-blur-xl px-2 sm:px-4 md:px-10 py-4 rounded-[2.5rem] flex items-center justify-between shadow-2xl border-4 border-[#e6d5bc] relative overflow-hidden"
       >
         {/* Background texture */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />

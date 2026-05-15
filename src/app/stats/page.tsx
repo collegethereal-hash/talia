@@ -50,7 +50,7 @@ const HOURLY_DATA = [
 function PaliaPaper({ children, title, icon: Icon, className }: { children: React.ReactNode, title?: string, icon?: any, className?: string }) {
   return (
     <div className={cn("relative p-1 bg-[#e6d5bc] rounded-[2.5rem] shadow-xl", className)}>
-      <div className="bg-[#fdfaf3] rounded-[2.3rem] p-8 border-4 border-[#e6d5bc] relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
+      <div className="bg-[#fdfaf3] rounded-[2.3rem] p-6 md:p-8 border-4 border-[#e6d5bc] relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
         {/* Paper pin effect */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#5c4a33] rounded-full shadow-lg border-4 border-[#e6d5bc] z-20" />
         
@@ -128,7 +128,7 @@ export default function StatsPage() {
       {/* Countdown - Wooden Tablet Style */}
       <div className="max-w-3xl mx-auto">
         <div className="p-1.5 bg-[#5c4a33] rounded-[3rem] shadow-2xl border-4 border-[#e6d5bc]">
-          <div className="bg-[#fdfaf3] p-10 rounded-[2.8rem] border-4 border-[#e6d5bc] space-y-8 relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
+          <div className="bg-[#fdfaf3] p-6 md:p-10 rounded-[2.8rem] border-4 border-[#e6d5bc] space-y-8 relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
             <div className="text-center space-y-6">
               <div className="flex items-center justify-center gap-4 text-[#8b7355]">
                 <Timer size={24} className="animate-spin-slow" />
@@ -306,7 +306,7 @@ export default function StatsPage() {
         </div>
 
         <div className="relative p-1.5 bg-[#e6d5bc] rounded-[4rem] shadow-2xl">
-          <div className="bg-[#fdfaf3] p-12 rounded-[3.8rem] border-4 border-[#e6d5bc] relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
+          <div className="bg-[#fdfaf3] p-6 md:p-12 rounded-[3.8rem] border-4 border-[#e6d5bc] relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
             <div className="absolute top-0 right-0 p-12 opacity-5 text-[#5c4a33]">
               <BookOpen size={180} />
             </div>

@@ -204,17 +204,15 @@ export default function GalleryPage() {
   };
 
   const addCategory = async () => {
-    if (!newCategoryName.trim() || categories.includes(newCategoryName.trim())) return;
-    const updated = [...categories, newCategoryName.trim()];
-    setCategories(updated);
+    if (!newCategoryName.trim() || galleryCategories.includes(newCategoryName.trim())) return;
+    const updated = [...galleryCategories, newCategoryName.trim()];
     await saveCategories(updated);
     setNewCategoryName('');
   };
 
   const deleteCategory = async (catToDelete: string) => {
     if (catToDelete === 'Все') return;
-    const updated = categories.filter(c => c !== catToDelete);
-    setCategories(updated);
+    const updated = galleryCategories.filter(c => c !== catToDelete);
     await saveCategories(updated);
     if (filter === catToDelete) setFilter('Все');
     setCategoryToDelete(null);
@@ -717,7 +715,7 @@ export default function GalleryPage() {
                 </div>
 
                 <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                  {categories.map(cat => (
+                  {galleryCategories.map(cat => (
                     <div 
                       key={cat}
                       className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 border border-black/5 group"

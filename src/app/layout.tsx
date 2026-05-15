@@ -19,6 +19,15 @@ export const metadata: Metadata = {
   description: "A magical space for Polina and Me",
 };
 
+import { Viewport } from "next";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 import { DataProvider } from "@/components/DataProvider";
 
 export default function RootLayout({

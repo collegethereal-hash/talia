@@ -387,7 +387,7 @@ export default function Home() {
           </div>
 
           <div className="md:col-span-3">
-            <Card delay={0.1} className="relative flex flex-col md:flex-row items-center justify-between gap-6 py-10 px-12 bg-[#fdfaf3] border-4 border-[#e6d5bc] shadow-2xl rounded-[2.5rem] overflow-hidden group">
+            <Card delay={0.1} className="relative flex flex-col md:flex-row items-center justify-between gap-6 py-10 px-6 md:px-12 bg-[#fdfaf3] border-4 border-[#e6d5bc] shadow-2xl rounded-[2.5rem] overflow-hidden group">
               <div className="flex items-center gap-8 z-10 w-full md:w-auto">
                 <div className="p-5 rounded-3xl bg-[#f5e6d3] text-[#5c4a33] shadow-xl border-4 border-[#e6d5bc] group-hover:rotate-6 transition-transform duration-500 shrink-0">
                   <BrainCircuit size={40} />
@@ -458,7 +458,7 @@ const FAQModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void })
             className="relative w-full max-w-4xl max-h-[90vh] bg-[#fdfaf3] rounded-[3rem] border-8 border-[#e6d5bc] shadow-2xl overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="p-8 md:p-12 bg-[#f5e6d3] border-b-4 border-[#e6d5bc] relative shrink-0">
+            <div className="p-6 md:p-12 bg-[#f5e6d3] border-b-4 border-[#e6d5bc] relative shrink-0">
               <button onClick={onClose} className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/20 transition-colors">
                 <X size={32} className="text-[#5c4a33]" />
               </button>
@@ -474,7 +474,7 @@ const FAQModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void })
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-8 md:p-12 space-y-12 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 md:p-12 space-y-12 custom-scrollbar">
               {categories.map((cat, idx) => (
                 <div key={idx} className="space-y-6">
                   <h3 className="text-2xl font-serif font-bold text-[#5c4a33] flex items-center gap-3 border-b-2 border-[#e6d5bc] pb-2">

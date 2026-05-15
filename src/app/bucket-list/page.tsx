@@ -311,7 +311,7 @@ export default function BucketListPage() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="bg-[#fdfaf3] border-8 border-dashed border-amber-200 p-8 rounded-[3rem] space-y-6 shadow-2xl relative overflow-hidden"
+                  className="bg-[#fdfaf3] border-8 border-dashed border-amber-200 p-6 md:p-8 rounded-[3rem] space-y-6 shadow-2xl relative overflow-hidden"
                 >
                   <div className="absolute top-0 right-0 w-12 h-12 bg-amber-100/50 rounded-bl-[2rem] flex items-center justify-center text-amber-500">
                     <Clock size={20} />
@@ -378,7 +378,7 @@ export default function BucketListPage() {
                 >
                   <div className="relative p-1 bg-[#e6d5bc] rounded-[2.5rem] shadow-xl group-hover:shadow-2xl transition-all h-full">
                     <div className={cn(
-                      "bg-[#fdfaf3] rounded-[2.3rem] p-8 border-4 border-[#e6d5bc] relative overflow-hidden space-y-6 h-full flex flex-col",
+                      "bg-[#fdfaf3] rounded-[2.3rem] p-6 md:p-8 border-4 border-[#e6d5bc] relative overflow-hidden space-y-6 h-full flex flex-col",
                       quest.completed && "opacity-60 grayscale-[0.5]"
                     )}>
                       {/* Paper pin effect */}
@@ -497,7 +497,7 @@ export default function BucketListPage() {
                   "relative p-1 bg-[#e6d5bc] rounded-[2rem] shadow-lg h-full transition-all",
                   reward.unlocked && "opacity-50 grayscale-[0.5]"
                 )}>
-                  <div className="bg-[#fdfaf3] p-5 rounded-[1.8rem] border-2 border-[#e6d5bc] space-y-4 h-full flex flex-col items-center text-center bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
+                  <div className="bg-[#fdfaf3] p-4 sm:p-5 rounded-[1.8rem] border-2 border-[#e6d5bc] space-y-4 h-full flex flex-col items-center text-center bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
                     <div className={cn(
                       "w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner border-2",
                       reward.unlocked ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-white border-[#e6d5bc] text-[#5c4a33]"
@@ -555,7 +555,7 @@ export default function BucketListPage() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative w-full max-w-xl bg-[#fdfaf3] rounded-[3rem] shadow-2xl border-8 border-[#e6d5bc] overflow-hidden"
             >
-              <div className="p-10 space-y-8 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
+              <div className="p-6 md:p-10 space-y-8 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
                 <div className="flex justify-between items-center border-b-4 border-[#e6d5bc] pb-6">
                   <div className="space-y-1">
                     <h3 className="text-3xl font-serif font-black text-[#5c4a33]">
@@ -632,11 +632,11 @@ export default function BucketListPage() {
                   </div>
                 ) : selectedQuest && (
                   <div className="space-y-8">
-                    <div className="p-10 bg-white border-8 border-[#e6d5bc] rounded-[3rem] shadow-2xl relative overflow-hidden">
+                    <div className="p-6 md:p-10 bg-white border-8 border-[#e6d5bc] rounded-[3rem] shadow-2xl relative overflow-hidden">
                        <div className="absolute top-4 right-4 opacity-5"><ListChecks size={60} /></div>
                        <p className="text-2xl font-serif italic leading-relaxed text-[#5c4a33]">"{selectedQuest.description}"</p>
                     </div>
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="flex items-center gap-4 p-6 bg-white border-4 border-[#e6d5bc] rounded-[2rem] shadow-lg">
                         <Coins className="text-amber-500" size={32} fill="currentColor" />
                         <div>
