@@ -9,8 +9,7 @@ import { supabase } from '@/lib/supabase';
 
 import dynamic from 'next/dynamic';
 
-const Canvas = dynamic(() => import('@react-three/fiber').then((mod) => mod.Canvas), { ssr: false });
-const MagicPet3D = dynamic(() => import('./MagicPet3D').then((mod) => mod.MagicPet3D), { 
+const ArchiScene = dynamic(() => import('./ArchiScene'), { 
   ssr: false,
   loading: () => <div className="w-full h-full flex items-center justify-center text-[#5c4a33] opacity-20"><Dog size={80} /></div>
 });
@@ -431,13 +430,10 @@ export const PetHub = () => {
                   )}
                 </AnimatePresence>
 
-                <div className="relative w-full aspect-square max-w-[200px] md:max-w-[300px] pointer-events-none">
-                  <Canvas camera={{ position: [0, 0, 3] }}>
-                    <ambientLight intensity={0.5} />
-                    <pointLight position={[10, 10, 10]} />
-                    <MagicPet3D color={currentPet.hexColor} mood={avgMood} />
-                  </Canvas>
-                  
+                <div className="relative w-full aspect-square md:aspect-auto md:flex-1 bg-[#f5e6d3]/30 rounded-[3rem] overflow-hidden border-4 border-[#e6d5bc]/50 shadow-inner group">
+                <ArchiScene color={currentPet.hexColor} mood={avgMood} />
+                
+                {/* Floating status badges */}
                   <AnimatePresence>
                     {showHeart && (
                       <motion.div
