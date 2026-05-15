@@ -24,7 +24,9 @@ export const AuthScreen = ({ onComplete }: AuthProps) => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === '16032026') {
+    const correctPassword = selectedChar === 'grinch' ? '66658985' : '16032026';
+    
+    if (password === correctPassword) {
       if (selectedChar) onComplete(selectedChar);
     } else {
       setError(true);
