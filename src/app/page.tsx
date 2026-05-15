@@ -9,9 +9,9 @@ import { Sparkles, MessageCircle, Heart, Cookie, Timer, RefreshCw, BrainCircuit,
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/lib/utils";
-import { supabase } from '@/lib/supabase';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useData } from "@/components/DataProvider";
 
 const FORTUNES = [
   "Сегодня тот самый день, чтобы сказать 'да' самой безумной идее, которая придет вам в голову 🌪️",
@@ -74,20 +74,14 @@ const BOTTLE_MESSAGES = [
 
 export default function Home() {
   const router = useRouter();
+  const { currentUser, dailyFact, dailyCookie } = useData();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
 
   const [fortune, setFortune] = useState<string | null>(null);
   const [isBreaking, setIsBreaking] = useState(false);
   const [nextCookieTime, setNextCookieTime] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState("");
-  const [currentFactIndex, setCurrentFactIndex] = useState(0);
-
-  // Facts Limit State
-  const [factsViewedCount, setFactsViewedCount] = useState(0);
-  const [nextFactResetTime, setNextFactResetTime] = useState<number | null>(null);
-  const [factTimeLeft, setFactTimeLeft] = useState("");
 
   const [bottleMessage, setBottleMessage] = useState<string | null>(null);
   const [isBottleOpen, setIsBottleOpen] = useState(false);
@@ -98,80 +92,15 @@ export default function Home() {
     const auth = localStorage.getItem('lumina_auth');
     if (auth && !window.location.search.includes('reset')) {
       setIsAuthenticated(true);
-      setCurrentUser(auth);
     }
     
-    fetchGlobalStates();
-  }, []);
+    // Set daily content from context
+    setFortune(dailyCookie);
+  }, [dailyCookie]);
 
-  const fetchGlobalStates = async () => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Fetch all global states at once
-    const { data, error } = await supabase
-      .from('global_state')
-      .select('*')
-      .in('key', ['fortune_state', 'facts_state', 'bottle_state']);
-
-    if (data) {
-      const stateMap = Object.fromEntries(data.map(item => [item.key, item.value]));
-      const now = new Date().getTime();
-
-      // Fortune
-      if (stateMap.fortune_state) {
-        const { fortune, nextTime } = stateMap.fortune_state;
-        if (now < nextTime) {
-          setFortune(fortune);
-          setNextCookieTime(nextTime);
-        }
-      }
-
-      // Facts
-      if (stateMap.facts_state) {
-        const { count, resetTime, currentIndex } = stateMap.facts_state;
-        if (now < resetTime) {
-          setFactsViewedCount(count);
-          setNextFactResetTime(resetTime);
-        }
-        setCurrentFactIndex(currentIndex);
-      } else {
-        const initialIndex = Math.floor(Math.random() * INTERESTING_FACTS.length);
-        setCurrentFactIndex(initialIndex);
-      }
-
-      // Bottle
-      if (stateMap.bottle_state) {
-        const { message, day, readDay } = stateMap.bottle_state;
-        if (day === today) {
-          setBottleMessage(message);
-          setHasUnreadBottle(readDay !== today);
-        } else {
-          generateNewBottle();
-        }
-      } else {
-        generateNewBottle();
-      }
-    } else {
-      // Initial defaults
-      setCurrentFactIndex(Math.floor(Math.random() * INTERESTING_FACTS.length));
-      generateNewBottle();
-    }
-  };
-
-  const generateNewBottle = async () => {
-    const today = new Date().toISOString().split('T')[0];
-    const randomMsg = BOTTLE_MESSAGES[Math.floor(Math.random() * BOTTLE_MESSAGES.length)];
-    setBottleMessage(randomMsg);
-    setHasUnreadBottle(true);
-    
-    await supabase.from('global_state').upsert({
-      key: 'bottle_state',
-      value: { message: randomMsg, day: today, readDay: '' }
-    });
-  };
 
   useEffect(() => {
-    if (!nextCookieTime && !nextFactResetTime) return;
+    if (!nextCookieTime) return;
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
@@ -189,23 +118,10 @@ export default function Home() {
           setTimeLeft(`${h}ч ${m}м ${s}с`);
         }
       }
-
-      // Fact timer
-      if (nextFactResetTime) {
-        const distance = nextFactResetTime - now;
-        if (distance < 0) {
-          setFactsViewedCount(0);
-          setNextFactResetTime(null);
-        } else {
-          const m = Math.floor(distance / (1000 * 60));
-          const s = Math.floor((distance % (1000 * 60)) / 1000);
-          setFactTimeLeft(`${m}м ${s}с`);
-        }
-      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [nextCookieTime, nextFactResetTime]);
+  }, [nextCookieTime]);
 
   const breakCookie = async () => {
     setIsBreaking(true);
@@ -481,35 +397,11 @@ export default function Home() {
                     <Sparkle size={12} className="text-amber-500" />
                     Интересный факт
                   </h3>
-                  <AnimatePresence mode="wait">
-                    <motion.p 
-                      key={currentFactIndex}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="text-xl md:text-2xl font-serif italic text-[#5c4a33] leading-relaxed max-w-2xl font-bold"
-                    >
-                      "{INTERESTING_FACTS[currentFactIndex]}"
-                    </motion.p>
-                  </AnimatePresence>
+                  <p className="text-xl md:text-2xl font-serif italic text-[#5c4a33] leading-relaxed max-w-2xl font-bold">
+                    "{dailyFact || "Морские выдры держатся за лапки во сне, чтобы их не унесло течением... 🦦"}"
+                  </p>
                 </div>
               </div>
-
-              <button 
-                onClick={nextFact}
-                disabled={factsViewedCount >= 2}
-                className="shrink-0 z-10 px-8 py-5 rounded-2xl bg-[#5c4a33] text-[#fdfaf3] font-black hover:bg-[#4a3b29] transition-all flex flex-col items-center gap-1 group/btn disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed shadow-xl active:scale-95"
-              >
-                <div className="flex items-center gap-3">
-                  <RefreshCw size={20} className={cn("transition-transform duration-700", factsViewedCount < 2 && "group-hover/btn:rotate-180")} />
-                  <span className="text-sm uppercase tracking-widest">Еще факт</span>
-                </div>
-                {factsViewedCount >= 2 ? (
-                  <span className="text-[9px] font-black uppercase tracking-tighter opacity-60">через {factTimeLeft}</span>
-                ) : (
-                  <span className="text-[9px] font-black uppercase tracking-tighter opacity-60">Осталось: {2 - factsViewedCount}</span>
-                )}
-              </button>
               
               {/* Texture Overlay */}
               <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />

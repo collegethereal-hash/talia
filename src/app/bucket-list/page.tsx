@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';
+import { useData } from '@/components/DataProvider';
 
 const CATEGORY_COLORS = [
   { bg: 'bg-[#ff7e7e]', text: 'text-white', border: 'border-[#ff7e7e]', name: 'Красный' },
@@ -54,8 +55,7 @@ const INITIAL_REWARDS: Reward[] = [
 ];
 
 export default function BucketListPage() {
-  const [currentUser, setCurrentUser] = useState<'Grinch' | 'Cindy' | null>(null);
-  const [quests, setQuests] = useState<Quest[]>(INITIAL_QUESTS);
+  const { currentUser, quests, setQuests, refreshQuests, profiles } = useData();
   const [rewards, setRewards] = useState<Reward[]>(INITIAL_REWARDS);
   const [selectedQuest, setSelectedQuest] = useState<Quest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -64,54 +64,16 @@ export default function BucketListPage() {
   const [purchasedReward, setPurchasedReward] = useState<Reward | null>(null);
 
   useEffect(() => {
-    const auth = localStorage.getItem('lumina_auth');
-    if (auth) {
-      setCurrentUser(auth === 'grinch' ? 'Grinch' : 'Cindy');
-    }
-    fetchQuests();
     fetchRewards();
-  }, []);
+  }, [currentUser, profiles]);
 
-  const fetchQuests = async () => {
-    const { data, error } = await supabase
-      .from('bucket_list')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching quests:', error);
-    } else if (data) {
-      setQuests(data.map((q: any) => ({
-        id: q.id,
-        title: q.title,
-        description: q.description || '',
-        completed: q.is_completed,
-        completedByGrinch: q.completed_by_grinch || false,
-        completedByCindy: q.completed_by_cindy || false,
-        points: q.points,
-        category: q.category,
-        categoryColor: q.category_color || CATEGORY_COLORS[0],
-        proposedBy: q.proposed_by,
-        approvedByPartner: q.approved_by_partner,
-        deleteRequestedBy: q.delete_requested_by,
-        location: q.location
-      })));
-    }
-  };
-
-  const fetchRewards = async () => {
+  const fetchRewards = () => {
     if (!currentUser) return;
-    
-    // Fetch individual rewards from the user's profile
     const profileId = currentUser === 'Grinch' ? 'me' : 'polina';
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('unlocked_rewards')
-      .eq('id', profileId)
-      .single();
+    const profile = profiles[profileId];
 
-    if (data && data.unlocked_rewards) {
-      const unlockedIds = data.unlocked_rewards as string[];
+    if (profile && profile.unlocked_rewards) {
+      const unlockedIds = profile.unlocked_rewards as string[];
       setRewards(prev => prev.map(r => ({ ...r, unlocked: unlockedIds.includes(r.id) })));
     }
   };
@@ -142,7 +104,7 @@ export default function BucketListPage() {
 
     if (error) {
       console.error('Error updating quest:', error);
-      fetchQuests();
+      refreshQuests();
     }
   };
 
@@ -156,7 +118,7 @@ export default function BucketListPage() {
     if (error) {
       console.error('Error approving quest:', error);
     } else {
-      fetchQuests();
+    refreshQuests();
     }
   };
 
@@ -170,7 +132,7 @@ export default function BucketListPage() {
     if (error) {
       console.error('Error rejecting quest:', error);
     } else {
-      fetchQuests();
+    refreshQuests();
     }
   };
 
@@ -233,7 +195,7 @@ export default function BucketListPage() {
       }
     }
 
-    fetchQuests();
+    refreshQuests();
     setIsModalOpen(false);
   };
 
@@ -261,7 +223,7 @@ export default function BucketListPage() {
       if (error) console.error('Error deleting quest:', error);
     }
     
-    fetchQuests();
+    refreshQuests();
     setIsModalOpen(false);
   };
 
@@ -321,20 +283,11 @@ export default function BucketListPage() {
     <div className="max-w-6xl mx-auto px-4 pt-12 pb-32 space-y-12 relative">
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] z-0" />
 
-      <header className="text-center space-y-6 relative z-10">
+      <header className="text-center space-y-4 relative z-10">
         <h1 className="text-5xl md:text-7xl font-serif font-bold text-[#5c4a33] tracking-tight">Наши Квесты</h1>
-        
-        <div className="flex flex-wrap justify-center gap-6">
-          <div className="bg-white px-8 py-4 rounded-[2rem] border-4 border-[#e6d5bc] shadow-xl flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 shadow-inner">
-              <Star size={24} fill="currentColor" />
-            </div>
-            <div className="text-left">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#8b7355]">Общий Уровень</p>
-              <p className="text-2xl font-serif font-bold text-[#5c4a33]">{level}</p>
-            </div>
-          </div>
-        </div>
+        <p className="text-lg md:text-xl text-[#8b7355] font-serif italic max-w-2xl mx-auto leading-relaxed">
+          "Каждое приключение начинается с желания, а каждое выполненное обещание — с маленького шага навстречу друг другу"
+        </p>
       </header>
 
       {/* Pending Approvals Section */}

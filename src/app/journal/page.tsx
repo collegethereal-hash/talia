@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useData } from '@/components/DataProvider';
 
 interface Comment {
   id: number;
@@ -30,35 +31,10 @@ interface Note {
 const INITIAL_NOTES: Note[] = [];
 
 function JournalContent() {
-  const [currentUser, setCurrentUser] = useState<'Grinch' | 'Cindy' | null>(null);
-  const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
-  const [activeTab, setActiveTab] = useState<'all' | 'me' | 'partner'>('all');
+  const { currentUser, notes, setNotes, refreshNotes } = useData();
+  const [activeTab, setActiveTab] = useState<'all' | 'Grinch' | 'Cindy'>('all');
   const [openCommentsId, setOpenCommentsId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
-
-  useEffect(() => {
-    const auth = localStorage.getItem('lumina_auth');
-    if (auth) {
-      setCurrentUser(auth === 'grinch' ? 'Grinch' : 'Cindy');
-    }
-    fetchNotes();
-  }, []);
-
-  const fetchNotes = async () => {
-    const { data, error } = await supabase
-      .from('journal_notes')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching notes:', error);
-    } else if (data) {
-      setNotes(data.map((n: any) => ({
-        ...n,
-        isLiked: n.is_liked
-      })));
-    }
-  };
   
   // New Note State
   const [newNoteTitle, setNewNoteTitle] = useState("");
@@ -246,7 +222,7 @@ function JournalContent() {
     if (error) {
       console.error('Error adding comment:', error);
       // Revert on error
-      fetchNotes();
+      refreshNotes();
     }
     setCommentText("");
   };

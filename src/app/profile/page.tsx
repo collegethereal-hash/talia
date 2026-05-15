@@ -6,6 +6,7 @@ import { User, Heart, Lock, Calendar, Smile, Edit3, Save, X, Sparkles, Gift, Inf
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';
+import { useData } from '@/components/DataProvider';
 
 interface ProfileField {
   id: string;
@@ -66,8 +67,7 @@ const EMOJI_LIST = ['🎁', '✨', '🌸', '🐱', '🐶', '🎵', '🍕', '✈�
 const INITIAL_CAPSULES: TimeCapsule[] = [];
 
 export default function ProfilePage() {
-  const [profiles, setProfiles] = useState(INITIAL_PROFILES);
-  const [capsules, setCapsules] = useState<TimeCapsule[]>(INITIAL_CAPSULES);
+  const { currentUser, profiles, capsules, setCapsules, refreshProfiles, refreshCapsules } = useData();
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   
   const [selectedCapsule, setSelectedCapsule] = useState<TimeCapsule | null>(null);
@@ -77,18 +77,8 @@ export default function ProfilePage() {
 
   const [editData, setEditData] = useState<ProfileData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentUser, setCurrentUser] = useState<'Grinch' | 'Cindy' | null>(null);
   const [hasNewWhisper, setHasNewWhisper] = useState(false);
   const [hearts, setHearts] = useState<{ id: number; x: number }[]>([]);
-
-  useEffect(() => {
-    const auth = localStorage.getItem('lumina_auth');
-    if (auth) {
-      setCurrentUser(auth === 'grinch' ? 'Grinch' : 'Cindy');
-    }
-    fetchProfiles();
-    fetchCapsules();
-  }, []);
 
   useEffect(() => {
     if (currentUser) {
@@ -110,49 +100,37 @@ export default function ProfilePage() {
     }
   };
 
-  const fetchProfiles = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*');
-    
-    if (error) {
-      console.error('Error fetching profiles:', error);
-    } else if (data && data.length > 0) {
-      const profileMap: Record<string, ProfileData> = {};
-      data.forEach((p: any) => {
-        profileMap[p.id] = {
-          id: p.id,
-          name: p.name,
-          status: p.status,
-          mood: p.mood,
-          pref: p.pref,
-          avatarColor: p.avatar_color,
-          categories: p.categories
-        };
-      });
-      setProfiles(prev => ({ ...prev, ...profileMap }));
-    }
-  };
 
-  const fetchCapsules = async () => {
-    const { data, error } = await supabase
-      .from('time_capsules')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const getPresenceStatus = (profile: any) => {
+    // Local override for current user to ensure they see themselves as online
+    const isMe = (currentUser?.toLowerCase() === 'grinch' && (profile.id === 'Grinch' || profile.id === 'me')) || 
+                 (currentUser?.toLowerCase() === 'cindy' && (profile.id === 'Cindy' || profile.id === 'polina'));
     
-    if (error) {
-      console.error('Error fetching capsules:', error);
-    } else if (data) {
-      setCapsules(data.map((c: any) => ({
-        id: c.id,
-        title: c.title,
-        description: c.description,
-        unlockDate: c.unlock_date,
-        isLocked: c.is_sealed,
-        content: c.content,
-        author: c.author
-      })));
+    if (isMe) return { text: "В сети", online: true };
+    
+    const lastActive = profile.lastActive;
+    if (!lastActive) return { text: "Давно не заглядывал(а)", online: false };
+    
+    const now = new Date();
+    const last = new Date(lastActive);
+    const diffInSeconds = Math.floor((now.getTime() - last.getTime()) / 1000);
+
+    if (diffInSeconds < 90) return { text: "В сети", online: true };
+    
+    if (diffInSeconds < 3600) {
+      const mins = Math.floor(diffInSeconds / 60);
+      return { text: `Был(а) ${mins} мин. назад`, online: false };
     }
+    
+    if (diffInSeconds < 86400) {
+      const hours = last.getHours().toString().padStart(2, '0');
+      const mins = last.getMinutes().toString().padStart(2, '0');
+      return { text: `Заходил(а) в ${hours}:${mins}`, online: false };
+    }
+
+    const day = last.getDate().toString().padStart(2, '0');
+    const month = (last.getMonth() + 1).toString().padStart(2, '0');
+    return { text: `Был(а) ${day}.${month}`, online: false };
   };
 
   const openDetails = (id: string) => {
@@ -185,10 +163,7 @@ export default function ProfilePage() {
       if (error) {
         console.error('Error saving profile:', error);
       } else {
-        setProfiles(prev => ({
-          ...prev,
-          [selectedProfileId]: editData
-        }));
+        await refreshProfiles();
         setIsEditing(false);
       }
     }
@@ -298,7 +273,7 @@ export default function ProfilePage() {
         if (error) throw error;
       }
 
-      await fetchCapsules();
+      await refreshCapsules();
       setIsCapsuleModalOpen(false);
       setIsEditingCapsule(false);
     } catch (err) {
@@ -337,6 +312,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!currentUser) return;
     
+
     const checkMail = async () => {
       const key = currentUser === 'Grinch' ? 'whisper_for_grinch' : 'whisper_for_cindy';
       const { data } = await supabase
@@ -387,7 +363,7 @@ export default function ProfilePage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {Object.values(profiles).map((profile) => (
+        {Object.values(profiles).map((profile: any) => (
           <motion.div
             key={profile.id}
             whileHover={{ y: -5 }}
@@ -397,7 +373,7 @@ export default function ProfilePage() {
             <Card className="relative overflow-hidden p-8 border-none bg-white/60 hover:bg-white transition-all duration-500 shadow-xl group">
               <div className={cn(
                 "absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-10 blur-2xl group-hover:opacity-20 transition-opacity",
-                profile.id === 'me' ? "bg-talia-lavender" : "bg-talia-peach"
+                profile.id === 'Grinch' ? "bg-talia-lavender" : "bg-talia-peach"
               )} />
               
               <div className="flex items-center gap-6">
@@ -405,14 +381,22 @@ export default function ProfilePage() {
                   "w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform group-hover:rotate-6",
                   profile.avatarColor
                 )}>
-                  <User size={32} />
+                  {profile.mood}
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <h3 className="text-2xl font-serif font-bold text-foreground/80">{profile.name}</h3>
                     <span className="text-2xl">{profile.mood}</span>
                   </div>
-                  <p className="text-sm text-foreground/40 font-medium">{profile.status}</p>
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "w-1.5 h-1.5 rounded-full",
+                      getPresenceStatus(profile).online ? "bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]" : "bg-zinc-300"
+                    )} />
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 italic">
+                      {getPresenceStatus(profile).text}
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="mt-6 pt-6 border-t border-black/5">

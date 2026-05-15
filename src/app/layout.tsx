@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   description: "A magical space for Polina and Me",
 };
 
+import { DataProvider } from "@/components/DataProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,10 +30,12 @@ export default function RootLayout({
     <html lang="ru" className={`${inter.variable} ${playfair.variable}`}>
       <body className="font-sans text-foreground">
         <AuthGuard>
-          <main className="min-h-screen pb-24">
-            {children}
-          </main>
-          <Navbar />
+          <DataProvider>
+            <main className="min-h-screen pb-24">
+              {children}
+            </main>
+            <Navbar />
+          </DataProvider>
         </AuthGuard>
       </body>
     </html>

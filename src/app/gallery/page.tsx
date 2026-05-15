@@ -6,6 +6,7 @@ import { Plus, Search, Filter, Sparkles, Heart, Calendar, Image as ImageIcon, X,
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';
+import { useData } from '@/components/DataProvider';
 
 interface Moment {
   id: string;
@@ -21,8 +22,7 @@ const INITIAL_MOMENTS: Moment[] = [];
 const INITIAL_CATEGORIES = ['Все', 'Свидания', 'Прогулки', 'Дом', 'Путешествия'];
 
 export default function GalleryPage() {
-  const [moments, setMoments] = useState<Moment[]>(INITIAL_MOMENTS);
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const { currentUser, moments, setMoments, refreshMoments, galleryCategories, setGalleryCategories } = useData();
   const [filter, setFilter] = useState('Все');
   const [search, setSearch] = useState('');
   const [randomMoment, setRandomMoment] = useState<Moment | null>(null);
@@ -42,52 +42,15 @@ export default function GalleryPage() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
-
-  useEffect(() => {
-    const auth = localStorage.getItem('lumina_auth');
-    if (auth) {
-      setCurrentUser(auth === 'grinch' ? 'Grinch' : 'Cindy');
-    }
-    fetchMoments();
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from('global_state')
-      .select('value')
-      .eq('key', 'gallery_categories')
-      .single();
-
-    if (data && data.value) {
-      setCategories(data.value as string[]);
-    }
-  };
 
   const saveCategories = async (newCats: string[]) => {
+    setGalleryCategories(newCats); // Optimistic update
     await supabase
       .from('global_state')
       .upsert({
         key: 'gallery_categories',
         value: newCats
       });
-  };
-
-  const fetchMoments = async () => {
-    const { data, error } = await supabase
-      .from('gallery_moments')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching moments:', error);
-    } else if (data) {
-      setMoments(data.map((m: any) => ({
-        ...m,
-        src: m.image_url
-      })));
-    }
   };
 
   // Body scroll lock
@@ -228,7 +191,7 @@ export default function GalleryPage() {
       if (error) throw error;
 
       setMoments([{ ...data, src: data.image_url }, ...moments]);
-      setNewMoment({ src: '', caption: '', category: categories[1] || 'Все' });
+      setNewMoment({ src: '', caption: '', category: galleryCategories[1] || 'Все' });
       setIsAddModalOpen(false);
     } catch (err: any) {
       console.error('Full Error Object:', err);
@@ -350,7 +313,7 @@ export default function GalleryPage() {
         
         <div className="flex items-center gap-3 w-full md:w-auto relative z-10">
           <div className="flex items-center gap-2 p-1 bg-[#f5e6d3] rounded-2xl overflow-x-auto no-scrollbar touch-pan-x max-w-[85vw] md:max-w-md">
-            {categories.map(cat => (
+            {galleryCategories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
@@ -551,7 +514,7 @@ export default function GalleryPage() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-[#8b7355] ml-2">Категория</label>
                   <div className="flex flex-wrap gap-2">
-                    {categories.filter(c => c !== 'Все').map(cat => (
+                    {galleryCategories.filter(c => c !== 'Все').map(cat => (
                       <button
                         key={cat}
                         onClick={() => setNewMoment({...newMoment, category: cat})}
