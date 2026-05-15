@@ -189,6 +189,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const refreshAll = useCallback(async () => {
     // Only show global loading on the very first load if we have no profile data
     if (Object.keys(profiles).length === 0) {
       setIsLoading(true);
