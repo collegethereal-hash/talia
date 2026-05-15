@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { supabase } from '@/lib/supabase';
 
 const CATEGORY_COLORS = [
   { bg: 'bg-[#ff7e7e]', text: 'text-white', border: 'border-[#ff7e7e]', name: 'Красный' },
@@ -67,33 +68,110 @@ export default function BucketListPage() {
     if (auth) {
       setCurrentUser(auth === 'grinch' ? 'Grinch' : 'Cindy');
     }
+    fetchQuests();
+    fetchRewards();
   }, []);
 
-  const toggleQuest = (id: string, e: React.MouseEvent) => {
+  const fetchQuests = async () => {
+    const { data, error } = await supabase
+      .from('bucket_list')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching quests:', error);
+    } else if (data) {
+      setQuests(data.map((q: any) => ({
+        id: q.id,
+        title: q.title,
+        description: q.description || '',
+        completed: q.is_completed,
+        completedByGrinch: q.completed_by_grinch || false,
+        completedByCindy: q.completed_by_cindy || false,
+        points: q.points,
+        category: q.category,
+        categoryColor: q.category_color || CATEGORY_COLORS[0],
+        proposedBy: q.proposed_by,
+        approvedByPartner: q.approved_by_partner,
+        deleteRequestedBy: q.delete_requested_by,
+        location: q.location
+      })));
+    }
+  };
+
+  const fetchRewards = async () => {
+    if (!currentUser) return;
+    
+    // Fetch individual rewards from the user's profile
+    const profileId = currentUser === 'Grinch' ? 'me' : 'polina';
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('unlocked_rewards')
+      .eq('id', profileId)
+      .single();
+
+    if (data && data.unlocked_rewards) {
+      const unlockedIds = data.unlocked_rewards as string[];
+      setRewards(prev => prev.map(r => ({ ...r, unlocked: unlockedIds.includes(r.id) })));
+    }
+  };
+
+  const toggleQuest = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUser) return;
 
-    setQuests(quests.map(q => {
-      if (q.id === id) {
-        const updated = { ...q };
-        if (currentUser === 'Grinch') updated.completedByGrinch = !updated.completedByGrinch;
-        if (currentUser === 'Cindy') updated.completedByCindy = !updated.completedByCindy;
-        
-        updated.completed = updated.completedByGrinch && updated.completedByCindy;
-        return updated;
-      }
-      return q;
-    }));
+    const quest = quests.find(q => q.id === id);
+    if (!quest) return;
+
+    const updated = { ...quest };
+    if (currentUser === 'Grinch') updated.completedByGrinch = !updated.completedByGrinch;
+    if (currentUser === 'Cindy') updated.completedByCindy = !updated.completedByCindy;
+    updated.completed = updated.completedByGrinch && updated.completedByCindy;
+
+    // Optimistic update
+    setQuests(quests.map(q => q.id === id ? updated : q));
+
+    const { error } = await supabase
+      .from('bucket_list')
+      .update({
+        completed_by_grinch: updated.completedByGrinch,
+        completed_by_cindy: updated.completedByCindy,
+        is_completed: updated.completed
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating quest:', error);
+      fetchQuests();
+    }
   };
 
-  const approveQuest = (id: string, e?: React.MouseEvent) => {
+  const approveQuest = async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setQuests(quests.map(q => q.id === id ? { ...q, approvedByPartner: true } : q));
+    const { error } = await supabase
+      .from('bucket_list')
+      .update({ approved_by_partner: true })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error approving quest:', error);
+    } else {
+      fetchQuests();
+    }
   };
 
-  const rejectQuest = (id: string, e?: React.MouseEvent) => {
+  const rejectQuest = async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setQuests(quests.filter(q => q.id !== id));
+    const { error } = await supabase
+      .from('bucket_list')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error rejecting quest:', error);
+    } else {
+      fetchQuests();
+    }
   };
 
   const openQuest = (quest: Quest) => {
@@ -122,55 +200,112 @@ export default function BucketListPage() {
     setIsModalOpen(true);
   };
 
-  const saveQuest = () => {
+  const saveQuest = async () => {
     if (!currentUser) return;
+
+    const questData = {
+      title: editData.title || 'Новый квест',
+      description: editData.description || '',
+      points: editData.points || 500,
+      category: editData.category || 'Общее',
+      category_color: editData.categoryColor || CATEGORY_COLORS[0],
+      proposed_by: currentUser,
+      approved_by_partner: selectedQuest ? selectedQuest.approvedByPartner : false,
+      date: new Date().toISOString().split('T')[0]
+    };
 
     if (selectedQuest) {
-      setQuests(quests.map(q => q.id === selectedQuest.id ? { ...q, ...editData } as Quest : q));
+      const { error } = await supabase
+        .from('bucket_list')
+        .update(questData)
+        .eq('id', selectedQuest.id);
+      
+      if (error) console.error('Error updating quest:', error);
     } else {
-      const newQuest: Quest = {
-        id: Date.now().toString(),
-        title: editData.title || 'Новый квест',
-        description: editData.description || '',
-        points: editData.points || 500,
-        category: editData.category || 'Общее',
-        categoryColor: editData.categoryColor || CATEGORY_COLORS[Math.floor(Math.random() * CATEGORY_COLORS.length)],
-        completed: false,
-        completedByGrinch: false,
-        completedByCindy: false,
-        proposedBy: currentUser,
-        approvedByPartner: false, // Needs partner's approval
-        ...editData
-      };
-      setQuests([...quests, newQuest]);
+      const { error } = await supabase
+        .from('bucket_list')
+        .insert([questData]);
+      
+      if (error) {
+        console.error('Full Create Error:', error);
+        console.error('Error detail:', error.message);
+        alert(`Ошибка при создании квеста: ${error.message} (${error.details || 'нет деталей'})`);
+      }
     }
+
+    fetchQuests();
     setIsModalOpen(false);
   };
 
-  const deleteQuest = (id: string) => {
+  const deleteQuest = async (id: string) => {
     if (!currentUser) return;
     
-    setQuests(quests.map(q => {
-      if (q.id === id) {
-        if (!q.deleteRequestedBy) {
-          // First request
-          return { ...q, deleteRequestedBy: currentUser };
-        } else if (q.deleteRequestedBy !== currentUser) {
-          // Second request - actual delete (handled by filter in next step if needed, but here we can just mark it)
-          return null; 
-        }
-      }
-      return q;
-    }).filter(Boolean) as Quest[]);
+    const quest = quests.find(q => q.id === id);
+    if (!quest) return;
+
+    if (!quest.deleteRequestedBy) {
+      // First request
+      const { error } = await supabase
+        .from('bucket_list')
+        .update({ delete_requested_by: currentUser })
+        .eq('id', id);
+      
+      if (error) console.error('Error requesting delete:', error);
+    } else if (quest.deleteRequestedBy !== currentUser) {
+      // Second request - actual delete
+      const { error } = await supabase
+        .from('bucket_list')
+        .delete()
+        .eq('id', id);
+      
+      if (error) console.error('Error deleting quest:', error);
+    }
     
+    fetchQuests();
     setIsModalOpen(false);
   };
 
-  const unlockReward = (reward: Reward) => {
-    if (currentXP >= reward.cost && !reward.unlocked) {
-      setRewards(rewards.map(r => r.id === reward.id ? { ...r, unlocked: true } : r));
-      setPurchasedReward(reward);
-      setTimeout(() => setPurchasedReward(null), 3000);
+  const unlockReward = async (reward: Reward) => {
+    if (!currentUser) return;
+
+    // 1. Double check current balance from DB (Anti-Cheat)
+    const { data: latestQuests } = await supabase.from('bucket_list').select('points, is_completed');
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('unlocked_rewards')
+      .eq('id', currentUser === 'Grinch' ? 'me' : 'polina')
+      .single();
+
+    if (latestQuests && profile) {
+      const totalPoints = latestQuests.filter((q: any) => q.is_completed).reduce((acc: number, q: any) => acc + q.points, 0);
+      const unlockedIds = (profile.unlocked_rewards as string[]) || [];
+      const spentPoints = rewards
+        .filter(r => unlockedIds.includes(r.id))
+        .reduce((acc, r) => acc + r.cost, 0);
+      
+      const realXP = totalPoints - spentPoints;
+
+      if (realXP >= reward.cost && !unlockedIds.includes(reward.id)) {
+        const newUnlockedIds = [...unlockedIds, reward.id];
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({ unlocked_rewards: newUnlockedIds })
+          .eq('id', currentUser === 'Grinch' ? 'me' : 'polina');
+
+        if (error) {
+          console.error('Error unlocking reward:', error);
+          alert('Ошибка при покупке. Попробуйте еще раз.');
+        } else {
+          setRewards(prev => prev.map(r => r.id === reward.id ? { ...r, unlocked: true } : r));
+          setPurchasedReward(reward);
+          setTimeout(() => setPurchasedReward(null), 3000);
+        }
+      } else {
+        alert('Недостаточно эликсира! Возможно, баланс изменился. Обновите страницу.');
+        fetchQuests();
+        fetchRewards();
+      }
     }
   };
 

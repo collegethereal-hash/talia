@@ -5,8 +5,10 @@ import { PolaroidCard } from "@/components/PolaroidCard";
 import { Plus, Search, Filter, Sparkles, Heart, Calendar, Image as ImageIcon, X, Camera, Tag, Link as LinkIcon, Upload, Trash2, Settings2, Download, Maximize2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { supabase } from '@/lib/supabase';
 
 interface Moment {
+  id: string;
   src: string;
   caption: string;
   date: string;
@@ -39,6 +41,54 @@ export default function GalleryPage() {
   const [isManagingCategories, setIsManagingCategories] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    const auth = localStorage.getItem('lumina_auth');
+    if (auth) {
+      setCurrentUser(auth === 'grinch' ? 'Grinch' : 'Cindy');
+    }
+    fetchMoments();
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from('global_state')
+      .select('value')
+      .eq('key', 'gallery_categories')
+      .single();
+
+    if (data && data.value) {
+      setCategories(data.value as string[]);
+    }
+  };
+
+  const saveCategories = async (newCats: string[]) => {
+    await supabase
+      .from('global_state')
+      .upsert({
+        key: 'gallery_categories',
+        value: newCats
+      });
+  };
+
+  const fetchMoments = async () => {
+    const { data, error } = await supabase
+      .from('gallery_moments')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching moments:', error);
+    } else if (data) {
+      setMoments(data.map((m: any) => ({
+        ...m,
+        src: m.image_url
+      })));
+    }
+  };
 
   // Body scroll lock
   useEffect(() => {
@@ -56,9 +106,59 @@ export default function GalleryPage() {
     (m.caption.toLowerCase().includes(search.toLowerCase()))
   );
 
+  const getNewThisWeekCount = () => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return moments.filter(m => new Date(m.date) >= sevenDaysAgo).length;
+  };
+
   const showRandomMemory = () => {
     const random = moments[Math.floor(Math.random() * moments.length)];
     setRandomMoment(random);
+  };
+
+  const compressImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Max dimensions
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Convert to Blob (JPEG 0.7 quality)
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('Canvas to Blob failed'));
+          }, 'image/jpeg', 0.7);
+        };
+      };
+      reader.onerror = (error) => reject(error);
+    });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,37 +172,116 @@ export default function GalleryPage() {
     }
   };
 
-  const addMoment = () => {
+  const addMoment = async () => {
     if (!newMoment.src || !newMoment.caption) return;
+    setIsUploading(true);
     
-    const moment: Moment = {
-      ...newMoment,
-      date: new Date().toISOString().split('T')[0],
-      rotate: Math.floor(Math.random() * 10) - 5
-    };
-    
-    setMoments([moment, ...moments]);
-    setNewMoment({ src: '', caption: '', category: categories[1] || 'Все' });
-    setIsAddModalOpen(false);
+    try {
+      let finalImageUrl = newMoment.src;
+
+      // If it's a base64 from file upload, we should compress and upload it to Supabase Storage
+      if (newMoment.src.startsWith('data:')) {
+        // Convert base64 to File object first
+        const originalBlob = await fetch(newMoment.src).then(res => res.blob());
+        const originalFile = new File([originalBlob], "upload.jpg", { type: "image/jpeg" });
+        
+        // Compress the image!
+        const compressedBlob = await compressImage(originalFile);
+        
+        const fileName = `${Math.random()}.jpeg`;
+        const filePath = `moments/${fileName}`;
+
+        const { error: uploadError, data } = await supabase.storage
+          .from('gallery')
+          .upload(filePath, compressedBlob, {
+            contentType: 'image/jpeg',
+            upsert: true
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('gallery')
+          .getPublicUrl(filePath);
+        
+        finalImageUrl = publicUrl;
+      }
+
+      const moment = {
+        title: newMoment.caption.slice(0, 50),
+        image_url: finalImageUrl,
+        caption: newMoment.caption,
+        category: newMoment.category,
+        date: new Date().toISOString().split('T')[0],
+        rotate: Math.floor(Math.random() * 10) - 5,
+        author: currentUser
+      };
+      
+      const { data, error } = await supabase
+        .from('gallery_moments')
+        .insert([moment])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setMoments([{ ...data, src: data.image_url }, ...moments]);
+      setNewMoment({ src: '', caption: '', category: categories[1] || 'Все' });
+      setIsAddModalOpen(false);
+    } catch (err: any) {
+      console.error('Full Error Object:', err);
+      const errorMessage = err.message || JSON.stringify(err);
+      console.error('Error detail:', errorMessage);
+      alert(`Ошибка при загрузке фото: ${errorMessage}. Проверьте права доступа (INSERT) для бакета "gallery" в Storage Policies.`);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const addCategory = () => {
+  const addCategory = async () => {
     if (!newCategoryName.trim() || categories.includes(newCategoryName.trim())) return;
-    setCategories([...categories, newCategoryName.trim()]);
+    const updated = [...categories, newCategoryName.trim()];
+    setCategories(updated);
+    await saveCategories(updated);
     setNewCategoryName('');
   };
 
-  const deleteCategory = (catToDelete: string) => {
+  const deleteCategory = async (catToDelete: string) => {
     if (catToDelete === 'Все') return;
-    setCategories(categories.filter(c => c !== catToDelete));
+    const updated = categories.filter(c => c !== catToDelete);
+    setCategories(updated);
+    await saveCategories(updated);
     if (filter === catToDelete) setFilter('Все');
     setCategoryToDelete(null);
   };
 
-  const confirmDeletePhoto = (moment: Moment) => {
-    setMoments(moments.filter(m => m.src !== moment.src));
-    setPhotoToDelete(null);
-    if (selectedPhoto?.src === moment.src) setSelectedPhoto(null);
+  const confirmDeletePhoto = async (moment: Moment) => {
+    try {
+      // 1. Delete from Database
+      const { error: dbError } = await supabase
+        .from('gallery_moments')
+        .delete()
+        .eq('id', moment.id);
+
+      if (dbError) throw dbError;
+
+      // 2. Delete from Storage if it's a Supabase URL
+      if (moment.src.includes('.supabase.co/storage/v1/object/public/gallery/')) {
+        const filePath = moment.src.split('/gallery/')[1];
+        await supabase.storage
+          .from('gallery')
+          .remove([filePath]);
+      }
+
+      setMoments(moments.filter(m => m.id !== moment.id));
+      setPhotoToDelete(null);
+      if (selectedPhoto?.id === moment.id) setSelectedPhoto(null);
+    } catch (err) {
+      console.error('Error deleting photo:', err);
+      alert('Ошибка при удалении фотографии.');
+    }
   };
 
   const downloadPhoto = (src: string, filename: string) => {
@@ -142,7 +321,7 @@ export default function GalleryPage() {
             <div className="h-10 w-px bg-[#e6d5bc]" />
             <div className="text-right">
               <p className="text-[10px] font-black uppercase text-[#8b7355]">Новых за неделю</p>
-              <p className="text-xl font-bold text-[#5c4a33]">+3</p>
+              <p className="text-xl font-bold text-[#5c4a33]">+{getNewThisWeekCount()}</p>
             </div>
           </div>
           <div className="flex gap-4">
@@ -170,7 +349,7 @@ export default function GalleryPage() {
         <div className="absolute inset-0 pointer-events-none opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
         
         <div className="flex items-center gap-3 w-full md:w-auto relative z-10">
-          <div className="flex gap-2 p-1 bg-[#f5e6d3] rounded-2xl overflow-x-auto no-scrollbar touch-pan-x">
+          <div className="flex items-center gap-2 p-1 bg-[#f5e6d3] rounded-2xl overflow-x-auto no-scrollbar touch-pan-x max-w-[85vw] md:max-w-md">
             {categories.map(cat => (
               <button
                 key={cat}
@@ -544,7 +723,7 @@ export default function GalleryPage() {
             >
               <div className="flex justify-between items-center">
                 <h3 className="text-2xl font-serif font-bold text-foreground/80 flex items-center gap-3">
-                  <Tag className="text-lumina-lavender" />
+                  <Tag className="text-talia-lavender" />
                   Категории
                 </h3>
                 <button 
@@ -562,13 +741,13 @@ export default function GalleryPage() {
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                     placeholder="Новая категория..."
-                    className="flex-1 bg-zinc-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-lumina-lavender/20 transition-all text-sm font-medium"
+                    className="flex-1 bg-zinc-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-talia-lavender/20 transition-all text-sm font-medium"
                     onKeyDown={(e) => e.key === 'Enter' && addCategory()}
                   />
                   <button 
                     onClick={addCategory}
                     disabled={!newCategoryName.trim()}
-                    className="p-4 rounded-2xl bg-lumina-lavender text-white shadow-lg shadow-lumina-lavender/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                    className="p-4 rounded-2xl bg-talia-lavender text-white shadow-lg shadow-talia-lavender/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                   >
                     <Plus size={20} />
                   </button>

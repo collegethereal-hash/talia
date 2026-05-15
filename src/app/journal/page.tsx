@@ -6,6 +6,7 @@ import { BookOpen, PenTool, Calendar, Heart, MessageCircle, Send, User, Mail, Er
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 interface Comment {
   id: number;
@@ -15,7 +16,7 @@ interface Comment {
 }
 
 interface Note {
-  id: number;
+  id: string; // Changed to string for UUID support
   title: string;
   content: string;
   date: string;
@@ -32,7 +33,7 @@ function JournalContent() {
   const [currentUser, setCurrentUser] = useState<'Grinch' | 'Cindy' | null>(null);
   const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
   const [activeTab, setActiveTab] = useState<'all' | 'me' | 'partner'>('all');
-  const [openCommentsId, setOpenCommentsId] = useState<number | null>(null);
+  const [openCommentsId, setOpenCommentsId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
 
   useEffect(() => {
@@ -40,7 +41,24 @@ function JournalContent() {
     if (auth) {
       setCurrentUser(auth === 'grinch' ? 'Grinch' : 'Cindy');
     }
+    fetchNotes();
   }, []);
+
+  const fetchNotes = async () => {
+    const { data, error } = await supabase
+      .from('journal_notes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching notes:', error);
+    } else if (data) {
+      setNotes(data.map((n: any) => ({
+        ...n,
+        isLiked: n.is_liked
+      })));
+    }
+  };
   
   // New Note State
   const [newNoteTitle, setNewNoteTitle] = useState("");
@@ -48,7 +66,7 @@ function JournalContent() {
   const [selectedMood, setSelectedMood] = useState("🌿");
   
   // Edit State
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editMood, setEditMood] = useState("");
@@ -57,23 +75,53 @@ function JournalContent() {
   
   // Scratch-off state
   const [whisperText, setWhisperText] = useState("");
+  const [receivedWhisper, setReceivedWhisper] = useState("");
+  const [isWhisperPreview, setIsWhisperPreview] = useState(false);
   const [isWhisperModalOpen, setIsWhisperModalOpen] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Body scroll lock
+  useEffect(() => {
+    if (isWhisperModalOpen) {
+      document.body.classList.add('lock-scroll');
+    } else {
+      document.body.classList.remove('lock-scroll');
+    }
+    return () => document.body.classList.remove('lock-scroll');
+  }, [isWhisperModalOpen]);
   const whisperSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const openWhisper = searchParams.get('openWhisper');
-    if (openWhisper === 'true') {
-      const savedWhisper = localStorage.getItem('lastWhisper');
-      if (savedWhisper) {
-        setWhisperText(savedWhisper);
-      } else {
-        setWhisperText("Тут будет текст последнего письма... Напиши его в 'Отправить конверт'!");
-      }
-      setIsWhisperModalOpen(true);
+    if (openWhisper === 'true' && currentUser) {
+      setIsWhisperPreview(false);
+      fetchIncomingWhisper();
     }
-  }, [searchParams]);
+  }, [searchParams, currentUser]);
+
+  const fetchIncomingWhisper = async () => {
+    if (!currentUser) return;
+    const key = currentUser === 'Grinch' ? 'whisper_for_grinch' : 'whisper_for_cindy';
+    console.log('DEBUG Whisper: Fetching for', currentUser, 'using key', key);
+    
+    const { data, error } = await supabase
+      .from('global_state')
+      .select('value')
+      .eq('key', key)
+      .single();
+
+    if (error) {
+      console.log('DEBUG Whisper: Fetch error or empty', error);
+      setReceivedWhisper("В почтовом ящике пока пусто... Ждем письма от любимого человека! ✨");
+    } else if (data && data.value) {
+      console.log('DEBUG Whisper: Received data', data.value);
+      // Handle both old string format and new object format
+      const content = typeof data.value === 'object' ? (data.value as any).text : data.value;
+      setReceivedWhisper(content || "Письмо пустое... Странно! 🌀");
+    }
+    setIsWhisperModalOpen(true);
+  };
 
   useEffect(() => {
     if (isWhisperModalOpen && canvasRef.current) {
@@ -121,78 +169,136 @@ function JournalContent() {
     ctx.fill();
   };
 
-  const sendWhisper = () => {
-    if (!whisperText.trim()) return;
-    localStorage.setItem('lastWhisper', whisperText);
-    setIsSent(true);
-    setTimeout(() => {
-      setIsSent(false);
-      setWhisperText("");
-    }, 3000);
+  const sendWhisper = async () => {
+    if (!whisperText.trim() || !currentUser) return;
+    
+    // Target is the partner
+    const targetKey = currentUser === 'Grinch' ? 'whisper_for_cindy' : 'whisper_for_grinch';
+    console.log('DEBUG Whisper: Sending from', currentUser, 'to', targetKey);
+    
+    const { error } = await supabase
+      .from('global_state')
+      .upsert({
+        key: targetKey,
+        value: { text: whisperText } // Wrap in object for better JSONB handling
+      });
+
+    if (error) {
+      console.error('DEBUG Whisper: Send error', error);
+      alert('Ошибка при отправке письма: ' + error.message);
+    } else {
+      console.log('DEBUG Whisper: Send SUCCESS');
+      setIsSent(true);
+      setTimeout(() => {
+        setIsSent(false);
+        setWhisperText("");
+      }, 3000);
+    }
   };
 
-  const toggleLike = (id: number) => {
-    setNotes(notes.map(n => {
-      if (n.id === id) {
-        return {
-          ...n,
-          likes: n.isLiked ? n.likes - 1 : n.likes + 1,
-          isLiked: !n.isLiked
-        };
-      }
-      return n;
-    }));
+  const toggleLike = async (id: string) => {
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+
+    const newIsLiked = !note.isLiked;
+    const newLikes = newIsLiked ? note.likes + 1 : note.likes - 1;
+
+    // Optimistic update
+    setNotes(notes.map(n => n.id === id ? { ...n, isLiked: newIsLiked, likes: newLikes } : n));
+
+    const { error } = await supabase
+      .from('journal_notes')
+      .update({ is_liked: newIsLiked, likes: newLikes })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error toggling like:', error);
+      // Revert on error
+      fetchNotes();
+    }
   };
 
-  const addComment = (noteId: number) => {
+  const addComment = async (noteId: string) => {
     if (!commentText.trim() || !currentUser) return;
     
-    setNotes(notes.map(n => {
-      if (n.id === noteId) {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-        const newComment: Comment = {
-          id: Date.now(),
-          author: currentUser,
-          text: commentText,
-          date: `${timeStr}`
-        };
-        return {
-          ...n,
-          comments: [...n.comments, newComment]
-        };
-      }
-      return n;
-    }));
+    const note = notes.find(n => n.id === noteId);
+    if (!note) return;
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    const newComment: Comment = {
+      id: Date.now(),
+      author: currentUser,
+      text: commentText,
+      date: `${timeStr}`
+    };
+
+    const newComments = [...note.comments, newComment];
+
+    // Optimistic update
+    setNotes(notes.map(n => n.id === noteId ? { ...n, comments: newComments } : n));
+
+    const { error } = await supabase
+      .from('journal_notes')
+      .update({ comments: newComments })
+      .eq('id', noteId);
+
+    if (error) {
+      console.error('Error adding comment:', error);
+      // Revert on error
+      fetchNotes();
+    }
     setCommentText("");
   };
 
-  const addNote = () => {
+  const addNote = async () => {
     if (!newNoteTitle.trim() || !newNoteContent.trim() || !currentUser) return;
     
     const now = new Date();
     const dateStr = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
     
-    const newNote: Note = {
-      id: Date.now(),
+    const newNote = {
       title: newNoteTitle,
       content: newNoteContent,
       date: dateStr,
       author: currentUser,
       mood: selectedMood,
       likes: 0,
-      isLiked: false,
+      is_liked: false,
       comments: []
     };
     
-    setNotes([newNote, ...notes]);
-    setNewNoteTitle("");
-    setNewNoteContent("");
-    setSelectedMood(currentUser === 'Grinch' ? '🌿' : '🌸');
+    const { data, error } = await supabase
+      .from('journal_notes')
+      .insert([newNote])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding note:', error);
+    } else if (data) {
+      const mappedNote = {
+        ...data,
+        isLiked: data.is_liked
+      };
+      setNotes([mappedNote, ...notes]);
+      setNewNoteTitle("");
+      setNewNoteContent("");
+      setSelectedMood(currentUser === 'Grinch' ? '🌿' : '🌸');
+    }
   };
 
-  const deleteNote = (id: number) => {
-    setNotes(notes.filter(n => n.id !== id));
+  const deleteNote = async (id: string) => {
+    const { error } = await supabase
+      .from('journal_notes')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting note:', error);
+    } else {
+      setNotes(notes.filter(n => n.id !== id));
+    }
   };
 
   const startEditing = (note: Note) => {
@@ -209,20 +315,34 @@ function JournalContent() {
     setEditMood("");
   };
 
-  const updateNote = () => {
-    if (!editTitle.trim() || !editContent.trim()) return;
-    setNotes(notes.map(n => {
-      if (n.id === editingId) {
-        return {
-          ...n,
-          title: editTitle,
-          content: editContent,
-          mood: editMood
-        };
-      }
-      return n;
-    }));
-    cancelEditing();
+  const updateNote = async () => {
+    if (!editTitle.trim() || !editContent.trim() || !editingId) return;
+    
+    const { error } = await supabase
+      .from('journal_notes')
+      .update({
+        title: editTitle,
+        content: editContent,
+        mood: editMood
+      })
+      .eq('id', editingId);
+
+    if (error) {
+      console.error('Error updating note:', error);
+    } else {
+      setNotes(notes.map(n => {
+        if (n.id === editingId) {
+          return {
+            ...n,
+            title: editTitle,
+            content: editContent,
+            mood: editMood
+          };
+        }
+        return n;
+      }));
+      cancelEditing();
+    }
   };
 
   const scrollToWhisper = () => {
@@ -441,7 +561,10 @@ function JournalContent() {
                 
                 {whisperText.trim() && !isSent && (
                   <button 
-                    onClick={() => setIsWhisperModalOpen(true)}
+                    onClick={() => {
+                      setIsWhisperPreview(true);
+                      setIsWhisperModalOpen(true);
+                    }}
                     className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8b7355]/40 hover:text-[#5c4a33] transition-colors"
                   >
                     Посмотреть предпросмотр
@@ -483,51 +606,68 @@ function JournalContent() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg bg-[#fdfaf3] rounded-[3rem] border-4 border-[#e6d5bc] shadow-2xl overflow-hidden p-8 text-center space-y-6"
+              className="relative w-full max-w-2xl bg-[#fdfaf3] rounded-[3rem] border-4 border-[#e6d5bc] shadow-2xl overflow-hidden"
             >
-              <div className="space-y-2">
-                <h3 className="text-2xl font-serif font-bold text-[#5c4a33]">Тайное послание</h3>
-                <p className="text-xs text-[#8b7355] font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                  <Eraser size={14} />
-                  Стирай, чтобы прочитать
-                </p>
-              </div>
-
-              <div className="relative w-full rounded-[2rem] overflow-hidden bg-white border-4 border-[#e6d5bc] shadow-inner group min-h-[300px]">
-                {/* Hidden Text Container - Scrollable */}
-                <div className="absolute inset-0 overflow-y-auto custom-scrollbar p-8 flex items-center justify-center">
-                  <p className="text-xl font-serif italic text-[#5c4a33] leading-relaxed select-none text-center font-medium">
-                    {whisperText}
-                  </p>
+              <div className="p-8 md:p-10 space-y-6 max-h-[85vh] flex flex-col">
+                <div className="space-y-2 flex justify-between items-start border-b-2 border-[#e6d5bc] pb-4">
+                  <div>
+                    <h3 className="text-2xl font-serif font-bold text-[#5c4a33]">Тайное послание</h3>
+                    <p className="text-[10px] text-[#8b7355] font-black uppercase tracking-widest flex items-center gap-2">
+                      <Eraser size={14} />
+                      Стирай, чтобы прочитать
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => setIsWhisperModalOpen(false)}
+                    className="p-2 hover:bg-[#f5e6d3] rounded-full transition-all text-[#8b7355]"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
 
-                {/* Scratch Canvas - Fixed on top */}
-                <canvas
-                  ref={canvasRef}
-                  width={500}
-                  height={400}
-                  onMouseMove={handleScratch}
-                  onTouchMove={handleScratch}
-                  className="absolute inset-0 w-full h-full cursor-crosshair touch-none z-10"
-                />
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <button 
-                   onClick={() => {
-                     setIsWhisperModalOpen(false);
-                     if (searchParams.get('openWhisper') === 'true') {
-                       localStorage.removeItem('lastWhisper');
-                       setWhisperText("");
-                       window.history.replaceState({}, '', window.location.pathname);
-                     } else {
-                       setWhisperText("");
-                     }
-                   }}
-                   className="w-full py-4 rounded-2xl bg-[#f5e6d3] text-[#5c4a33] font-black uppercase tracking-widest text-[10px] hover:bg-[#e6d5bc] transition-all"
-                 >
-                   Закрыть письмо
-                 </button>
+                <div className="relative flex-1 overflow-y-auto custom-scrollbar rounded-[2rem] bg-white border-4 border-[#e6d5bc] shadow-inner min-h-[400px]">
+                  <div className="relative p-10 min-h-full">
+                    {/* The Text */}
+                    <p className="text-xl md:text-2xl font-serif italic text-[#5c4a33] leading-relaxed whitespace-pre-wrap text-left align-top font-medium pt-2">
+                      {isWhisperPreview ? whisperText : receivedWhisper}
+                    </p>
+                    
+                    {/* Scratch Canvas - Now inside the scrollable area */}
+                    <canvas
+                      ref={canvasRef}
+                      width={800}
+                      height={1200} // Increased height for longer letters
+                      className="absolute inset-0 w-full h-full cursor-crosshair z-30 touch-none"
+                      onMouseMove={handleScratch}
+                      onTouchMove={handleScratch}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                  <button 
+                    onClick={async () => {
+                      setIsWhisperModalOpen(false);
+                      if (!isWhisperPreview && currentUser) {
+                        // Delete the letter from the mailbox after reading
+                        const key = currentUser === 'Grinch' ? 'whisper_for_grinch' : 'whisper_for_cindy';
+                        await supabase
+                          .from('global_state')
+                          .delete()
+                          .eq('key', key);
+                        
+                        setReceivedWhisper("");
+                        // Clear the URL param
+                        window.history.replaceState({}, '', window.location.pathname);
+                      } else {
+                        setIsWhisperPreview(false);
+                      }
+                    }}
+                    className="w-full py-4 rounded-2xl bg-[#f5e6d3] text-[#5c4a33] font-black uppercase tracking-widest text-[10px] hover:bg-[#e6d5bc] transition-all"
+                  >
+                    Закрыть письмо
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>

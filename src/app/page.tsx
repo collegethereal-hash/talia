@@ -9,6 +9,7 @@ import { Sparkles, MessageCircle, Heart, Cookie, Timer, RefreshCw, BrainCircuit,
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/lib/utils";
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -93,66 +94,81 @@ export default function Home() {
   const [hasUnreadBottle, setHasUnreadBottle] = useState(false);
 
   useEffect(() => {
-    const savedFortune = localStorage.getItem('lastFortune');
-    const savedTime = localStorage.getItem('nextCookieTime');
-    
-    // Load facts state
-    const savedFactsCount = localStorage.getItem('factsViewedCount');
-    const savedFactResetTime = localStorage.getItem('nextFactResetTime');
-    const savedFactIndex = localStorage.getItem('currentFactIndex');
-    
-    if (savedFortune && savedTime) {
-      const now = new Date().getTime();
-      if (now < parseInt(savedTime)) {
-        setFortune(savedFortune);
-        setNextCookieTime(parseInt(savedTime));
-      }
-    }
-
-    if (savedFactsCount && savedFactResetTime) {
-      const now = new Date().getTime();
-      if (now < parseInt(savedFactResetTime)) {
-        setFactsViewedCount(parseInt(savedFactsCount));
-        setNextFactResetTime(parseInt(savedFactResetTime));
-      } else {
-        localStorage.removeItem('factsViewedCount');
-        localStorage.removeItem('nextFactResetTime');
-      }
-    }
-
-    if (savedFactIndex) {
-      setCurrentFactIndex(parseInt(savedFactIndex));
-    } else {
-      const initialIndex = Math.floor(Math.random() * INTERESTING_FACTS.length);
-      setCurrentFactIndex(initialIndex);
-      localStorage.setItem('currentFactIndex', initialIndex.toString());
-    }
-
-    // Auth check
+    // Auth check (Client-only)
     const auth = localStorage.getItem('lumina_auth');
     if (auth && !window.location.search.includes('reset')) {
       setIsAuthenticated(true);
       setCurrentUser(auth);
     }
-
-    // Load bottle message
-    const today = new Date().toISOString().split('T')[0];
-    const savedBottleDay = localStorage.getItem('bottle_day');
-    const savedBottleRead = localStorage.getItem('bottle_read_day');
     
-    if (savedBottleDay === today) {
-      const savedMsg = localStorage.getItem('bottle_message');
-      setBottleMessage(savedMsg);
-      setHasUnreadBottle(savedBottleRead !== today);
-    } else {
-      // New message for today
-      const randomMsg = BOTTLE_MESSAGES[Math.floor(Math.random() * BOTTLE_MESSAGES.length)];
-      setBottleMessage(randomMsg);
-      setHasUnreadBottle(true);
-      localStorage.setItem('bottle_day', today);
-      localStorage.setItem('bottle_message', randomMsg);
-    }
+    fetchGlobalStates();
   }, []);
+
+  const fetchGlobalStates = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Fetch all global states at once
+    const { data, error } = await supabase
+      .from('global_state')
+      .select('*')
+      .in('key', ['fortune_state', 'facts_state', 'bottle_state']);
+
+    if (data) {
+      const stateMap = Object.fromEntries(data.map(item => [item.key, item.value]));
+      const now = new Date().getTime();
+
+      // Fortune
+      if (stateMap.fortune_state) {
+        const { fortune, nextTime } = stateMap.fortune_state;
+        if (now < nextTime) {
+          setFortune(fortune);
+          setNextCookieTime(nextTime);
+        }
+      }
+
+      // Facts
+      if (stateMap.facts_state) {
+        const { count, resetTime, currentIndex } = stateMap.facts_state;
+        if (now < resetTime) {
+          setFactsViewedCount(count);
+          setNextFactResetTime(resetTime);
+        }
+        setCurrentFactIndex(currentIndex);
+      } else {
+        const initialIndex = Math.floor(Math.random() * INTERESTING_FACTS.length);
+        setCurrentFactIndex(initialIndex);
+      }
+
+      // Bottle
+      if (stateMap.bottle_state) {
+        const { message, day, readDay } = stateMap.bottle_state;
+        if (day === today) {
+          setBottleMessage(message);
+          setHasUnreadBottle(readDay !== today);
+        } else {
+          generateNewBottle();
+        }
+      } else {
+        generateNewBottle();
+      }
+    } else {
+      // Initial defaults
+      setCurrentFactIndex(Math.floor(Math.random() * INTERESTING_FACTS.length));
+      generateNewBottle();
+    }
+  };
+
+  const generateNewBottle = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const randomMsg = BOTTLE_MESSAGES[Math.floor(Math.random() * BOTTLE_MESSAGES.length)];
+    setBottleMessage(randomMsg);
+    setHasUnreadBottle(true);
+    
+    await supabase.from('global_state').upsert({
+      key: 'bottle_state',
+      value: { message: randomMsg, day: today, readDay: '' }
+    });
+  };
 
   useEffect(() => {
     if (!nextCookieTime && !nextFactResetTime) return;
@@ -180,8 +196,6 @@ export default function Home() {
         if (distance < 0) {
           setFactsViewedCount(0);
           setNextFactResetTime(null);
-          localStorage.removeItem('factsViewedCount');
-          localStorage.removeItem('nextFactResetTime');
         } else {
           const m = Math.floor(distance / (1000 * 60));
           const s = Math.floor((distance % (1000 * 60)) / 1000);
@@ -193,37 +207,42 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [nextCookieTime, nextFactResetTime]);
 
-  const breakCookie = () => {
+  const breakCookie = async () => {
     setIsBreaking(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       const randomFortune = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
       const nextTime = new Date().getTime() + 24 * 60 * 60 * 1000;
       
       setFortune(randomFortune);
       setNextCookieTime(nextTime);
-      localStorage.setItem('lastFortune', randomFortune);
-      localStorage.setItem('nextCookieTime', nextTime.toString());
       setIsBreaking(false);
+
+      await supabase.from('global_state').upsert({
+        key: 'fortune_state',
+        value: { fortune: randomFortune, nextTime: nextTime }
+      });
     }, 800);
   };
 
-  const nextFact = () => {
+  const nextFact = async () => {
     if (factsViewedCount >= 2) return;
 
     const newCount = factsViewedCount + 1;
     const newIndex = (currentFactIndex + 1) % INTERESTING_FACTS.length;
+    let resetTime = nextFactResetTime;
+
+    if (newCount === 1) {
+      resetTime = new Date().getTime() + 30 * 60 * 1000; // 30 minutes
+    }
     
     setFactsViewedCount(newCount);
     setCurrentFactIndex(newIndex);
-    
-    localStorage.setItem('factsViewedCount', newCount.toString());
-    localStorage.setItem('currentFactIndex', newIndex.toString());
+    setNextFactResetTime(resetTime);
 
-    if (newCount === 1) {
-      const resetTime = new Date().getTime() + 30 * 60 * 1000; // 30 minutes
-      setNextFactResetTime(resetTime);
-      localStorage.setItem('nextFactResetTime', resetTime.toString());
-    }
+    await supabase.from('global_state').upsert({
+      key: 'facts_state',
+      value: { count: newCount, currentIndex: newIndex, resetTime: resetTime }
+    });
   };
 
   const handleAuthComplete = (user: string) => {
@@ -243,10 +262,15 @@ export default function Home() {
     setShowOnboarding(false);
   };
 
-  const openBottle = () => {
+  const openBottle = async () => {
     setIsBottleOpen(true);
     setHasUnreadBottle(false);
-    localStorage.setItem('bottle_read_day', new Date().toISOString().split('T')[0]);
+    const today = new Date().toISOString().split('T')[0];
+
+    await supabase.from('global_state').upsert({
+      key: 'bottle_state',
+      value: { message: bottleMessage, day: today, readDay: today }
+    });
   };
 
   if (!isAuthenticated) {

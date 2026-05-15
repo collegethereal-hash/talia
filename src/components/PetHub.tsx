@@ -5,6 +5,7 @@ import { Card } from './Card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dog, Heart, Zap, Utensils, Droplets, X, Star, Settings2, Flame, MessageCircle, Clock, Book, Quote, Info, Sparkles, User, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
 
 import { Canvas } from '@react-three/fiber';
 import { MagicPet3D } from './MagicPet3D';
@@ -98,30 +99,32 @@ export const PetHub = () => {
 
   const [showHeart, setShowHeart] = useState(false);
   const [currentThought, setCurrentThought] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  // Load state from localStorage with offline decay calculation
   useEffect(() => {
-    const saved = localStorage.getItem('archi_state');
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    fetchArchiState();
+  }, []);
 
-    if (saved) {
-      const parsed = JSON.parse(saved);
+  const fetchArchiState = async () => {
+    const { data, error } = await supabase
+      .from('global_state')
+      .select('value')
+      .eq('key', 'archi_state')
+      .single();
+
+    if (data) {
+      const parsed = data.value as PetState;
       const now = Date.now();
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
       const secondsPassed = Math.floor((now - parsed.lastInteraction) / 1000);
 
       // Calculate offline decay
-      // Hunger: 100% in 12h (43200s) -> 1s = 0.0023%
-      // Thirst: 100% in 8h (28800s) -> 1s = 0.0034%
-      // Happiness: 100% in 24h (86400s) -> 1s = 0.0011%
-      
       const hungerDecay = secondsPassed * 0.0023;
       const thirstDecay = secondsPassed * 0.0034;
       const happinessDecay = secondsPassed * 0.0011;
 
       let newStreak = parsed.streak || 0;
-      
-      // Check if missed more than a day
       if (parsed.lastVisitDay !== today && parsed.lastVisitDay !== yesterday) {
         newStreak = 0;
       }
@@ -133,17 +136,51 @@ export const PetHub = () => {
         happiness: Math.max(0, parsed.happiness - happinessDecay),
         streak: newStreak,
         lastInteraction: now,
-        lastVisitDay: parsed.lastVisitDay // Keep old day until interaction
       });
     } else {
-      setState(prev => ({ ...prev, lastVisitDay: today, lastInteraction: Date.now() }));
+      // Initialize with default state if not found
+      const defaultState: PetState = {
+        hunger: 80,
+        happiness: 90,
+        thirst: 75,
+        level: 1,
+        xp: 0,
+        lastInteraction: Date.now(),
+        isFull: false,
+        isHappy: false,
+        isHydrated: false,
+        streak: 0,
+        lastVisitDay: new Date().toISOString().split('T')[0],
+        careLog: []
+      };
+      setState(defaultState);
+      saveArchiState(defaultState);
     }
-  }, []);
+  };
 
-  // Save state to localStorage whenever it changes
+  const saveArchiState = async (newState: PetState) => {
+    setIsSyncing(true);
+    const { error } = await supabase
+      .from('global_state')
+      .upsert({
+        key: 'archi_state',
+        value: newState
+      });
+    
+    if (error) console.error('Error syncing Archi state:', error);
+    setIsSyncing(false);
+  };
+
+  // Sync state to Supabase on changes (Debounced manually in the interaction handlers or here)
   useEffect(() => {
-    localStorage.setItem('archi_state', JSON.stringify(state));
+    if (state.lastVisitDay !== '') { // Avoid initial empty sync
+      const timer = setTimeout(() => {
+        saveArchiState(state);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
   }, [state]);
+
 
   // Update thoughts - less frequent
   useEffect(() => {

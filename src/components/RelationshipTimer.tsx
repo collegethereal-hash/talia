@@ -5,7 +5,9 @@ import { Card } from './Card';
 import { Heart, RefreshCw, Zap, Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const START_DATE = new Date('2026-03-17T00:00:00');
+import { supabase } from '@/lib/supabase';
+
+const DEFAULT_START_DATE = new Date('2026-03-17T00:00:00');
 
 type TimerMode = 'classic' | 'beats' | 'breath' | 'kiss';
 
@@ -18,11 +20,27 @@ export const RelationshipTimer = () => {
     seconds: 0,
     totalSeconds: 0
   });
+  const [startDate, setStartDate] = useState<Date>(DEFAULT_START_DATE);
+
+  useEffect(() => {
+    const fetchStartDate = async () => {
+      const { data, error } = await supabase
+        .from('global_state')
+        .select('value')
+        .eq('key', 'start_date')
+        .single();
+
+      if (data) {
+        setStartDate(new Date(data.value as string));
+      }
+    };
+    fetchStartDate();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
-      const difference = now.getTime() - START_DATE.getTime();
+      const difference = now.getTime() - startDate.getTime();
 
       const totalSeconds = Math.floor(difference / 1000);
       const days = Math.floor(difference / (1000 * 60 * 60 * 24));

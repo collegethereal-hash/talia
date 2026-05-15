@@ -5,6 +5,7 @@ import { Card } from "@/components/Card";
 import { User, Heart, Lock, Calendar, Smile, Edit3, Save, X, Sparkles, Gift, Info, Plus, Trash2, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { supabase } from '@/lib/supabase';
 
 interface ProfileField {
   id: string;
@@ -36,6 +37,7 @@ interface TimeCapsule {
   unlockDate: string;
   isLocked: boolean;
   content: string;
+  author: 'Grinch' | 'Cindy';
 }
 
 const INITIAL_PROFILES: Record<string, ProfileData> = {
@@ -73,9 +75,85 @@ export default function ProfilePage() {
   const [isEditingCapsule, setIsEditingCapsule] = useState(false);
   const [capsuleEditData, setCapsuleEditData] = useState<Partial<TimeCapsule>>({});
 
-  const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<ProfileData | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentUser, setCurrentUser] = useState<'Grinch' | 'Cindy' | null>(null);
+  const [hasNewWhisper, setHasNewWhisper] = useState(false);
   const [hearts, setHearts] = useState<{ id: number; x: number }[]>([]);
+
+  useEffect(() => {
+    const auth = localStorage.getItem('lumina_auth');
+    if (auth) {
+      setCurrentUser(auth === 'grinch' ? 'Grinch' : 'Cindy');
+    }
+    fetchProfiles();
+    fetchCapsules();
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      checkWhisper();
+    }
+  }, [currentUser]);
+
+  const checkWhisper = async () => {
+    if (!currentUser) return;
+    const key = currentUser === 'Grinch' ? 'whisper_for_grinch' : 'whisper_for_cindy';
+    const { data } = await supabase
+      .from('global_state')
+      .select('value')
+      .eq('key', key)
+      .single();
+
+    if (data && data.value) {
+      setHasNewWhisper(true);
+    }
+  };
+
+  const fetchProfiles = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*');
+    
+    if (error) {
+      console.error('Error fetching profiles:', error);
+    } else if (data && data.length > 0) {
+      const profileMap: Record<string, ProfileData> = {};
+      data.forEach((p: any) => {
+        profileMap[p.id] = {
+          id: p.id,
+          name: p.name,
+          status: p.status,
+          mood: p.mood,
+          pref: p.pref,
+          avatarColor: p.avatar_color,
+          categories: p.categories
+        };
+      });
+      setProfiles(prev => ({ ...prev, ...profileMap }));
+    }
+  };
+
+  const fetchCapsules = async () => {
+    const { data, error } = await supabase
+      .from('time_capsules')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching capsules:', error);
+    } else if (data) {
+      setCapsules(data.map((c: any) => ({
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        unlockDate: c.unlock_date,
+        isLocked: c.is_sealed,
+        content: c.content,
+        author: c.author
+      })));
+    }
+  };
 
   const openDetails = (id: string) => {
     setSelectedProfileId(id);
@@ -90,13 +168,29 @@ export default function ProfilePage() {
     }
   };
 
-  const saveDetails = () => {
+  const saveDetails = async () => {
     if (selectedProfileId && editData) {
-      setProfiles(prev => ({
-        ...prev,
-        [selectedProfileId]: editData
-      }));
-      setIsEditing(false);
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: selectedProfileId,
+          name: editData.name,
+          status: editData.status,
+          mood: editData.mood,
+          pref: editData.pref,
+          avatar_color: editData.avatarColor,
+          categories: editData.categories
+        });
+
+      if (error) {
+        console.error('Error saving profile:', error);
+      } else {
+        setProfiles(prev => ({
+          ...prev,
+          [selectedProfileId]: editData
+        }));
+        setIsEditing(false);
+      }
     }
   };
 
@@ -176,29 +270,56 @@ export default function ProfilePage() {
     setIsEditingCapsule(true);
   };
 
-  const saveCapsule = () => {
-    if (capsuleEditData.id) {
-      // Edit existing
-      setCapsules(capsules.map(c => c.id === capsuleEditData.id ? { ...c, ...capsuleEditData } as TimeCapsule : c));
-    } else {
-      // Create new
-      const newCapsule: TimeCapsule = {
-        id: Date.now().toString(),
+  const saveCapsule = async () => {
+    try {
+      const capsuleData = {
         title: capsuleEditData.title || 'Новая капсула',
         description: capsuleEditData.description || '',
-        unlockDate: capsuleEditData.unlockDate || new Date().toISOString().split('T')[0],
+        unlock_date: capsuleEditData.unlockDate || new Date().toISOString().split('T')[0],
         content: capsuleEditData.content || '',
-        isLocked: true
+        is_sealed: true,
+        author: selectedProfileId === 'me' ? 'Grinch' : 'Cindy'
       };
-      setCapsules([...capsules, newCapsule]);
+
+      if (capsuleEditData.id) {
+        // Edit existing
+        const { error } = await supabase
+          .from('time_capsules')
+          .update(capsuleData)
+          .eq('id', capsuleEditData.id);
+
+        if (error) throw error;
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from('time_capsules')
+          .insert([capsuleData]);
+
+        if (error) throw error;
+      }
+
+      await fetchCapsules();
+      setIsCapsuleModalOpen(false);
+      setIsEditingCapsule(false);
+    } catch (err) {
+      console.error('Error saving capsule:', err);
+      alert('Ошибка при сохранении капсулы.');
     }
-    setIsCapsuleModalOpen(false);
-    setIsEditingCapsule(false);
   };
 
-  const deleteCapsule = (id: string) => {
-    setCapsules(capsules.filter(c => c.id !== id));
-    setIsCapsuleModalOpen(false);
+  const deleteCapsule = async (id: string) => {
+    const { error } = await supabase
+      .from('time_capsules')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting capsule:', error);
+      alert('Ошибка при удалении капсулы.');
+    } else {
+      setCapsules(capsules.filter(c => c.id !== id));
+      setIsCapsuleModalOpen(false);
+    }
   };
 
   const sendHearts = () => {
@@ -214,15 +335,23 @@ export default function ProfilePage() {
   const [isMailClaimed, setIsMailClaimed] = useState(false);
 
   useEffect(() => {
-    const checkMail = () => {
-      const savedWhisper = localStorage.getItem('lastWhisper');
-      setHasMail(!!savedWhisper);
+    if (!currentUser) return;
+    
+    const checkMail = async () => {
+      const key = currentUser === 'Grinch' ? 'whisper_for_grinch' : 'whisper_for_cindy';
+      const { data } = await supabase
+        .from('global_state')
+        .select('value')
+        .eq('key', key)
+        .single();
+        
+      setHasMail(!!(data && data.value));
     };
+
     checkMail();
-    // Проверяем каждые пару секунд на случай, если письмо пришло
-    const interval = setInterval(checkMail, 2000);
+    const interval = setInterval(checkMail, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentUser]);
 
   const claimMail = () => {
     if (!hasMail) return;
@@ -654,21 +783,24 @@ export default function ProfilePage() {
                           } дней.
                         </p>
                       </div>
-                      <div className="flex gap-4">
-                        <button 
-                          onClick={() => startEditCapsule(selectedCapsule)}
-                          className="flex-1 py-3 rounded-xl bg-white border border-zinc-100 text-zinc-400 font-bold hover:text-talia-lavender transition-all flex items-center justify-center gap-2"
-                        >
-                          <Edit3 size={18} />
-                          Изменить
-                        </button>
-                        <button 
-                          onClick={() => deleteCapsule(selectedCapsule.id)}
-                          className="p-3 rounded-xl bg-red-50 text-red-300 hover:text-red-500 transition-all"
-                        >
-                          <Trash2 size={20} />
-                        </button>
-                      </div>
+                      {/* Only show Edit/Delete if current user is the author */}
+                      {selectedCapsule.author === currentUser && (
+                        <div className="flex gap-4">
+                          <button 
+                            onClick={() => startEditCapsule(selectedCapsule)}
+                            className="flex-1 py-3 rounded-xl bg-white border border-zinc-100 text-zinc-400 font-bold hover:text-talia-lavender transition-all flex items-center justify-center gap-2"
+                          >
+                            <Edit3 size={18} />
+                            Изменить
+                          </button>
+                          <button 
+                            onClick={() => deleteCapsule(selectedCapsule.id)}
+                            className="p-3 rounded-xl bg-red-50 text-red-300 hover:text-red-500 transition-all"
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>
@@ -682,12 +814,15 @@ export default function ProfilePage() {
                       <div className="p-8 bg-white shadow-inner rounded-[2rem] border border-black/5 text-left italic font-serif text-lg leading-relaxed text-foreground/70 max-h-[300px] overflow-y-auto custom-scrollbar">
                         "{selectedCapsule.content}"
                       </div>
-                      <button 
-                        onClick={() => deleteCapsule(selectedCapsule.id)}
-                        className="text-red-300 hover:text-red-500 text-xs font-bold uppercase tracking-widest transition-all"
-                      >
-                        Удалить из архива
-                      </button>
+                      
+                      {selectedCapsule.author === currentUser && (
+                        <button 
+                          onClick={() => deleteCapsule(selectedCapsule.id)}
+                          className="text-red-300 hover:text-red-500 text-xs font-bold uppercase tracking-widest transition-all"
+                        >
+                          Удалить из архива
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
