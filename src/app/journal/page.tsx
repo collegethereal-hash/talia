@@ -218,7 +218,7 @@ function JournalContent() {
     
     let newLikedBy;
     if (isLiked) {
-      newLikedBy = likedBy.filter(u => u !== currentUser);
+      newLikedBy = likedBy.filter((u: string) => u !== currentUser);
     } else {
       newLikedBy = [...likedBy, currentUser];
     }
