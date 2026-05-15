@@ -473,7 +473,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar space-y-12 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
-                {(isEditing ? editData!.categories : selectedProfile.categories).map((category) => (
+                {(isEditing ? editData!.categories : selectedProfile.categories).map((category: any) => (
                   <div key={category.id} className="space-y-6 group/cat relative">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -522,7 +522,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {category.fields.map((field) => (
+                      {category.fields.map((field: any) => (
                         <div key={field.id} className="relative group/field">
                           <DetailItem 
                             label={field.label}

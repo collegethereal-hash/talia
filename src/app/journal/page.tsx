@@ -190,7 +190,7 @@ function JournalContent() {
     if (error) {
       console.error('Error toggling like:', error);
       // Revert on error
-      fetchNotes();
+      refreshNotes();
     }
   };
 

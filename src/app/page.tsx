@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useData } from "@/components/DataProvider";
+import { supabase } from '@/lib/supabase';
 
 const FORTUNES = [
   "Сегодня тот самый день, чтобы сказать 'да' самой безумной идее, которая придет вам в голову 🌪️",
@@ -140,30 +141,10 @@ export default function Home() {
     }, 800);
   };
 
-  const nextFact = async () => {
-    if (factsViewedCount >= 2) return;
 
-    const newCount = factsViewedCount + 1;
-    const newIndex = (currentFactIndex + 1) % INTERESTING_FACTS.length;
-    let resetTime = nextFactResetTime;
-
-    if (newCount === 1) {
-      resetTime = new Date().getTime() + 30 * 60 * 1000; // 30 minutes
-    }
-    
-    setFactsViewedCount(newCount);
-    setCurrentFactIndex(newIndex);
-    setNextFactResetTime(resetTime);
-
-    await supabase.from('global_state').upsert({
-      key: 'facts_state',
-      value: { count: newCount, currentIndex: newIndex, resetTime: resetTime }
-    });
-  };
 
   const handleAuthComplete = (user: string) => {
     localStorage.setItem('lumina_auth', user);
-    setCurrentUser(user);
     setIsAuthenticated(true);
     
     const hasSeenOnboarding = localStorage.getItem('lumina_onboarding_seen');
