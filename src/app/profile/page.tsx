@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/Card";
-import { User, Heart, Lock, Calendar, Smile, Edit3, Save, X, Sparkles, Gift, Info, Plus, Trash2, Mail } from "lucide-react";
+import { User, Heart, Lock, Calendar, Smile, Edit3, Save, X, Sparkles, Gift, Info, Plus, Trash2, Mail, Trees, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';
@@ -340,7 +340,9 @@ export default function ProfilePage() {
   const selectedProfile = selectedProfileId ? profiles[selectedProfileId] : null;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 pt-12 pb-32 space-y-16 relative min-h-screen">
+    <div className="max-w-5xl mx-auto px-4 pt-12 pb-32 space-y-20 relative min-h-screen">
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] z-0" />
+      
       <AnimatePresence>
         {hearts.map(heart => (
           <motion.div
@@ -349,7 +351,7 @@ export default function ProfilePage() {
             animate={{ y: '-10vh', opacity: 0, scale: 1.5 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 3, ease: "easeOut" }}
-            className="absolute text-talia-peach pointer-events-none z-[60]"
+            className="absolute text-[#e6d5bc] pointer-events-none z-[60]"
             style={{ left: `${heart.x}%` }}
           >
             <Heart fill="currentColor" size={48} />
@@ -357,56 +359,70 @@ export default function ProfilePage() {
         ))}
       </AnimatePresence>
 
-      <header className="text-center space-y-4">
-        <h1 className="text-5xl font-serif font-bold text-foreground/90 tracking-tight">Наши Отражения</h1>
-        <p className="text-foreground/40 italic">"Мы видим друг друга лучше, чем самих себя"</p>
+      <header className="text-center space-y-6 relative z-10">
+        <div className="inline-block relative">
+          <h1 className="text-6xl md:text-8xl font-serif font-black text-[#5c4a33] tracking-tighter relative z-10">Наши Отражения</h1>
+          <div className="absolute -bottom-2 left-0 w-full h-4 bg-[#e6d5bc]/30 -rotate-1" />
+        </div>
+        <p className="text-[#8b7355] font-serif italic text-xl">"Мы видим друг друга лучше, чем самих себя"</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
         {Object.values(profiles).map((profile: any) => (
           <motion.div
             key={profile.id}
-            whileHover={{ y: -5 }}
+            whileHover={{ y: -8, scale: 1.02 }}
             onClick={() => openDetails(profile.id)}
-            className="cursor-pointer"
+            className="cursor-pointer group"
           >
-            <Card className="relative overflow-hidden p-8 border-none bg-white/60 hover:bg-white transition-all duration-500 shadow-xl group">
-              <div className={cn(
-                "absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-10 blur-2xl group-hover:opacity-20 transition-opacity",
-                profile.id === 'Grinch' ? "bg-talia-lavender" : "bg-talia-peach"
-              )} />
-              
-              <div className="flex items-center gap-6">
-                <div className={cn(
-                  "w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform group-hover:rotate-6",
-                  profile.avatarColor
-                )}>
-                  {profile.mood}
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-2xl font-serif font-bold text-foreground/80">{profile.name}</h3>
-                    <span className="text-2xl">{profile.mood}</span>
+            <div className="relative p-1 bg-[#e6d5bc] rounded-[3rem] shadow-2xl">
+              <div className="bg-[#fdfaf3] rounded-[2.8rem] p-10 border-4 border-[#e6d5bc] relative overflow-hidden">
+                {/* Wood Grain Overlay */}
+                <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[radial-gradient(#5c4a33_1px,transparent_1px)] [background-size:20px_20px]" />
+                
+                <div className="flex flex-col items-center text-center space-y-6 relative z-10">
+                  <div className={cn(
+                    "w-32 h-32 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl border-8 border-white transition-transform duration-500 group-hover:rotate-6 relative overflow-hidden",
+                    profile.avatarColor
+                  )}>
+                    <div className="absolute inset-0 bg-black/10 opacity-50" />
+                    <div className="relative z-10 filter drop-shadow-lg">
+                      {profile.id === 'Grinch' || profile.id === 'me' ? (
+                        <div className="text-amber-200"><Trees size={64} strokeWidth={1.5} /></div>
+                      ) : (
+                        <div className="text-blue-100"><Moon size={64} strokeWidth={1.5} /></div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={cn(
-                      "w-1.5 h-1.5 rounded-full",
-                      getPresenceStatus(profile).online ? "bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]" : "bg-zinc-300"
-                    )} />
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 italic">
-                      {getPresenceStatus(profile).text}
+                  
+                  <div className="space-y-2">
+                    <h2 className="text-4xl font-serif font-black text-[#5c4a33]">{profile.name}</h2>
+                    <div className="flex items-center justify-center gap-3">
+                      <span className={cn(
+                        "w-2.5 h-2.5 rounded-full",
+                        getPresenceStatus(profile).online ? "bg-green-400 animate-pulse shadow-[0_0_12px_rgba(74,222,128,0.8)]" : "bg-zinc-300"
+                      )} />
+                      <p className="text-[12px] font-black uppercase tracking-[0.2em] text-[#8b7355]">
+                        {getPresenceStatus(profile).text}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="w-full pt-8 border-t-2 border-[#e6d5bc]/40">
+                    <p className="text-[#8b7355] italic font-serif text-lg leading-relaxed line-clamp-2">
+                      "{profile.pref}"
                     </p>
                   </div>
+
+                  <div className="pt-4">
+                    <span className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-[#5c4a33] text-[#fdfaf3] text-[10px] font-black uppercase tracking-widest shadow-lg transform group-hover:translate-y-[-2px] transition-transform">
+                      Заглянуть в анкету
+                      <Sparkles size={14} />
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="mt-6 pt-6 border-t border-black/5">
-                <p className="text-sm italic text-foreground/60 line-clamp-1">"{profile.pref}"</p>
-                <div className="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-talia-lavender">
-                  <Info size={12} />
-                  Нажми, чтобы узнать больше
-                </div>
-              </div>
-            </Card>
+            </div>
           </motion.div>
         ))}
       </div>
@@ -419,40 +435,51 @@ export default function ProfilePage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedProfileId(null)}
-              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/40 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-2xl bg-white/90 backdrop-blur-xl rounded-[3rem] shadow-2xl border border-white/40 overflow-hidden"
+              className="relative w-full max-w-2xl bg-[#fdfaf3] rounded-[3rem] shadow-2xl border-8 border-[#e6d5bc] overflow-hidden"
             >
+              {/* Wooden Header Bar */}
               <div className={cn(
-                "p-8 flex items-center justify-between text-white",
+                "p-8 flex items-center justify-between text-white border-b-8 border-[#e6d5bc]",
                 selectedProfile.avatarColor
               )}>
                 <div className="flex items-center gap-6">
-                  <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
-                    <User size={40} />
+                  <div className="w-24 h-24 rounded-[2rem] bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner border-4 border-white/40 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-black/5" />
+                    <div className="relative z-10">
+                      {selectedProfile.id === 'Grinch' || selectedProfile.id === 'me' ? (
+                        <div className="text-amber-200"><Trees size={48} strokeWidth={1.5} /></div>
+                      ) : (
+                        <div className="text-blue-100"><Moon size={48} strokeWidth={1.5} /></div>
+                      )}
+                    </div>
                   </div>
                   <div>
-                    <h2 className="text-3xl font-serif font-bold">{selectedProfile.name}</h2>
-                    <p className="text-sm opacity-80 font-medium">Подробная анкета</p>
+                    <h2 className="text-4xl font-serif font-black tracking-tight">{selectedProfile.name}</h2>
+                    <p className="text-sm opacity-80 font-bold uppercase tracking-widest">Дневник приключений</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setSelectedProfileId(null)}
-                  className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"
+                  className="w-12 h-12 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition-all border-2 border-white/20"
                 >
                   <X size={24} />
                 </button>
               </div>
 
-              <div className="p-8 max-h-[75vh] overflow-y-auto custom-scrollbar space-y-10">
+              <div className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar space-y-12 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
                 {(isEditing ? editData!.categories : selectedProfile.categories).map((category) => (
-                  <div key={category.id} className="space-y-4 group/cat">
-                    <div className="flex items-center justify-between px-2">
-                      <div className="flex items-center gap-3">
+                  <div key={category.id} className="space-y-6 group/cat relative">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-[#e6d5bc]/30 flex items-center justify-center text-2xl shadow-inner">
+                          {category.emoji}
+                        </div>
                         {isEditing ? (
                           <div className="flex items-center gap-2">
                             <select 
@@ -463,7 +490,7 @@ export default function ProfilePage() {
                                 );
                                 setEditData({ ...editData!, categories: updated });
                               }}
-                              className="bg-white/50 rounded-lg p-1 text-xl border-none focus:ring-0"
+                              className="bg-white border-4 border-[#e6d5bc] rounded-xl p-1 text-xl focus:ring-0"
                             >
                               {EMOJI_LIST.map(e => <option key={e} value={e}>{e}</option>)}
                             </select>
@@ -475,29 +502,26 @@ export default function ProfilePage() {
                                 );
                                 setEditData({ ...editData!, categories: updated });
                               }}
-                              className="bg-transparent border-none font-bold uppercase tracking-[0.2em] text-foreground/40 focus:ring-0 w-40"
+                              className="bg-transparent border-b-2 border-[#e6d5bc] font-serif font-black text-2xl text-[#5c4a33] focus:ring-0 focus:border-[#5c4a33] w-full"
                             />
                           </div>
                         ) : (
-                          <>
-                            <span className="text-xl">{category.emoji}</span>
-                            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/30">
-                              {category.title}
-                            </h4>
-                          </>
+                          <h4 className="text-2xl font-serif font-black text-[#5c4a33]">
+                            {category.title}
+                          </h4>
                         )}
                       </div>
                       {isEditing && (
                         <button 
                           onClick={() => removeCategory(category.id)}
-                          className="text-red-400 opacity-0 group-hover/cat:opacity-100 transition-opacity"
+                          className="p-2 text-red-400 hover:bg-red-50 rounded-xl transition-all"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={18} />
                         </button>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {category.fields.map((field) => (
                         <div key={field.id} className="relative group/field">
                           <DetailItem 
@@ -532,9 +556,9 @@ export default function ProfilePage() {
                           {isEditing && (
                             <button 
                               onClick={() => removeField(category.id, field.id)}
-                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-100 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover/field:opacity-100 transition-opacity"
+                              className="absolute -top-2 -right-2 w-7 h-7 bg-white border-2 border-[#e6d5bc] text-red-400 rounded-full flex items-center justify-center shadow-lg transform hover:scale-110 transition-all z-10"
                             >
-                              <X size={12} />
+                              <X size={14} />
                             </button>
                           )}
                         </div>
@@ -542,9 +566,9 @@ export default function ProfilePage() {
                       {isEditing && (
                         <button 
                           onClick={() => addField(category.id)}
-                          className="p-4 border-2 border-dashed border-black/5 rounded-2xl flex items-center justify-center text-foreground/20 hover:text-talia-lavender hover:border-talia-lavender/30 transition-all"
+                          className="p-4 border-4 border-dashed border-[#e6d5bc] rounded-3xl flex items-center justify-center text-[#8b7355]/40 hover:text-[#5c4a33] hover:border-[#5c4a33]/30 transition-all bg-white/50"
                         >
-                          <Plus size={20} />
+                          <Plus size={24} />
                         </button>
                       )}
                     </div>
@@ -554,37 +578,37 @@ export default function ProfilePage() {
                 {isEditing && (
                   <button 
                     onClick={addCategory}
-                    className="w-full py-6 border-2 border-dashed border-black/5 rounded-[2rem] flex flex-col items-center gap-2 text-foreground/20 hover:text-talia-lavender hover:border-talia-lavender/30 transition-all"
+                    className="w-full py-8 border-4 border-dashed border-[#e6d5bc] rounded-[2.5rem] flex flex-col items-center gap-3 text-[#8b7355]/40 hover:text-[#5c4a33] hover:bg-white/50 transition-all"
                   >
-                    <Plus size={32} />
-                    <span className="text-xs font-bold uppercase tracking-widest">Добавить категорию</span>
+                    <Plus size={40} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Добавить главу дневника</span>
                   </button>
                 )}
 
-                <div className="pt-6 border-t border-black/5 flex justify-end gap-4">
+                <div className="pt-8 border-t-4 border-[#e6d5bc] flex justify-end gap-4">
                   {isEditing ? (
                     <>
                       <button 
                         onClick={() => setIsEditing(false)}
-                        className="px-6 py-3 rounded-2xl bg-zinc-100 text-foreground/40 font-bold hover:bg-zinc-200 transition-all"
+                        className="px-8 py-4 rounded-2xl bg-[#e6d5bc]/20 text-[#8b7355] font-black uppercase tracking-widest text-[10px] hover:bg-[#e6d5bc]/40 transition-all"
                       >
                         Отмена
                       </button>
                       <button 
                         onClick={saveDetails}
-                        className="px-8 py-3 rounded-2xl bg-talia-lavender text-white font-bold shadow-lg shadow-talia-lavender/20 flex items-center gap-2"
+                        className="px-10 py-4 rounded-2xl bg-[#5c4a33] text-[#fdfaf3] font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                       >
-                        <Save size={18} />
-                        Сохранить
+                        <Save size={16} />
+                        Записать
                       </button>
                     </>
                   ) : (
                     <button 
                       onClick={startEditing}
-                      className="px-8 py-3 rounded-2xl bg-white border border-black/5 text-foreground/60 hover:text-talia-lavender hover:border-talia-lavender transition-all font-bold flex items-center gap-2"
+                      className="px-10 py-4 rounded-2xl bg-white border-4 border-[#e6d5bc] text-[#5c4a33] font-black uppercase tracking-widest text-[10px] shadow-lg hover:border-[#5c4a33] transition-all flex items-center gap-2"
                     >
-                      <Edit3 size={18} />
-                      Редактировать анкету
+                      <Edit3 size={16} />
+                      Редактировать
                     </button>
                   )}
                 </div>
@@ -594,17 +618,20 @@ export default function ProfilePage() {
         )}
       </AnimatePresence>
 
-      <section className="space-y-8 pt-10">
-        <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-serif font-bold flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-zinc-900 text-white shadow-xl">
-              <Lock size={24} />
+      <section className="space-y-10 pt-16 relative z-10">
+        <div className="flex items-center justify-between border-b-8 border-[#e6d5bc] pb-6">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-[#5c4a33] text-[#fdfaf3] flex items-center justify-center shadow-2xl border-4 border-[#e6d5bc]">
+              <Lock size={32} />
             </div>
-            Капсулы времени
-          </h2>
+            <div>
+              <h2 className="text-4xl font-serif font-black text-[#5c4a33]">Капсулы времени</h2>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8b7355]">Тайные послания в будущее</p>
+            </div>
+          </div>
           <button 
             onClick={startCreateCapsule}
-            className="flex items-center gap-2 bg-talia-lavender/10 text-talia-lavender px-4 py-2 rounded-xl font-bold hover:bg-talia-lavender/20 transition-all"
+            className="flex items-center gap-2 bg-[#5c4a33] text-[#fdfaf3] px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 active:scale-95 transition-all"
           >
             <Plus size={18} />
             Создать
@@ -617,52 +644,46 @@ export default function ProfilePage() {
             return (
               <motion.div
                 key={capsule.id}
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ y: -5 }}
                 onClick={() => openCapsule(capsule)}
-                className="cursor-pointer"
+                className="cursor-pointer group"
               >
-                <Card className="group border-none bg-white/40 hover:bg-white transition-all p-6 relative overflow-hidden shadow-lg">
-                  <div className={cn(
-                    "absolute top-0 right-0 w-2 h-full transition-all group-hover:w-3",
-                    isUnlocked ? "bg-green-400" : "bg-zinc-200"
-                  )} />
-                  
-                  <div className="flex gap-6 items-center">
+                <div className="p-1 bg-[#e6d5bc] rounded-[2.5rem] shadow-xl">
+                  <div className="bg-[#fdfaf3] rounded-[2.2rem] p-8 border-4 border-[#e6d5bc] relative overflow-hidden flex items-center gap-6">
                     <div className={cn(
-                      "w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shadow-sm",
-                      isUnlocked ? "bg-green-50 text-green-500" : "bg-zinc-50 text-zinc-300"
+                      "w-20 h-20 rounded-3xl flex items-center justify-center transition-all shadow-inner border-4",
+                      isUnlocked ? "bg-emerald-50 border-emerald-200 text-emerald-500" : "bg-white border-[#e6d5bc] text-[#e6d5bc]"
                     )}>
-                      {isUnlocked ? <Sparkles size={28} /> : <Lock size={28} />}
+                      {isUnlocked ? <Sparkles size={32} /> : <Lock size={32} />}
                     </div>
-                    <div className="space-y-1 flex-1">
-                      <h4 className="font-bold text-foreground/80 text-lg">{capsule.title}</h4>
-                      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-foreground/30">
+                    <div className="space-y-2">
+                      <h4 className="text-2xl font-serif font-black text-[#5c4a33]">{capsule.title}</h4>
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#8b7355]">
                         <Calendar size={12} />
                         Откроется: {capsule.unlockDate}
                       </div>
                     </div>
                   </div>
-                </Card>
+                </div>
               </motion.div>
             );
           })}
 
-          {/* Empty State */}
           {capsules.length === 0 && (
-            <div className="col-span-full py-12 flex flex-col items-center justify-center text-center space-y-4 bg-white/30 rounded-[2.5rem] border-4 border-dashed border-black/5">
-              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-foreground/20 shadow-sm">
-                <Lock size={32} />
+            <div className="col-span-full py-16 flex flex-col items-center justify-center text-center space-y-6 bg-[#fdfaf3]/50 rounded-[3rem] border-8 border-dashed border-[#e6d5bc]/30">
+              <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-[#e6d5bc] shadow-inner border-4 border-[#e6d5bc]">
+                <Lock size={40} />
               </div>
-              <div className="space-y-1">
-                <p className="text-lg font-serif font-bold text-foreground/60">Капсул пока нет</p>
-                <p className="text-xs text-foreground/30 italic">"Оставьте послание себе в будущее, которое откроется только в особый день."</p>
+              <div className="space-y-2">
+                <p className="text-2xl font-serif font-black text-[#5c4a33]">Архив пока пуст</p>
+                <p className="text-sm text-[#8b7355] italic max-w-xs mx-auto">"Оставьте послание себе в будущее, которое откроется в особый день."</p>
               </div>
             </div>
           )}
         </div>
       </section>
 
-      {/* Time Capsule Modal */}
+      {/* Time Capsule Modal - Palia Scroll Style */}
       <AnimatePresence>
         {isCapsuleModalOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center px-4">
@@ -677,48 +698,53 @@ export default function ProfilePage() {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden"
+              className="relative w-full max-w-xl bg-[#fdfaf3] rounded-[3rem] shadow-2xl border-8 border-[#e6d5bc] overflow-hidden"
             >
               {isEditingCapsule ? (
-                <div className="p-8 space-y-6">
-                  <h3 className="text-2xl font-serif font-bold text-foreground/80 border-b pb-4">
-                    {capsuleEditData.id ? 'Редактировать капсулу' : 'Создать капсулу'}
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-bold text-foreground/30 px-2">Заголовок</label>
+                <div className="p-8 space-y-8 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
+                  <div className="text-center space-y-2">
+                    <h3 className="text-3xl font-serif font-black text-[#5c4a33]">
+                      {capsuleEditData.id ? 'Свиток Изменений' : 'Новое Послание'}
+                    </h3>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8b7355]">Запечатайте свои мысли во времени</p>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-black text-[#8b7355] px-4">Заголовок Свитка</label>
                       <input 
                         value={capsuleEditData.title}
                         onChange={e => setCapsuleEditData({...capsuleEditData, title: e.target.value})}
-                        className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-talia-lavender/30 transition-all"
-                        placeholder="Назови капсулу..."
+                        className="w-full bg-white border-4 border-[#e6d5bc] rounded-2xl px-6 py-4 focus:ring-0 focus:border-[#5c4a33] transition-all font-serif font-bold text-[#5c4a33]"
+                        placeholder="Как назовем это чудо?"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-bold text-foreground/30 px-2">Описание (кратко)</label>
-                      <input 
-                        value={capsuleEditData.description}
-                        onChange={e => setCapsuleEditData({...capsuleEditData, description: e.target.value})}
-                        className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-talia-lavender/30 transition-all"
-                        placeholder="О чем это послание?"
-                      />
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-black text-[#8b7355] px-4">Дата Пробуждения</label>
+                        <input 
+                          type="date"
+                          value={capsuleEditData.unlockDate}
+                          onChange={e => setCapsuleEditData({...capsuleEditData, unlockDate: e.target.value})}
+                          className="w-full bg-white border-4 border-[#e6d5bc] rounded-2xl px-4 py-3 focus:ring-0 focus:border-[#5c4a33] transition-all font-bold text-[#5c4a33]"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase font-black text-[#8b7355] px-4">Суть (кратко)</label>
+                        <input 
+                          value={capsuleEditData.description}
+                          onChange={e => setCapsuleEditData({...capsuleEditData, description: e.target.value})}
+                          className="w-full bg-white border-4 border-[#e6d5bc] rounded-2xl px-4 py-3 focus:ring-0 focus:border-[#5c4a33] transition-all font-bold text-[#5c4a33]"
+                          placeholder="О чем память?"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] uppercase font-bold text-foreground/30 px-2">Дата открытия</label>
-                      <input 
-                        type="date"
-                        value={capsuleEditData.unlockDate}
-                        onChange={e => setCapsuleEditData({...capsuleEditData, unlockDate: e.target.value})}
-                        className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-talia-lavender/30 transition-all"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-end px-2">
-                        <label className="text-[10px] uppercase font-bold text-foreground/30">Тайное послание</label>
-                        <span className={cn(
-                          "text-[10px] font-bold",
-                          (capsuleEditData.content?.length || 0) > 2800 ? "text-red-400" : "text-foreground/20"
-                        )}>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-end px-4">
+                        <label className="text-[10px] uppercase font-black text-[#8b7355]">Тайное Письмо</label>
+                        <span className="text-[10px] font-black text-[#8b7355]/30 tracking-widest">
                           {capsuleEditData.content?.length || 0} / 3000
                         </span>
                       </div>
@@ -729,57 +755,59 @@ export default function ProfilePage() {
                             setCapsuleEditData({...capsuleEditData, content: e.target.value})
                           }
                         }}
-                        className="w-full h-48 bg-zinc-50 border-none rounded-2xl px-4 py-4 focus:ring-2 focus:ring-talia-lavender/30 transition-all resize-none custom-scrollbar"
-                        placeholder="Напиши то, что вы прочтете в будущем..."
+                        className="w-full h-48 bg-white border-4 border-[#e6d5bc] rounded-[2rem] px-6 py-6 focus:ring-0 focus:border-[#5c4a33] transition-all resize-none custom-scrollbar font-serif italic text-lg text-[#5c4a33]"
+                        placeholder="Начни писать свою историю..."
                       />
                     </div>
                   </div>
+
                   <div className="flex gap-4 pt-4">
                     <button 
                       onClick={() => setIsCapsuleModalOpen(false)}
-                      className="flex-1 py-3 rounded-xl bg-zinc-100 text-foreground/40 font-bold hover:bg-zinc-200 transition-all"
+                      className="flex-1 py-4 rounded-2xl bg-[#e6d5bc]/20 text-[#8b7355] font-black uppercase tracking-widest text-[10px] hover:bg-[#e6d5bc]/40 transition-all"
                     >
-                      Отмена
+                      Сжечь черновик
                     </button>
                     <button 
                       onClick={saveCapsule}
-                      className="flex-1 py-3 rounded-xl bg-talia-lavender text-white font-bold shadow-lg hover:scale-105 active:scale-95 transition-all"
+                      className="flex-1 py-4 rounded-2xl bg-[#5c4a33] text-[#fdfaf3] font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
-                      Запечатать
+                      <Lock size={14} />
+                      Запечатать Свиток
                     </button>
                   </div>
                 </div>
               ) : selectedCapsule && (
-                <div className="p-10 text-center space-y-8">
+                <div className="p-10 text-center space-y-10 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
                   {selectedCapsule.isLocked ? (
                     <>
-                      <div className="w-24 h-24 rounded-3xl bg-zinc-100 flex items-center justify-center text-zinc-400 mx-auto animate-bounce">
-                        <Lock size={48} />
+                      <div className="w-28 h-28 rounded-[2rem] bg-[#e6d5bc]/30 flex items-center justify-center text-[#5c4a33] mx-auto shadow-inner border-4 border-[#e6d5bc] animate-pulse">
+                        <Lock size={56} />
                       </div>
-                      <div className="space-y-3">
-                        <h3 className="text-3xl font-serif font-bold text-foreground/80">{selectedCapsule.title}</h3>
-                        <p className="text-foreground/50 italic">"{selectedCapsule.description}"</p>
+                      <div className="space-y-4">
+                        <h3 className="text-4xl font-serif font-black text-[#5c4a33]">{selectedCapsule.title}</h3>
+                        <p className="text-[#8b7355] font-serif italic text-xl">"{selectedCapsule.description}"</p>
                       </div>
-                      <div className="p-6 bg-talia-peach/10 rounded-2xl border border-talia-peach/20">
-                        <p className="text-sm font-medium text-talia-peach">
-                          Эта капсула еще заперта. Она откроется через {
-                            Math.ceil((new Date(selectedCapsule.unlockDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-                          } дней.
+                      <div className="p-8 bg-white border-4 border-[#e6d5bc] rounded-[2rem] shadow-xl">
+                        <p className="text-sm font-black uppercase tracking-widest text-[#5c4a33]">
+                          Этот свиток защищен магией времени. Пробуждение через:
+                        </p>
+                        <p className="text-3xl font-serif font-black text-[#5c4a33] mt-2">
+                          {Math.ceil((new Date(selectedCapsule.unlockDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} дн.
                         </p>
                       </div>
-                      {/* Only show Edit/Delete if current user is the author */}
                       {selectedCapsule.author === currentUser && (
                         <div className="flex gap-4">
                           <button 
                             onClick={() => startEditCapsule(selectedCapsule)}
-                            className="flex-1 py-3 rounded-xl bg-white border border-zinc-100 text-zinc-400 font-bold hover:text-talia-lavender transition-all flex items-center justify-center gap-2"
+                            className="flex-1 py-4 rounded-2xl bg-white border-4 border-[#e6d5bc] text-[#5c4a33] font-black uppercase tracking-widest text-[10px] hover:border-[#5c4a33] transition-all flex items-center justify-center gap-2"
                           >
-                            <Edit3 size={18} />
-                            Изменить
+                            <Edit3 size={16} />
+                            Править
                           </button>
                           <button 
                             onClick={() => deleteCapsule(selectedCapsule.id)}
-                            className="p-3 rounded-xl bg-red-50 text-red-300 hover:text-red-500 transition-all"
+                            className="p-4 rounded-2xl bg-red-50 text-red-400 border-4 border-red-100 hover:bg-red-100 transition-all"
                           >
                             <Trash2 size={20} />
                           </button>
@@ -788,23 +816,24 @@ export default function ProfilePage() {
                     </>
                   ) : (
                     <>
-                      <div className="w-24 h-24 rounded-3xl bg-green-50 flex items-center justify-center text-green-500 mx-auto">
-                        <Sparkles size={48} />
+                      <div className="w-28 h-28 rounded-[2rem] bg-emerald-50 flex items-center justify-center text-emerald-500 mx-auto shadow-inner border-4 border-emerald-100">
+                        <Sparkles size={56} />
                       </div>
-                      <div className="space-y-3">
-                        <h3 className="text-3xl font-serif font-bold text-foreground/80">{selectedCapsule.title}</h3>
-                        <p className="text-[10px] uppercase font-bold text-green-500 tracking-widest">Капсула времени открыта!</p>
+                      <div className="space-y-2">
+                        <h3 className="text-4xl font-serif font-black text-[#5c4a33]">{selectedCapsule.title}</h3>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Древний свиток пробужден</p>
                       </div>
-                      <div className="p-8 bg-white shadow-inner rounded-[2rem] border border-black/5 text-left italic font-serif text-lg leading-relaxed text-foreground/70 max-h-[300px] overflow-y-auto custom-scrollbar">
-                        "{selectedCapsule.content}"
+                      <div className="p-10 bg-white shadow-2xl rounded-[3rem] border-8 border-[#e6d5bc] text-left italic font-serif text-2xl leading-relaxed text-[#5c4a33] max-h-[400px] overflow-y-auto custom-scrollbar relative">
+                         <div className="absolute top-4 right-4 opacity-10"><Mail size={40} /></div>
+                         "{selectedCapsule.content}"
                       </div>
                       
                       {selectedCapsule.author === currentUser && (
                         <button 
                           onClick={() => deleteCapsule(selectedCapsule.id)}
-                          className="text-red-300 hover:text-red-500 text-xs font-bold uppercase tracking-widest transition-all"
+                          className="text-red-400 hover:text-red-600 text-[10px] font-black uppercase tracking-[0.3em] transition-all pt-4"
                         >
-                          Удалить из архива
+                          Предать забвению (удалить)
                         </button>
                       )}
                     </>
@@ -816,13 +845,13 @@ export default function ProfilePage() {
         )}
       </AnimatePresence>
 
-      <div className="pt-10 flex flex-col items-center gap-6">
+      <div className="pt-16 flex flex-col items-center gap-6 relative z-10">
         <button 
           onClick={claimMail}
           disabled={isMailClaimed || !hasMail}
-          className="group relative px-16 py-8 rounded-[2.5rem] bg-talia-lavender text-white font-bold text-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all overflow-hidden flex items-center gap-6"
+          className="group relative px-20 py-10 rounded-[3rem] bg-[#5c4a33] text-[#fdfaf3] font-serif font-black text-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all overflow-hidden border-8 border-[#e6d5bc] flex items-center gap-8"
         >
-          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+          <div className="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
           <AnimatePresence mode="wait">
             {isMailClaimed ? (
               <motion.div
@@ -831,7 +860,7 @@ export default function ProfilePage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="relative flex items-center gap-6"
               >
-                <Sparkles size={36} className="animate-spin-slow" />
+                <Sparkles size={40} className="animate-spin-slow text-[#e6d5bc]" />
                 Забираю письмо...
               </motion.div>
             ) : (
@@ -843,13 +872,13 @@ export default function ProfilePage() {
               >
                 {hasMail ? (
                   <>
-                    <Mail fill="white" size={36} className="animate-bounce" />
-                    Забрать письмо
+                    <Mail fill="currentColor" size={40} className="animate-bounce text-[#e6d5bc]" />
+                    Послание прибыло!
                   </>
                 ) : (
                   <>
-                    <Mail size={36} className="opacity-20" />
-                    <span className="opacity-40">Писем пока нет</span>
+                    <Mail size={40} className="opacity-20" />
+                    <span className="opacity-40">Почта пуста</span>
                   </>
                 )}
               </motion.div>
@@ -869,17 +898,17 @@ function DetailItem({ label, value, isEditing, onLabelChange, onValueChange }: {
   onValueChange?: (val: string) => void
 }) {
   return (
-    <div className="p-4 bg-white/50 rounded-2xl border border-white/60 group">
+    <div className="p-6 bg-white border-4 border-[#e6d5bc] rounded-[2rem] shadow-lg transition-all hover:border-[#5c4a33]/30 group">
       <div className="flex-1">
         {isEditing ? (
           <input 
             value={label}
             onChange={(e) => onLabelChange?.(e.target.value)}
-            className="block text-[10px] uppercase font-bold text-foreground/30 bg-transparent border-none focus:ring-0 w-full mb-1"
+            className="block text-[10px] font-black uppercase tracking-widest text-[#8b7355]/50 bg-transparent border-none focus:ring-0 w-full mb-1"
             placeholder="Название поля"
           />
         ) : (
-          <span className="block text-[10px] uppercase font-bold text-foreground/30">{label}</span>
+          <span className="block text-[10px] font-black uppercase tracking-widest text-[#8b7355]/50">{label}</span>
         )}
         
         {isEditing ? (
