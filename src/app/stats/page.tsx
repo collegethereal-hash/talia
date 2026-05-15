@@ -2,34 +2,38 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/Card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Cell } from 'recharts';
-import { BarChart2, MessageSquare, History, Heart, Clock, Smile, Mic, Video, Image as ImageIcon, StickyNote, PenTool, Hash, ExternalLink, Zap, Calendar, User, BrainCircuit, Sparkle, Sparkles, Timer } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { 
+  BarChart2, MessageSquare, History, Heart, Clock, Mic, StickyNote, 
+  PenTool, Zap, Calendar, User, BrainCircuit, Sparkle, Sparkles, Timer,
+  Trees, Moon, BookOpen, ScrollText
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from "@/lib/utils";
 
 const SUMMARY_STATS = [
-  { label: 'Всего сообщений', value: '86 680', sub: 'за 2 месяца', icon: MessageSquare, color: 'text-blue-500' },
-  { label: 'Апрель 2026', value: '54 352', sub: 'самый активный', icon: Zap, color: 'text-amber-500' },
-  { label: 'Рекорд дня', value: '3 736', sub: '13 апреля', icon: History, color: 'text-purple-500' },
-  { label: 'Голосовые', value: '846', sub: 'всего', icon: Mic, color: 'text-emerald-500' },
-  { label: 'Стикеры', value: '1 108', sub: 'итого', icon: StickyNote, color: 'text-rose-500' },
+  { label: 'Письма в Свитках', value: '86 680', sub: 'летопись за 2 месяца', icon: MessageSquare, color: 'text-blue-600' },
+  { label: 'Пик Пробуждения', value: '54 352', sub: 'апрельское цветение', icon: Zap, color: 'text-amber-500' },
+  { label: 'Великий Рекорд', value: '3 736', sub: '13 апреля', icon: History, color: 'text-purple-600' },
+  { label: 'Песни Ветра', value: '846', sub: 'голосовые послания', icon: Mic, color: 'text-emerald-600' },
+  { label: 'Магические Печати', value: '1 108', sub: 'стикеры и знаки', icon: StickyNote, color: 'text-rose-500' },
 ];
 
 const COMPARISON_DATA = [
-  { label: 'Сообщения', me: 44397, polina: 42283, meLabel: '44 397 (51.2%)', polinaLabel: '42 283 (48.8%)' },
-  { label: 'Слов всего', me: 160532, polina: 113332, meLabel: '160 532', polinaLabel: '113 332' },
-  { label: 'Голосовые', me: 672, polina: 174, meLabel: '672', polinaLabel: '174' },
-  { label: 'Видео-кружки', me: 0, polina: 115, meLabel: '0', polinaLabel: '115' },
-  { label: 'Фото', me: 275, polina: 586, meLabel: '275', polinaLabel: '586' },
-  { label: 'Стикеры', me: 549, polina: 559, meLabel: '549', polinaLabel: '559' },
-  { label: 'Смех (хаха/лол)', me: 393, polina: 777, meLabel: '393', polinaLabel: '777' },
-  { label: 'Вопросы (?)', me: 1718, polina: 914, meLabel: '1718', polinaLabel: '914' },
+  { label: 'Послания', me: 44397, polina: 42283, meLabel: '44 397', polinaLabel: '42 283' },
+  { label: 'Слова Силы', me: 160532, polina: 113332, meLabel: '160 532', polinaLabel: '113 332' },
+  { label: 'Голос Сердца', me: 672, polina: 174, meLabel: '672', polinaLabel: '174' },
+  { label: 'Зеркальные Сферы', me: 0, polina: 115, meLabel: '0', polinaLabel: '115' },
+  { label: 'Отражения (Фото)', me: 275, polina: 586, meLabel: '275', polinaLabel: '586' },
+  { label: 'Тайные Знаки', me: 549, polina: 559, meLabel: '549', polinaLabel: '559' },
+  { label: 'Искры Смеха', me: 393, polina: 777, meLabel: '393', polinaLabel: '777' },
+  { label: 'Поиск Истины (?)', me: 1718, polina: 914, meLabel: '1718', polinaLabel: '914' },
 ];
 
 const MONTHLY_DATA = [
-  { name: 'Март 2026', me: 8000, polina: 8200 },
-  { name: 'Апрель 2026', me: 28000, polina: 26352 },
-  { name: 'Май 2026', me: 9000, polina: 8500 },
+  { name: 'Март', me: 8000, polina: 8200 },
+  { name: 'Апрель', me: 28000, polina: 26352 },
+  { name: 'Май', me: 9000, polina: 8500 },
 ];
 
 const HOURLY_DATA = [
@@ -43,52 +47,39 @@ const HOURLY_DATA = [
   { hour: '21:00', me: 3600, polina: 3500 },
 ];
 
-function PaliaCard({ children, title, icon: Icon, className }: { children: React.ReactNode, title?: string, icon?: any, className?: string }) {
+function PaliaPaper({ children, title, icon: Icon, className }: { children: React.ReactNode, title?: string, icon?: any, className?: string }) {
   return (
-    <Card className={cn("relative p-6 border-none bg-[#fdfaf3] shadow-lg shadow-black/5 overflow-visible", className)}>
-      {/* Pin */}
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-        <div className="relative">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-md border border-red-700/20" />
-          <div className="absolute top-0.5 left-0.5 w-1.5 h-1.5 rounded-full bg-white/40" />
-        </div>
+    <div className={cn("relative p-1 bg-[#e6d5bc] rounded-[2.5rem] shadow-xl", className)}>
+      <div className="bg-[#fdfaf3] rounded-[2.3rem] p-8 border-4 border-[#e6d5bc] relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
+        {/* Paper pin effect */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-6 h-6 bg-[#5c4a33] rounded-full shadow-lg border-4 border-[#e6d5bc] z-20" />
+        
+        {title && (
+          <div className="flex items-center gap-4 border-b-4 border-[#e6d5bc]/30 pb-6 mb-8 mt-4">
+            <div className="p-3 bg-[#5c4a33] text-[#fdfaf3] rounded-2xl shadow-lg border-2 border-[#e6d5bc]">
+              {Icon && <Icon size={24} />}
+            </div>
+            <div>
+              <h3 className="text-2xl font-serif font-black text-[#5c4a33]">{title}</h3>
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#8b7355]">Архивные записи</p>
+            </div>
+          </div>
+        )}
+        <div className="relative z-10">{children}</div>
       </div>
-      
-      {title && (
-        <h3 className="text-lg font-serif font-bold mb-6 flex items-center gap-2 text-zinc-800/70 border-b border-zinc-200 pb-3">
-          {Icon && <Icon size={20} className="text-talia-lavender" />}
-          {title}
-        </h3>
-      )}
-      {children}
-      
-      {/* Texture */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] rounded-3xl" />
-    </Card>
+    </div>
   );
 }
 
 function CountdownTimer() {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    // Target is June 15, 2026 (Next update after tomorrow's May 15)
     const targetDate = new Date('2026-06-15T00:00:00').getTime();
-
     const interval = setInterval(() => {
       const now = new Date().getTime();
       const distance = targetDate - now;
-
-      if (distance < 0) {
-        clearInterval(interval);
-        return;
-      }
-
+      if (distance < 0) { clearInterval(interval); return; }
       setTimeLeft({
         days: Math.floor(distance / (1000 * 60 * 60 * 24)),
         hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
@@ -96,23 +87,22 @@ function CountdownTimer() {
         seconds: Math.floor((distance % (1000 * 60)) / 1000)
       });
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="flex gap-4 md:gap-8 items-center justify-center">
+    <div className="flex gap-4 md:gap-10 items-center justify-center">
       {[
         { val: timeLeft.days, label: 'дней' },
         { val: timeLeft.hours, label: 'часов' },
         { val: timeLeft.minutes, label: 'минут' },
         { val: timeLeft.seconds, label: 'секунд' }
-      ].map((item, i) => (
+      ].map((item) => (
         <div key={item.label} className="text-center">
-          <div className="text-3xl md:text-5xl font-black text-talia-lavender drop-shadow-sm font-serif">
+          <div className="text-4xl md:text-6xl font-black text-[#5c4a33] font-serif drop-shadow-sm">
             {String(item.val).padStart(2, '0')}
           </div>
-          <div className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 mt-1">
+          <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[#8b7355] mt-1">
             {item.label}
           </div>
         </div>
@@ -123,33 +113,40 @@ function CountdownTimer() {
 
 export default function StatsPage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 pt-12 pb-32 space-y-16 bg-[#fdfaf3]/50">
-      <header className="text-center space-y-4">
-        <h1 className="text-5xl font-serif font-bold text-foreground/90 tracking-tight">Архив воспоминаний</h1>
-        <div className="flex items-center justify-center gap-2 text-foreground/40 italic font-medium">
-          <History size={18} className="text-talia-lavender" />
-          <span>Наша история в деталях и цифрах</span>
+    <div className="max-w-7xl mx-auto px-4 pt-12 pb-32 space-y-20">
+      <header className="text-center space-y-6">
+        <div className="inline-flex items-center gap-4 px-8 py-3 bg-[#5c4a33] text-[#fdfaf3] rounded-full border-4 border-[#e6d5bc] shadow-2xl">
+          <ScrollText size={24} />
+          <span className="text-[10px] font-black uppercase tracking-[0.4em]">Великая Летопись</span>
         </div>
+        <h1 className="text-6xl font-serif font-black text-[#5c4a33] tracking-tight">Архив Наших Воспоминаний</h1>
+        <p className="text-[#8b7355] italic font-serif text-lg max-w-2xl mx-auto">
+          "Каждое слово — это след в истории, каждый день — новая глава нашей общей сказки."
+        </p>
       </header>
 
-      {/* Countdown to Next Update */}
-      <div className="max-w-2xl mx-auto">
-        <PaliaCard className="bg-gradient-to-b from-[#fdfaf3] to-white">
-          <div className="text-center space-y-6">
-            <div className="flex items-center justify-center gap-2 text-zinc-400">
-              <Timer size={18} className="animate-pulse" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em]">До следующего обновления</span>
+      {/* Countdown - Wooden Tablet Style */}
+      <div className="max-w-3xl mx-auto">
+        <div className="p-1.5 bg-[#5c4a33] rounded-[3rem] shadow-2xl border-4 border-[#e6d5bc]">
+          <div className="bg-[#fdfaf3] p-10 rounded-[2.8rem] border-4 border-[#e6d5bc] space-y-8 relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
+            <div className="text-center space-y-6">
+              <div className="flex items-center justify-center gap-4 text-[#8b7355]">
+                <Timer size={24} className="animate-spin-slow" />
+                <span className="text-[12px] font-black uppercase tracking-[0.4em]">До Нового Свитка</span>
+              </div>
+              <CountdownTimer />
+              <div className="pt-6 border-t-4 border-[#e6d5bc]/30">
+                <p className="text-[10px] font-black text-[#8b7355] uppercase tracking-widest">
+                  Следующее подведение итогов: <span className="text-[#5c4a33] border-b-2 border-[#5c4a33]">15 июня 2026</span>
+                </p>
+              </div>
             </div>
-            <CountdownTimer />
-            <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
-              Следующий отчет: <span className="text-talia-lavender">15 июня 2026</span>
-            </p>
           </div>
-        </PaliaCard>
+        </div>
       </div>
 
       {/* Summary Row */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
         {SUMMARY_STATS.map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -157,291 +154,198 @@ export default function StatsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
           >
-            <PaliaCard className="text-center group hover:scale-105 transition-transform cursor-default">
-              <stat.icon className={cn("mx-auto mb-3 opacity-50 group-hover:opacity-100 transition-opacity", stat.color)} size={24} />
-              <div className="text-2xl font-bold text-zinc-800">{stat.value}</div>
-              <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">{stat.label}</div>
-              <div className="text-[9px] text-zinc-300 italic">{stat.sub}</div>
-            </PaliaCard>
+            <div className="h-full p-1 bg-[#e6d5bc] rounded-[2rem] shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all group">
+              <div className="bg-[#fdfaf3] h-full p-8 rounded-[1.8rem] border-2 border-[#e6d5bc] text-center space-y-4">
+                <div className="w-14 h-14 bg-white border-4 border-[#e6d5bc] rounded-2xl flex items-center justify-center mx-auto shadow-inner group-hover:scale-110 transition-transform">
+                  <stat.icon className={cn("opacity-70", stat.color)} size={28} />
+                </div>
+                <div className="space-y-1">
+                  <div className="text-3xl font-serif font-black text-[#5c4a33] tracking-tighter">{stat.value}</div>
+                  <div className="text-[9px] font-black uppercase tracking-widest text-[#8b7355] leading-tight">{stat.label}</div>
+                </div>
+                <div className="text-[8px] text-[#8b7355]/60 italic font-serif pt-2 border-t border-[#e6d5bc]/30">{stat.sub}</div>
+              </div>
+            </div>
           </motion.div>
         ))}
       </div>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Who Writes More */}
-        <PaliaCard title="Кто пишет больше" icon={PenTool} className="lg:col-span-2">
-          <div className="space-y-6">
-            <div className="flex justify-center gap-8 mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#8b5cf6]" />
-                <span className="text-xs font-bold text-zinc-600">The Grinch</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* Comparison Board */}
+        <PaliaPaper title="Летопись Первенства" icon={PenTool} className="lg:col-span-2">
+          <div className="space-y-8">
+            <div className="flex justify-center gap-12 mb-8 bg-white/50 p-6 rounded-[2rem] border-4 border-[#e6d5bc]/30 shadow-inner">
+              <div className="flex items-center gap-4 group">
+                <div className="w-12 h-12 rounded-2xl bg-[#5c4a33] text-amber-200 flex items-center justify-center shadow-lg border-2 border-[#e6d5bc]">
+                  <Trees size={24} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <span className="block text-[8px] font-black uppercase text-[#8b7355] tracking-widest">Хранитель Леса</span>
+                  <span className="text-lg font-serif font-black text-[#5c4a33]">Гринч</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#10b981]" />
-                <span className="text-xs font-bold text-zinc-600">Cindy Lou</span>
+              <div className="w-px h-12 bg-[#e6d5bc]" />
+              <div className="flex items-center gap-4 group">
+                <div className="w-12 h-12 rounded-2xl bg-[#5c4a33] text-blue-100 flex items-center justify-center shadow-lg border-2 border-[#e6d5bc]">
+                  <Moon size={24} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <span className="block text-[8px] font-black uppercase text-[#8b7355] tracking-widest">Дитя Луны</span>
+                  <span className="text-lg font-serif font-black text-[#5c4a33]">Синди Лу</span>
+                </div>
               </div>
             </div>
             
-            {COMPARISON_DATA.map((item) => {
-              const total = item.me + item.polina;
-              const meWidth = total > 0 ? (item.me / Math.max(item.me, item.polina)) * 100 : 0;
-              const polinaWidth = total > 0 ? (item.polina / Math.max(item.me, item.polina)) * 100 : 0;
-              
-              return (
-                <div key={item.label} className="grid grid-cols-1 md:grid-cols-4 items-center gap-2 md:gap-6 group/item">
-                  <span className="text-sm font-bold text-zinc-600 group-hover/item:text-talia-lavender transition-colors">{item.label}</span>
-                  <div className="col-span-3 space-y-2.5">
-                    <div className="relative h-6 bg-zinc-100/50 rounded-xl overflow-hidden border border-black/5">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${meWidth}%` }}
-                        className="h-full bg-gradient-to-r from-[#8b5cf6] to-[#a78bfa] flex items-center px-4 shadow-inner"
-                      >
-                        <span className="text-[10px] md:text-xs font-black text-white drop-shadow-sm whitespace-nowrap">{item.meLabel}</span>
-                      </motion.div>
-                    </div>
-                    <div className="relative h-6 bg-zinc-100/50 rounded-xl overflow-hidden border border-black/5">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${polinaWidth}%` }}
-                        className="h-full bg-gradient-to-r from-[#10b981] to-[#34d399] flex items-center px-4 shadow-inner"
-                      >
-                        <span className="text-[10px] md:text-xs font-black text-white drop-shadow-sm whitespace-nowrap">{item.polinaLabel}</span>
-                      </motion.div>
+            <div className="space-y-8">
+              {COMPARISON_DATA.map((item) => {
+                const total = item.me + item.polina;
+                const meWidth = total > 0 ? (item.me / Math.max(item.me, item.polina)) * 100 : 0;
+                const polinaWidth = total > 0 ? (item.polina / Math.max(item.me, item.polina)) * 100 : 0;
+                
+                return (
+                  <div key={item.label} className="grid grid-cols-1 md:grid-cols-5 items-center gap-4 md:gap-10 group/item">
+                    <span className="text-sm font-black uppercase tracking-[0.2em] text-[#8b7355] group-hover/item:text-[#5c4a33] transition-colors col-span-1">{item.label}</span>
+                    <div className="col-span-4 space-y-4">
+                      <div className="relative h-8 bg-white/50 rounded-2xl overflow-hidden border-2 border-[#e6d5bc] shadow-inner">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${meWidth}%` }}
+                          className="h-full bg-gradient-to-r from-[#5c4a33] to-[#8b7355] flex items-center px-6"
+                        >
+                          <span className="text-[10px] font-black text-amber-100 uppercase tracking-widest">{item.meLabel}</span>
+                        </motion.div>
+                      </div>
+                      <div className="relative h-8 bg-white/50 rounded-2xl overflow-hidden border-2 border-[#e6d5bc] shadow-inner">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${polinaWidth}%` }}
+                          className="h-full bg-gradient-to-r from-[#8b7355] to-[#5c4a33] flex items-center px-6"
+                        >
+                          <span className="text-[10px] font-black text-blue-50 uppercase tracking-widest">{item.polinaLabel}</span>
+                        </motion.div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </PaliaCard>
+        </PaliaPaper>
 
-        {/* Activity by Hours */}
-        <PaliaCard title="Активность по часам" icon={Clock}>
-          <div className="h-[300px] w-full">
+        {/* Activity Charts */}
+        <PaliaPaper title="Ритмы Пробуждения" icon={Clock}>
+          <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={HOURLY_DATA}>
                 <defs>
                   <linearGradient id="colorMe" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#5c4a33" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#5c4a33" stopOpacity={0}/>
                   </linearGradient>
                   <linearGradient id="colorPolina" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#8b7355" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#8b7355" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e6d5bc" />
+                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#8b7355', fontWeight: 'bold'}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#8b7355', fontWeight: 'bold'}} />
                 <Tooltip 
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.1)' }}
+                  contentStyle={{ 
+                    backgroundColor: '#fdfaf3', 
+                    borderRadius: '1.5rem', 
+                    border: '4px solid #e6d5bc', 
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                    fontFamily: 'serif'
+                  }}
                 />
-                <Area type="monotone" dataKey="me" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorMe)" />
-                <Area type="monotone" dataKey="polina" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorPolina)" />
+                <Area type="monotone" dataKey="me" stroke="#5c4a33" strokeWidth={4} fillOpacity={1} fill="url(#colorMe)" />
+                <Area type="monotone" dataKey="polina" stroke="#8b7355" strokeWidth={4} fillOpacity={1} fill="url(#colorPolina)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </PaliaCard>
+        </PaliaPaper>
 
-        {/* Activity by Months */}
-        <PaliaCard title="Активность по месяцам" icon={Calendar}>
-          <div className="h-[300px] w-full">
+        <PaliaPaper title="Циклы Сезонов" icon={Calendar}>
+          <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={MONTHLY_DATA}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af'}} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e6d5bc" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#8b7355', fontWeight: 'bold'}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#8b7355', fontWeight: 'bold'}} />
                 <Tooltip 
-                  cursor={{fill: '#f3f4f6', radius: 8}}
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px -5px rgba(0,0,0,0.1)' }}
+                  cursor={{fill: '#e6d5bc', opacity: 0.3}}
+                  contentStyle={{ 
+                    backgroundColor: '#fdfaf3', 
+                    borderRadius: '1.5rem', 
+                    border: '4px solid #e6d5bc', 
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                    fontFamily: 'serif'
+                  }}
                 />
-                <Bar dataKey="me" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="polina" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="me" fill="#5c4a33" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="polina" fill="#8b7355" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </PaliaCard>
-
-        {/* Behavior & Style */}
-        <PaliaCard title="Поведение и стиль" icon={User} className="lg:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4 p-6 bg-zinc-50/50 rounded-[2rem] border border-black/5">
-              <div className="text-xs font-bold text-[#8b5cf6] uppercase tracking-widest mb-4">The Grinch</div>
-              {[
-                { label: 'Ср. длина сообщ.', val: '20.8 симв.' },
-                { label: 'Уникальных слов', val: '28 889' },
-                { label: 'Макс. монолог', val: '217 сообщ.' },
-                { label: 'Самое длинное', val: '3 976 симв.' },
-                { label: 'Ср. время ответа', val: '~31 сек' },
-                { label: 'Пересланных', val: '19' },
-                { label: 'Ссылок', val: '71' },
-              ].map(row => (
-                <div key={row.label} className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-400 font-medium">{row.label}</span>
-                  <span className="text-zinc-700 font-bold">{row.val}</span>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-4 p-6 bg-zinc-50/50 rounded-[2rem] border border-black/5">
-              <div className="text-xs font-bold text-[#10b981] uppercase tracking-widest mb-4">Cindy Lou</div>
-              {[
-                { label: 'Ср. длина сообщ.', val: '13.8 симв.' },
-                { label: 'Уникальных слов', val: '16 336' },
-                { label: 'Макс. монолог', val: '87 сообщ.' },
-                { label: 'Самое длинное', val: '2 853 симв.' },
-                { label: 'Ср. время ответа', val: '~17 сек' },
-                { label: 'Пересланных', val: '207' },
-                { label: 'Ссылок', val: '12' },
-              ].map(row => (
-                <div key={row.label} className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-400 font-medium">{row.label}</span>
-                  <span className="text-zinc-700 font-bold">{row.val}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </PaliaCard>
-
-        {/* Emotions & Tone */}
-        <PaliaCard title="Эмоции и тональность" icon={Heart} className="lg:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4 p-6 bg-white/50 rounded-[2rem] border border-black/5">
-              <div className="text-xs font-bold text-[#8b5cf6] uppercase tracking-widest mb-4">The Grinch</div>
-              {[
-                { label: 'Нежность / любовь', val: '324' },
-                { label: 'Ласковые слова', val: '513' },
-                { label: 'Извинения', val: '323' },
-                { label: 'Мат', val: '1 390' },
-                { label: 'Грусть / негатив', val: '485' },
-                { label: '«Скучаю»', val: '7 раз' },
-              ].map(row => (
-                <div key={row.label} className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-400 font-medium">{row.label}</span>
-                  <span className="text-zinc-700 font-bold">{row.val}</span>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-4 p-6 bg-white/50 rounded-[2rem] border border-black/5">
-              <div className="text-xs font-bold text-[#10b981] uppercase tracking-widest mb-4">Cindy Lou</div>
-              {[
-                { label: 'Нежность / любовь', val: '112' },
-                { label: 'Ласковые слова', val: '256' },
-                { label: 'Извинения', val: '103' },
-                { label: 'Мат', val: '1 128' },
-                { label: 'Грусть / негатив', val: '370' },
-                { label: '«Скучаю»', val: '7 раз' },
-              ].map(row => (
-                <div key={row.label} className="flex justify-between items-center text-xs">
-                  <span className="text-zinc-400 font-medium">{row.label}</span>
-                  <span className="text-zinc-700 font-bold">{row.val}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </PaliaCard>
-
-        {/* Favorite Stickers */}
-        <PaliaCard title="Анализ эмоций (Топ-15)" icon={StickyNote} className="lg:col-span-2">
-          <div className="space-y-8">
-            <div>
-              <div className="text-[10px] font-bold text-[#8b5cf6] uppercase tracking-[0.3em] mb-4 ml-2 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#8b5cf6]" />
-                Гринч
-              </div>
-              <div className="flex gap-3 flex-wrap">
-                {[
-                  { e: '😳', c: 252 }, { e: '⚔️', c: 136 }, { e: '😔', c: 88 }, { e: '😭', c: 44 }, { e: '❤️', c: 38 },
-                  { e: '⛓️', c: 27 }, { e: '😡', c: 13 }
-                ].map(s => (
-                  <div key={s.e} className="px-3 py-2 bg-white rounded-xl border border-black/5 shadow-sm text-sm font-bold flex items-center gap-2 group hover:border-[#8b5cf6]/30 transition-colors">
-                    <span className="text-lg">{s.e}</span>
-                    <span className="text-zinc-400 group-hover:text-[#8b5cf6] transition-colors">{s.c}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10px] font-bold text-[#10b981] uppercase tracking-[0.3em] mb-4 ml-2 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#10b981]" />
-                Синди Лу
-              </div>
-              <div className="flex gap-3 flex-wrap">
-                {[
-                  { e: '😳', c: 1423 }, { e: '😔', c: 691 }, { e: '😭', c: 286 }, { e: '😟', c: 196 }, { e: '😋', c: 118 },
-                  { e: '👎', c: 105 }, { e: '😛', c: 51 }
-                ].map(s => (
-                  <div key={s.e} className="px-3 py-2 bg-white rounded-xl border border-black/5 shadow-sm text-sm font-bold flex items-center gap-2 group hover:border-[#10b981]/30 transition-colors">
-                    <span className="text-lg">{s.e}</span>
-                    <span className="text-zinc-400 group-hover:text-[#10b981] transition-colors">{s.c}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </PaliaCard>
-
-        {/* Who Starts Conversation */}
-        <PaliaCard title="Кто начинает разговор" icon={Clock} className="lg:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 rounded-[2rem] bg-gradient-to-br from-[#8b5cf6]/5 to-transparent border border-[#8b5cf6]/10">
-              <div className="text-[10px] font-bold text-[#8b5cf6] uppercase tracking-widest mb-2">The Grinch</div>
-              <div className="text-3xl font-bold text-zinc-800">31 раз</div>
-              <div className="text-xs text-zinc-400">49.2% инициатив</div>
-            </div>
-            <div className="p-6 rounded-[2rem] bg-gradient-to-br from-[#10b981]/5 to-transparent border border-[#10b981]/10">
-              <div className="text-[10px] font-bold text-[#10b981] uppercase tracking-widest mb-2">Cindy Lou</div>
-              <div className="text-3xl font-bold text-zinc-800">32 раза</div>
-              <div className="text-xs text-zinc-400">50.8% инициатив</div>
-            </div>
-          </div>
-        </PaliaCard>
+        </PaliaPaper>
       </div>
 
-      {/* AI Opinion Footer */}
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex items-center gap-4 mb-2">
-          <div className="p-3 rounded-2xl bg-talia-lavender/10 text-talia-lavender">
-            <BrainCircuit size={28} />
+      {/* AI Insight Footer - Galdur Style */}
+      <div className="max-w-5xl mx-auto space-y-10">
+        <div className="flex items-center justify-center gap-6">
+          <div className="w-px h-12 bg-gradient-to-t from-transparent via-[#e6d5bc] to-transparent flex-1" />
+          <div className="flex flex-col items-center gap-2">
+            <div className="p-4 rounded-3xl bg-[#5c4a33] text-[#fdfaf3] shadow-2xl border-4 border-[#e6d5bc]">
+              <BrainCircuit size={40} />
+            </div>
+            <h2 className="text-3xl font-serif font-black text-[#5c4a33]">Озарение Гальдуров</h2>
           </div>
-          <div>
-            <h2 className="text-2xl font-serif font-bold text-zinc-800">Мнение Talia AI</h2>
-            <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Персональный разбор вашей истории</p>
-          </div>
+          <div className="w-px h-12 bg-gradient-to-t from-transparent via-[#e6d5bc] to-transparent flex-1" />
         </div>
 
-        <PaliaCard className="bg-gradient-to-br from-[#fdfaf3] to-white border border-talia-lavender/10 shadow-xl">
-          <div className="space-y-6 text-zinc-700 leading-relaxed">
-            <div className="flex gap-4">
-              <div className="mt-1 text-talia-lavender"><Sparkle size={18} /></div>
-              <p className="text-sm md:text-lg italic font-bold text-zinc-800/90">
-                «Ваша переписка — это редкий пример идеального цифрового баланса. Статистика 51.2% на 48.8% говорит о том, что вы оба одинаково цените ваше общение и вкладываетесь в него всем сердцем. Вы не просто обмениваетесь словами, вы строите общий мир.»
-              </p>
+        <div className="relative p-1.5 bg-[#e6d5bc] rounded-[4rem] shadow-2xl">
+          <div className="bg-[#fdfaf3] p-12 rounded-[3.8rem] border-4 border-[#e6d5bc] relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]">
+            <div className="absolute top-0 right-0 p-12 opacity-5 text-[#5c4a33]">
+              <BookOpen size={180} />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-zinc-100">
-              <div className="space-y-3">
-                <h4 className="font-black text-zinc-900 flex items-center gap-2 text-base">
-                  <Heart size={18} className="text-rose-400" />
-                  Что я вижу
-                </h4>
-                <p className="text-sm md:text-base font-semibold leading-relaxed">
-                  Невероятная нежность со стороны <span className="text-[#8b5cf6] font-black underline decoration-2 underline-offset-4 decoration-[#8b5cf6]/20">Гринча</span> (в 3 раза больше теплых слов!) создает прочный фундамент, а <span className="text-[#10b981] font-black underline decoration-2 underline-offset-4 decoration-[#10b981]/20">Синди Лу</span> привносит в диалог живость через юмор и визуальные образы (почти вдвое больше смеха и фото).
+            
+            <div className="relative z-10 space-y-10">
+              <div className="flex gap-8 items-start">
+                <div className="mt-2 text-[#5c4a33] shrink-0"><Sparkles size={32} /></div>
+                <p className="text-xl md:text-3xl font-serif italic font-black text-[#5c4a33] leading-relaxed">
+                  «Древние механизмы Talia считывают ритмы ваших сердец. Баланс 51.2% к 48.8% — это симфония, где две души звучат в идеальном унисоне. Ваша связь прочна, как корни Великого Дуба.»
                 </p>
               </div>
-              <div className="space-y-3">
-                <h4 className="font-black text-zinc-900 flex items-center gap-2 text-base">
-                  <Sparkles size={18} className="text-amber-400" />
-                  Мой совет
-                </h4>
-                <p className="text-sm md:text-base font-semibold leading-relaxed">
-                  Вы оба — выраженные "ночные совы". Эти часы затишья в полночь — ваше самое ценное время. Старайтесь беречь эти моменты тишины, когда мир затихает, и остаетесь только вы двое. Продолжайте в том же духе, вы — идеальная команда!
-                </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-12 border-t-4 border-[#e6d5bc]/30">
+                <div className="space-y-6">
+                  <h4 className="font-serif font-black text-[#5c4a33] flex items-center gap-4 text-2xl">
+                    <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center border-2 border-rose-100 shadow-sm">
+                      <Heart size={20} fill="currentColor" />
+                    </div>
+                    Свет Истины
+                  </h4>
+                  <p className="text-lg font-serif italic text-[#8b7355] leading-relaxed">
+                    Глубокая нежность <span className="text-[#5c4a33] font-black underline decoration-4 underline-offset-8 decoration-[#e6d5bc]">Гринча</span> в письмах создает защитный купол над вашей историей, а яркие эмоции и смех <span className="text-[#5c4a33] font-black underline decoration-4 underline-offset-8 decoration-[#e6d5bc]">Синди Лу</span> наполняют этот купол жизнью и цветом.
+                  </p>
+                </div>
+                <div className="space-y-6">
+                  <h4 className="font-serif font-black text-[#5c4a33] flex items-center gap-4 text-2xl">
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border-2 border-amber-100 shadow-sm">
+                      <Sparkles size={20} fill="currentColor" />
+                    </div>
+                    Путь Мудрецов
+                  </h4>
+                  <p className="text-lg font-serif italic text-[#8b7355] leading-relaxed">
+                    Ваши души пробуждаются в полночь, когда мир затихает. Эти часы — ваше сакральное время. Берегите эти ночные диалоги, в них скрыта истинная магия вашего союза. Продолжайте свой путь, вы — легенда этих миров.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </PaliaCard>
+        </div>
       </div>
     </div>
   );
