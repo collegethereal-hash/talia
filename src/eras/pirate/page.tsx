@@ -42,11 +42,12 @@ export default function PirateDashboard() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#020617] text-amber-100 font-serif overflow-x-hidden selection:bg-amber-500/30">
-      {/* Background Layer: Subtle Texture & Deep Gradient */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,#0f172a_0%,#020617_100%)]" />
-        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] pointer-events-none" />
+    <div className="relative min-h-screen bg-[#020a17] text-amber-100 font-serif overflow-x-hidden selection:bg-amber-500/30">
+      {/* Background Decor */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-10" />
+        <div className="absolute top-0 right-0 w-full h-[600px] bg-[radial-gradient(ellipse_at_top_right,rgba(14,165,233,0.1)_0%,transparent_50%)]" />
+        <div className="absolute bottom-0 left-0 w-full h-[600px] bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.05)_0%,transparent_50%)]" />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-12 md:py-20 space-y-12">
