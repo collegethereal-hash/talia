@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Skull, Anchor, Sword, Crosshair, Bomb, 
@@ -10,106 +10,99 @@ import {
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
-// Define Zone Interface
 interface Zone {
   id: string;
   name: string;
   desc: string;
   maxCrew: number;
-  effect: string;
-  x: string; // CSS position
+  x: string;
   y: string;
 }
 
 export default function LairPage() {
   const [battleLog, setBattleLog] = useState<string[]>([
-    "Вы на капитанском мостике. Команда ждет приказов.",
+    "Капитан! Вражеский галеон подошел на расстояние выстрела!",
+    "Прикажите начать абордаж или открыть огонь!"
   ]);
   
-  // Crew distribution
-  const [crew, setCrew] = useState<Record<string, number>>({
+  // Crew distribution for Player
+  const [playerCrew, setPlayerCrew] = useState<Record<string, number>>({
     helm: 5,
-    cannons_left: 10,
-    cannons_right: 10,
-    masts: 15,
+    cannons: 15,
+    deck: 30
+  });
+
+  // Crew distribution for Enemy
+  const [enemyCrew, setEnemyCrew] = useState<Record<string, number>>({
+    helm: 5,
+    cannons: 15,
     deck: 40
   });
 
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
-  const [movingCrew, setMovingCrew] = useState(false);
+  const [isAttacking, setIsAttacking] = useState(false);
+  const [boardingDots, setBoardingDots] = useState<{id: number, x: number, y: number}[]>([]);
 
-  const zones: Zone[] = [
-    { id: 'helm', name: 'Штурвал', desc: 'Управляет маневренностью', maxCrew: 5, effect: '+Уклонение', x: '50%', y: '15%' },
-    { id: 'masts', name: 'Мачты', desc: 'Управляют скоростью', maxCrew: 15, effect: '+Скорость', x: '50%', y: '40%' },
-    { id: 'cannons_left', name: 'Левые Пушки', desc: 'Огонь по левому борту', maxCrew: 15, effect: 'Атака Слева', x: '25%', y: '50%' },
-    { id: 'cannons_right', name: 'Правые Пушки', desc: 'Огонь по правому борту', maxCrew: 15, effect: 'Атака Справа', x: '75%', y: '50%' },
-    { id: 'deck', name: 'Палуба', desc: 'Резерв и абордаж', maxCrew: 50, effect: 'Готовность', x: '50%', y: '70%' },
+  const playerZones: Zone[] = [
+    { id: 'helm', name: 'Штурвал', desc: 'Маневр', maxCrew: 5, x: '50%', y: '15%' },
+    { id: 'cannons', name: 'Пушки', desc: 'Огонь', maxCrew: 20, x: '50%', y: '45%' },
+    { id: 'deck', name: 'Палуба', desc: 'Резерв', maxCrew: 50, x: '50%', y: '75%' },
+  ];
+
+  const enemyZones: Zone[] = [
+    { id: 'helm', name: 'Мостик', desc: 'Управление', maxCrew: 5, x: '50%', y: '15%' },
+    { id: 'cannons', name: 'Батарея', desc: 'Огонь', maxCrew: 20, x: '50%', y: '45%' },
+    { id: 'deck', name: 'Каюты', desc: 'Защита', maxCrew: 50, x: '50%', y: '75%' },
   ];
 
   const addLog = (msg: string) => {
     setBattleLog(prev => [...prev, msg]);
   };
 
-  const handleZoneClick = (zoneId: string) => {
-    if (!selectedZone) {
-      setSelectedZone(zoneId);
-      addLog(`Выбрана зона: ${zones.find(z => z.id === zoneId)?.name}. Выберите куда отправить людей.`);
-    } else if (selectedZone === zoneId) {
-      setSelectedZone(null);
-    } else {
-      // Move crew from selectedZone to zoneId
-      const sourceZone = selectedZone;
-      const targetZone = zoneId;
-      
-      const sourceCount = crew[sourceZone];
-      const targetMax = zones.find(z => z.id === targetZone)?.maxCrew || 0;
-      const targetCurrent = crew[targetZone];
-      
-      if (sourceCount <= 0) {
-        addLog(`❌ В зоне ${zones.find(z => z.id === sourceZone)?.name} нет людей!`);
-        setSelectedZone(null);
-        return;
-      }
-      
-      const availableSpace = targetMax - targetCurrent;
-      if (availableSpace <= 0) {
-        addLog(`❌ Зона ${zones.find(z => z.id === targetZone)?.name} уже заполнена!`);
-        setSelectedZone(null);
-        return;
-      }
-      
-      const amountToMove = Math.min(5, sourceCount, availableSpace); // Move in batches of 5
-      
-      setMovingCrew(true);
-      setTimeout(() => {
-        setCrew(prev => ({
-          ...prev,
-          [sourceZone]: prev[sourceZone] - amountToMove,
-          [targetZone]: prev[targetZone] + amountToMove
-        }));
-        addLog(`🏃‍♂️ ${amountToMove} матросов перебежали из ${zones.find(z => z.id === sourceZone)?.name} в ${zones.find(z => z.id === targetZone)?.name}.`);
-        setMovingCrew(false);
-        setSelectedZone(null);
-      }, 1000);
+  const startBoarding = () => {
+    if (playerCrew.deck < 5) {
+      addLog("❌ Слишком мало людей на палубе для абордажа!");
+      return;
     }
+
+    setIsAttacking(true);
+    addLog("⚔️ АБОРДАЖ! Твои люди прыгают на вражеский корабль!");
+
+    // Create dots moving from Player Deck to Enemy Deck
+    const newDots = Array.from({ length: 10 }).map((_, i) => ({
+      id: Date.now() + i,
+      x: 300, // Starting X (Player Deck area)
+      y: 400  // Starting Y
+    }));
+    setBoardingDots(newDots);
+
+    // Animate dots moving to the right (Enemy ship)
+    setTimeout(() => {
+      setBoardingDots(prev => prev.map(dot => ({ ...dot, x: dot.x + 300 })));
+      
+      // Simulate fight and deaths
+      setTimeout(() => {
+        setEnemyCrew(prev => ({ ...prev, deck: Math.max(0, prev.deck - 15) }));
+        setPlayerCrew(prev => ({ ...prev, deck: Math.max(0, prev.deck - 5) }));
+        setBoardingDots([]);
+        setIsAttacking(false);
+        addLog("💥 Бой на палубе! Враг потерял 15 человек, мы потеряли 5.");
+      }, 1000);
+    }, 100);
   };
 
-  // Generate random dots for crew representation
-  const renderCrewDots = (zoneId: string, count: number) => {
+  const renderCrewDots = (count: number, color: string) => {
     const dots = [];
     for (let i = 0; i < count; i++) {
-      // Random offset within a circle
-      const r = Math.random() * 20;
+      const r = Math.random() * 25;
       const theta = Math.random() * 2 * Math.PI;
       const dx = r * Math.cos(theta);
       const dy = r * Math.sin(theta);
       
       dots.push(
-        <motion.div
-          key={`${zoneId}-${i}`}
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="w-1.5 h-1.5 bg-amber-400 rounded-full absolute shadow-[0_0_5px_rgba(245,158,11,0.8)]"
+        <div
+          key={i}
+          className={cn("w-2 h-2 rounded-full absolute shadow-lg", color)}
           style={{ transform: `translate(${dx}px, ${dy}px)` }}
         />
       );
@@ -118,166 +111,118 @@ export default function LairPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#050505] text-amber-100 font-serif overflow-x-hidden p-6 md:p-12">
+    <div className="relative min-h-screen bg-[#030303] text-amber-100 font-serif overflow-x-hidden p-6 md:p-12">
       
-      {/* Huge Glowing Orbs */}
-      <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-amber-600/10 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-100px] right-[-100px] w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[100px] pointer-events-none" />
+      {/* Huge Glowing Orbs for brightness */}
+      <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-cyan-600/20 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-100px] right-[-100px] w-[600px] h-[600px] bg-red-600/20 rounded-full blur-[100px] pointer-events-none" />
       
-      <div className="relative z-10 max-w-6xl mx-auto space-y-8">
+      <div className="relative z-10 max-w-7xl mx-auto space-y-8">
          
          {/* Header */}
-         <div className="flex justify-between items-center border-b-2 border-amber-500/20 pb-4">
+         <div className="flex justify-between items-center border-b-2 border-amber-500/30 pb-4">
             <div>
-               <p className="text-[10px] font-black uppercase tracking-[0.5em] text-amber-500">Управление Кораблем</p>
-               <h1 className="text-5xl font-black uppercase text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500">Капитанский Мостик</h1>
+               <p className="text-[12px] font-black uppercase tracking-[0.5em] text-amber-500">Симуляция Сражения</p>
+               <h1 className="text-6xl font-black uppercase text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-400 to-red-600 drop-shadow-[0_2px_10px_rgba(245,158,11,0.3)]">Абордаж</h1>
             </div>
-            <div className="flex gap-4">
-               <div className="p-3 bg-black/80 rounded-xl border border-amber-500/30 text-xs">
-                  <span className="text-slate-500">Всего команды:</span> <span className="text-amber-400 font-bold">80</span>
-               </div>
-            </div>
+            <button 
+               onClick={startBoarding}
+               disabled={isAttacking}
+               className={cn(
+                 "px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl font-black uppercase text-sm tracking-wider transition-all hover:scale-105 shadow-[0_0_20px_rgba(239,68,68,0.3)] flex items-center gap-2",
+                 isAttacking ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+               )}
+            >
+               <Sword size={18} />
+               Начать Абордаж
+            </button>
          </div>
 
-         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+         {/* Two Ships Container */}
+         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
-            {/* Left: Interactive Ship Map (Top Down) */}
-            <div className="lg:col-span-8 bg-gradient-to-b from-[#110a03] to-black p-6 rounded-[3rem] border-2 border-amber-500/30 relative h-[650px] overflow-hidden">
+            {/* Ships Arena */}
+            <div className="lg:col-span-9 bg-gradient-to-b from-[#110a03] to-black p-8 rounded-[3rem] border-2 border-amber-500/20 relative h-[650px] overflow-hidden flex justify-around items-center">
                
                {/* Grid background */}
                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')]" />
                
-               {/* Holographic Ship Outline */}
-               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-[300px] h-[500px] border-4 border-amber-500/20 rounded-[100px] relative">
-                     {/* Bow (Нос) */}
-                     <div className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[150px] border-r-[150px] border-t-[80px] border-l-transparent border-r-transparent border-t-amber-500/20" />
-                     {/* Stern (Корма) */}
-                     <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 w-[200px] h-[40px] bg-amber-500/10 border-2 border-amber-500/20" />
-                  </div>
+               {/* PLAYER SHIP (Left) */}
+               <div className="relative w-[250px] h-[450px] border-4 border-cyan-500/30 rounded-[80px] bg-cyan-900/10 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+                  <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-cyan-500 text-black px-4 py-1 text-xs font-black uppercase rounded-full">Твой Корабль</div>
+                  
+                  {/* Bow */}
+                  <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[125px] border-r-[125px] border-t-[60px] border-l-transparent border-r-transparent border-t-cyan-500/20" />
+                  
+                  {/* Zones */}
+                  {playerZones.map(zone => (
+                     <div key={zone.id} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: zone.x, top: zone.y }}>
+                        <div className="w-16 h-16 bg-black/80 border-2 border-cyan-500/50 rounded-full flex items-center justify-center relative">
+                           {renderCrewDots(playerCrew[zone.id], "bg-cyan-400 shadow-cyan-500/50")}
+                        </div>
+                        {/* LARGER TEXT */}
+                        <p className="text-lg font-black text-white mt-2 drop-shadow-lg">{zone.name}</p>
+                        <p className="text-xs font-bold text-cyan-400">{playerCrew[zone.id]}👥</p>
+                     </div>
+                  ))}
                </div>
 
-               {/* Interactive Zones */}
-               {zones.map((zone) => {
-                  const isSelected = selectedZone === zone.id;
-                  const crewCount = crew[zone.id] || 0;
-                  
-                  return (
+               {/* VS Gap with moving dots */}
+               <div className="absolute inset-0 pointer-events-none">
+                  {boardingDots.map(dot => (
                      <motion.div
-                        key={zone.id}
-                        className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-                        style={{ left: zone.x, top: zone.y }}
-                        whileHover={{ scale: 1.05 }}
-                     >
-                        {/* Zone Trigger */}
-                        <div 
-                           onClick={() => handleZoneClick(zone.id)}
-                           className={cn(
-                             "w-20 h-20 rounded-full border-2 flex flex-col items-center justify-center cursor-pointer transition-all relative",
-                             isSelected ? "border-amber-400 bg-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.5)]" : "border-amber-500/30 bg-black/60 hover:border-amber-500/60"
-                           )}
-                        >
-                           {/* Crew Dots Container */}
-                           <div className="absolute inset-0 flex items-center justify-center">
-                              {renderCrewDots(zone.id, crewCount)}
-                           </div>
-                           
-                           {/* Text Overlay */}
-                           <div className="relative z-10 text-center bg-black/80 px-2 py-0.5 rounded-md">
-                              <p className="text-[10px] font-black text-amber-100">{zone.name}</p>
-                              <p className="text-xs font-black text-amber-400">{crewCount}/{zone.maxCrew}</p>
-                           </div>
-                        </div>
-                        
-                        {/* Zone Info (Shown on hover or select) */}
-                        <div className={cn(
-                          "mt-2 text-center transition-opacity max-w-[120px]",
-                          isSelected ? "opacity-100" : "opacity-60"
-                        )}>
-                           <p className="text-[8px] font-black uppercase text-amber-500">{zone.effect}</p>
-                           <p className="text-[9px] text-slate-400 leading-tight">{zone.desc}</p>
-                        </div>
-                     </motion.div>
-                  );
-               })}
+                        key={dot.id}
+                        initial={{ x: dot.x, y: dot.y }}
+                        animate={{ x: dot.x + 300, y: dot.y }}
+                        transition={{ duration: 1 }}
+                        className="w-3 h-3 bg-amber-400 rounded-full absolute shadow-[0_0_10px_rgba(245,158,11,1)]"
+                     />
+                  ))}
+               </div>
 
-               {/* Movement Line (Holographic) */}
-               {selectedZone && (
-                  <div className="absolute inset-0 pointer-events-none">
-                     {/* Visual cue to select target */}
-                     <div className="text-center mt-4">
-                        <span className="text-xs font-black uppercase bg-amber-500 text-black px-4 py-1 rounded-full animate-pulse">
-                           Выберите зону для отправки людей
-                        </span>
+               {/* ENEMY SHIP (Right) */}
+               <div className="relative w-[250px] h-[450px] border-4 border-red-500/30 rounded-[80px] bg-red-900/10 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+                  <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-1 text-xs font-black uppercase rounded-full">Галеон Врага</div>
+                  
+                  {/* Bow */}
+                  <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[125px] border-r-[125px] border-t-[60px] border-l-transparent border-r-transparent border-t-red-500/20" />
+                  
+                  {/* Zones */}
+                  {enemyZones.map(zone => (
+                     <div key={zone.id} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: zone.x, top: zone.y }}>
+                        <div className="w-16 h-16 bg-black/80 border-2 border-red-500/50 rounded-full flex items-center justify-center relative">
+                           {renderCrewDots(enemyCrew[zone.id], "bg-red-500 shadow-red-500/50")}
+                        </div>
+                        {/* LARGER TEXT */}
+                        <p className="text-lg font-black text-white mt-2 drop-shadow-lg">{zone.name}</p>
+                        <p className="text-xs font-bold text-red-400">{enemyCrew[zone.id]}👥</p>
                      </div>
-                  </div>
-               )}
-
-               {/* Moving Crew Animation */}
-               {movingCrew && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20 backdrop-blur-sm">
-                     <div className="text-center">
-                        <RefreshCw size={40} className="text-amber-500 animate-spin mx-auto mb-2" />
-                        <p className="text-sm font-bold text-amber-100">Перемещение команды...</p>
-                     </div>
-                  </div>
-               )}
+                  ))}
+               </div>
 
             </div>
 
-            {/* Right: Controls & Log */}
-            <div className="lg:col-span-4 space-y-6">
-               
-               {/* Ship Stats based on crew placement */}
-               <div className="bg-gradient-to-br from-[#110a03] to-black p-6 rounded-3xl border-2 border-amber-500/30 space-y-4">
-                  <h4 className="text-[12px] font-black uppercase tracking-[0.3em] text-amber-500">Эффективность Корабля</h4>
+            {/* Right: NEW JOURNAL (Beautiful and not "стремно") */}
+            <div className="lg:col-span-3 h-[650px] flex flex-col">
+               <div className="bg-gradient-to-br from-[#1a0f00] to-[#0a0501] p-6 rounded-[2rem] border-2 border-amber-500/30 flex-1 flex flex-col shadow-[0_0_30px_rgba(245,158,11,0.1)]">
+                  <div className="flex items-center gap-2 border-b border-amber-500/20 pb-4 mb-4">
+                     <Scroll size={20} className="text-amber-500" />
+                     <h4 className="text-[12px] font-black uppercase tracking-[0.3em] text-amber-500">Судовой Журнал</h4>
+                  </div>
                   
-                  {/* Speed */}
-                  <div>
-                     <div className="flex justify-between text-xs font-black mb-1">
-                        <span>СКОРОСТЬ (Мачты)</span>
-                        <span className="text-amber-400">{Math.floor((crew.masts / 15) * 100)}%</span>
-                     </div>
-                     <div className="h-1.5 bg-black rounded-full overflow-hidden border border-amber-500/20">
-                        <div className="h-full bg-amber-500" style={{ width: `${(crew.masts / 15) * 100}%` }} />
-                     </div>
-                  </div>
-
-                  {/* Firepower */}
-                  <div>
-                     <div className="flex justify-between text-xs font-black mb-1">
-                        <span>ОГНЕВАЯ МОЩЬ (Пушки)</span>
-                        <span className="text-red-400">{Math.floor(((crew.cannons_left + crew.cannons_right) / 30) * 100)}%</span>
-                     </div>
-                     <div className="h-1.5 bg-black rounded-full overflow-hidden border border-red-500/20">
-                        <div className="h-full bg-red-500" style={{ width: `${((crew.cannons_left + crew.cannons_right) / 30) * 100}%` }} />
-                     </div>
-                  </div>
-
-                  {/* Evasion */}
-                  <div>
-                     <div className="flex justify-between text-xs font-black mb-1">
-                        <span>МАНЕВРЕННОСТЬ (Штурвал)</span>
-                        <span className="text-cyan-400">{Math.floor((crew.helm / 5) * 100)}%</span>
-                     </div>
-                     <div className="h-1.5 bg-black rounded-full overflow-hidden border border-cyan-500/20">
-                        <div className="h-full bg-cyan-500" style={{ width: `${(crew.helm / 5) * 100}%` }} />
-                     </div>
-                  </div>
-               </div>
-
-               {/* Battle Log */}
-               <div className="bg-gradient-to-br from-[#050505] to-black p-6 rounded-3xl border-2 border-amber-500/30 h-[380px] flex flex-col">
-                  <h4 className="text-[12px] font-black uppercase tracking-[0.3em] text-amber-500 mb-4">Журнал Командования</h4>
-                  <div className="flex-1 overflow-y-auto space-y-3 text-xs text-amber-100/70 font-mono">
+                  <div className="flex-1 overflow-y-auto space-y-4 text-sm text-amber-100/90 font-sans leading-relaxed">
                      {battleLog.map((log, i) => (
-                        <div key={i} className="border-b border-amber-900/20 pb-2">
-                           <span className="text-amber-500/50">&gt;</span> {log}
+                        <div key={i} className="border-b border-amber-900/10 pb-2 flex gap-2">
+                           <span className="text-amber-500 font-black">&gt;</span>
+                           <p>{log}</p>
                         </div>
                      ))}
                   </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-amber-500/20 text-[10px] font-black uppercase text-amber-500/40 text-center">
+                     Записи ведутся в реальном времени
+                  </div>
                </div>
-
             </div>
          </div>
 
