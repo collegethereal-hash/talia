@@ -1,389 +1,267 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Skull, Anchor, Waves, Ship, Compass, 
-  Coins, Sword, Sparkles, Map, Wind, 
-  Flag, Bird, Package, MessageCircle, 
-  ChevronRight, Bomb, Search, Crosshair, Settings, Scroll,
-  Telescope, Zap, Flame, Star, Heart, X
+  Anchor, Shield, Heart, Hammer, Package, Beer, Sparkles, X, UserMinus, Scroll, Telescope, Bomb, Flag, Flame,
+  Bird, MessageCircle, RefreshCw
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useData } from "@/components/DataProvider";
 import Link from 'next/link';
 
-import { PirateAuth } from "@/eras/pirate/components/PirateAuth";
-import { PirateTimer } from "@/eras/pirate/components/PirateTimer";
 import { ParrotKoko } from "@/eras/pirate/components/ParrotKoko";
 
 export default function PirateDashboard() {
   const { currentUser } = useData();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pirateMode, setPirateMode] = useState<'harbor' | 'sail' | 'ghost'>('harbor');
-  const [showDossier, setShowDossier] = useState(false);
+  const [activeTab, setActiveTab] = useState<'ship' | 'crew' | 'coco'>('ship');
+  const [cocoMessage, setCocoMessage] = useState("Карр! Вижу, в ваших отношениях штиль. Пора поднять паруса страсти!");
 
-  useEffect(() => {
-    const auth = localStorage.getItem('lumina_auth');
-    if (auth) setIsAuthenticated(true);
-  }, []);
+  const cocoAdvices = [
+    "Карр! Вижу, в ваших отношениях штиль. Пора поднять паруса страсти!",
+    "Йо-хо-хо! Вчерашняя ссора — это просто шторм в стакане рома. Обнимитесь!",
+    "Капитан, твоя половинка заслуживает больше золотых дублонов... и комплиментов!",
+    "Секрет крепкого брака на Тортуге — делиться награбленным поровну!",
+    "Если на горизонте тучи — приготовьте вместе ужин, это разгонит любой туман."
+  ];
 
-  if (!isAuthenticated) {
-    return <PirateAuth onComplete={(user) => {
-      localStorage.setItem('lumina_auth', user);
-      setIsAuthenticated(true);
-    }} />;
-  }
-
-  const modes = {
-    harbor: { label: 'Тихая Гавань', color: 'text-emerald-400', glow: 'bg-emerald-500/10' },
-    sail: { label: 'Полный Вперед', color: 'text-amber-400', glow: 'bg-amber-500/10' },
-    ghost: { label: 'Летучий Голландец', color: 'text-purple-400', glow: 'bg-purple-500/10' },
+  const handleTalkToCoco = () => {
+    const random = Math.floor(Math.random() * cocoAdvices.length);
+    setCocoMessage(cocoAdvices[random]);
   };
 
+  // Crew State
+  const [crew, setCrew] = useState([
+    { id: 1, name: "Билл 'Бочонок'", role: "Штурман", status: "Пьян 🥴", loyalty: 40 },
+    { id: 2, name: "Джон 'Длинный'", role: "Кок", status: "Недоволен 😠", loyalty: 30 },
+    { id: 3, name: "Джек 'Громила'", role: "Канонир", status: "Готов к бою ⚔️", loyalty: 80 },
+  ]);
+
   return (
-    <div className="relative min-h-screen bg-[#020a17] text-amber-100 font-serif overflow-x-hidden selection:bg-amber-500/30">
-      {/* Background Decor */}
+    <div className="relative min-h-screen bg-[#0d0705] text-amber-100 font-serif overflow-hidden selection:bg-amber-500/30">
+      
+      {/* Background: Stormy Sea / Dark Wood Vibe */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-10" />
-        <div className="absolute top-0 right-0 w-full h-[600px] bg-[radial-gradient(ellipse_at_top_right,rgba(14,165,233,0.1)_0%,transparent_50%)]" />
-        <div className="absolute bottom-0 left-0 w-full h-[600px] bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.05)_0%,transparent_50%)]" />
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-15" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1c100b]/90 via-[#0d0705] to-[#020a17]" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-900/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-red-900/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-12 md:py-20 space-y-12">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-10 space-y-8">
         
-        {/* Header Section */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b-2 border-amber-500/10 pb-12">
-          <div className="space-y-4">
-             <motion.div
-               initial={{ opacity: 0, x: -20 }}
-               animate={{ opacity: 1, x: 0 }}
-               className="flex items-center gap-3 text-amber-500/60 uppercase text-[10px] font-black tracking-[0.5em]"
-             >
-               <Anchor size={14} />
-               <span>Флагман Lumina</span>
-             </motion.div>
-             <motion.h1 
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               className="text-6xl md:text-8xl font-black uppercase tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-b from-amber-200 to-amber-600"
-             >
-               Tortuga Bay
-             </motion.h1>
-          </div>
-          
-          <div className="flex items-center gap-4">
-             {/* Mode Switcher */}
-             <div className="flex bg-slate-900/50 p-1.5 rounded-2xl border border-white/5">
-                {(['harbor', 'sail', 'ghost'] as const).map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setPirateMode(m)}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                      pirateMode === m 
-                        ? "bg-amber-500 text-slate-950 shadow-lg" 
-                        : "text-amber-500/40 hover:text-amber-500"
-                    )}
-                  >
-                    {modes[m].label}
-                  </button>
-                ))}
-             </div>
-             
-             <Link href="/admin" className="p-4 bg-amber-500/5 hover:bg-amber-500/10 rounded-2xl border border-amber-500/20 text-amber-500 transition-all group">
-                <Settings size={24} className="group-hover:rotate-90 transition-transform duration-500" />
-             </Link>
-          </div>
+        {/* Header */}
+        <header className="flex justify-between items-center border-b border-amber-900/30 pb-6">
+           <div className="space-y-1">
+              <div className="flex items-center gap-2 text-amber-500/40 uppercase text-[10px] font-black tracking-[0.4em]">
+                 <Anchor size={14} />
+                 <span>Капитанский Мостик</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-400 to-amber-700">
+                 Тортуга: Бухта
+              </h1>
+           </div>
+           <div className="flex items-center gap-4">
+              <Link href="/admin" className="p-3 bg-amber-900/10 hover:bg-amber-900/20 rounded-xl border border-amber-900/30 text-amber-500 transition-all">
+                 <Anchor size={20} />
+              </Link>
+           </div>
         </header>
 
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* Left: Captains & Timer (Primary Info) */}
-          <div className="lg:col-span-7 space-y-8">
-             
-             {/* Captain's Card */}
-             <div 
-               onClick={() => setShowDossier(true)}
-               className={cn(
-               "relative p-8 md:p-12 rounded-[3.5rem] border-2 backdrop-blur-3xl overflow-hidden shadow-2xl transition-all duration-700 cursor-pointer group",
-               pirateMode === 'harbor' && "bg-slate-900/40 border-amber-500/10 hover:border-amber-500/30",
-               pirateMode === 'sail' && "bg-amber-900/10 border-amber-500/30 hover:border-amber-500/50",
-               pirateMode === 'ghost' && "bg-purple-900/10 border-purple-500/20 hover:border-purple-500/40"
-             )}>
-                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                   <Skull size={200} />
-                </div>
-                
-                <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
-                   <div className="relative">
-                      <div className="w-40 h-40 rounded-[2.5rem] bg-amber-500/10 border-4 border-amber-500/20 flex items-center justify-center text-7xl shadow-2xl group-hover:scale-105 transition-transform">
-                         {currentUser === 'Grinch' ? '🏴‍☠️' : '🧜‍♀️'}
-                      </div>
-                      <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-emerald-500 rounded-full border-4 border-[#020617] animate-pulse" />
-                   </div>
-                   
-                   <div className="text-center md:text-left space-y-4">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/40 mb-1">Действующий Капитан</p>
-                        <h2 className="text-4xl md:text-5xl font-bold text-amber-100">{currentUser === 'Grinch' ? 'Капитан Гринч' : 'Синди Лу'}</h2>
-                      </div>
-                      <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                         <Badge icon={<Waves size={12} />} label="На плаву" color="text-blue-400" />
-                         <Badge icon={<Flame size={12} />} label="Боевой дух" color="text-red-400" />
-                         <Badge icon={<Star size={12} />} label={modes[pirateMode].label} color={modes[pirateMode].color} />
-                      </div>
-                   </div>
-                </div>
-                
-                <div className="absolute bottom-4 right-8 opacity-0 group-hover:opacity-40 transition-opacity text-[8px] font-black uppercase tracking-[0.3em] text-amber-500">
-                  Нажми для просмотра досье
-                </div>
-             </div>
-
-             {/* Timer Card */}
-             <PirateTimer />
-          </div>
-
-          {/* Right: Navigation & Action Cards */}
-          <div className="lg:col-span-5 space-y-8">
-             
-             {/* Navigation Section */}
-             <div className="grid grid-cols-1 gap-4">
-                <NavCard 
-                  title="Галлерея" 
-                  desc="Ваши зафиксированные открытия" 
-                  icon={<Telescope size={24} />} 
-                  href="/gallery" 
-                />
-                <NavCard 
-                  title="Казна" 
-                  desc="Черный рынок и верфь" 
-                  icon={<Coins size={24} />} 
-                  href="/store" 
-                />
-                <NavCard 
-                  title="Журнал" 
-                  desc="Бортовые записи и мысли" 
-                  icon={<Scroll size={24} />} 
-                  href="/journal" 
-                />
-                <NavCard 
-                  title="Сокровища" 
-                  desc="Список общих целей и мечт" 
-                  icon={<Map size={24} />} 
-                  href="/bucket-list" 
-                />
-                <NavCard 
-                  title="Логово" 
-                  desc="Военная комната и бои" 
-                  icon={<Bomb size={24} />} 
-                  href="/lair" 
-                />
-             </div>
-
-             {/* Special Interactive Card */}
-             <div className="relative group p-8 rounded-[3rem] bg-gradient-to-br from-amber-600/20 to-transparent border-2 border-amber-500/20 overflow-hidden cursor-pointer hover:border-amber-500/40 transition-all shadow-xl">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-10" />
-                <div className="relative z-10 flex items-center justify-between">
-                   <div className="space-y-2">
-                      <h4 className="text-xl font-bold uppercase tracking-widest text-amber-400">Попугай Коко</h4>
-                      <p className="text-xs text-amber-100/60 leading-relaxed max-w-[200px]">Твой личный ИИ-психолог и советник в делах амурных.</p>
-                   </div>
-                   <ParrotKoko />
-                </div>
-             </div>
-
-             {/* Mini Stats Grid */}
-             <div className="grid grid-cols-2 gap-4">
-                <MiniStat label="Дублоны" value="4.2k" icon={<Coins size={16} />} />
-                <MiniStat label="Ветер" value="98%" icon={<Wind size={16} />} />
-             </div>
-          </div>
-        </div>
-
-        {/* Wanted Poster / Identity Card (Fixed Style) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-12">
+        {/* Main Project Window */}
+        <div className="bg-[#1a100a] rounded-[2.5rem] border-2 border-amber-900/40 shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[550px]">
            
-           {/* Wanted Poster */}
-           <div className="relative p-8 bg-[#f5e6d3] text-slate-900 rounded-2xl shadow-xl border-[12px] border-[#3e2723]/10 transform -rotate-1 hover:rotate-0 transition-transform duration-500">
-              <div className="absolute inset-0 opacity-[0.05] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
-              <div className="relative z-10 space-y-6 text-center">
-                 <h4 className="text-4xl font-black uppercase tracking-tighter border-b-4 border-slate-900/10 pb-4">Разыскивается</h4>
-                 <div className="w-full aspect-square bg-slate-200 rounded-xl overflow-hidden grayscale contrast-125 border-4 border-slate-900/5">
-                    <img src={currentUser === 'Grinch' ? "https://api.dicebear.com/7.x/avataaars/svg?seed=Grinch" : "https://api.dicebear.com/7.x/avataaars/svg?seed=Cindy"} alt="Wanted" className="w-full h-full object-cover" />
+           {/* LEFT SIDE: Ship & Coco Display */}
+           <div className="w-full md:w-[35%] bg-[#0d0705]/50 p-8 flex flex-col items-center justify-between gap-6 border-r border-amber-900/20 relative">
+              
+              {/* Corner Iron Brackets */}
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-amber-900/50" />
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-amber-900/50" />
+
+              {/* Speech Bubble */}
+              <div className="relative bg-[#2d1b10] text-amber-100 text-xs italic p-4 rounded-2xl shadow-xl max-w-[220px] text-center border border-amber-900/30">
+                 "{cocoMessage}"
+                 <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full w-0 h-0 border-t-[8px] border-t-[#2d1b10] border-x-[8px] border-x-transparent" />
+              </div>
+
+              {/* Center Display */}
+              <div className="relative">
+                 <div className="w-48 h-48 bg-[#1c100b] rounded-full border-4 border-amber-900/40 flex items-center justify-center shadow-2xl relative group overflow-hidden">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.1)_0%,transparent_70%)]" />
+                    <Telescope size={64} className="text-amber-500/80 group-hover:scale-105 transition-transform duration-500" />
                  </div>
-                 <div className="space-y-1">
-                    <p className="text-2xl font-bold uppercase tracking-tight">{currentUser === 'Grinch' ? 'Капитан Гринч' : 'Синди Лу'}</p>
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-60 text-red-600">Награда: 1,000,000 поцелуев</p>
+                 {/* Coco Badge */}
+                 <div className="absolute -top-2 -right-2 bg-[#2d1b10] p-2.5 rounded-xl border border-amber-900/40 shadow-lg">
+                    <ParrotKoko />
+                 </div>
+              </div>
+
+              {/* Info */}
+              <div className="text-center space-y-1">
+                 <h2 className="text-2xl font-bold uppercase tracking-tight text-amber-100">Чёрная Жемчужина</h2>
+                 <p className="text-xs font-black uppercase tracking-widest text-amber-500/40">Ранг: Легендарный</p>
+              </div>
+
+              {/* Experience Bar */}
+              <div className="w-full space-y-1">
+                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-500/40">
+                    <span>Известность</span>
+                    <span>78%</span>
+                 </div>
+                 <div className="w-full h-1.5 bg-black/50 rounded-full overflow-hidden border border-amber-900/20">
+                    <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 rounded-full" style={{ width: '78%' }} />
                  </div>
               </div>
            </div>
 
-           {/* Voyage Origin Card (New) */}
-           <div className="relative p-8 rounded-[3rem] bg-slate-900/40 border-2 border-amber-500/10 flex flex-col justify-center items-center text-center space-y-6 overflow-hidden group">
-              <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
+           {/* RIGHT SIDE: Tabs & Logic */}
+           <div className="w-full md:w-[65%] p-8 space-y-6 flex flex-col justify-between">
               
-              <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500 animate-pulse">
-                 <Compass size={40} />
+              {/* Tabs */}
+              <div className="flex justify-between items-center border-b border-amber-900/20 pb-4">
+                 <div className="flex bg-black/30 p-1 rounded-xl border border-amber-900/10">
+                    <button 
+                      onClick={() => setActiveTab('ship')}
+                      className={cn("px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2", activeTab === 'ship' ? "bg-amber-600 text-black shadow-lg" : "text-amber-500/40 hover:text-amber-100")}
+                    >
+                       <Anchor size={14} /> Борт
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('crew')}
+                      className={cn("px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2", activeTab === 'crew' ? "bg-amber-600 text-black shadow-lg" : "text-amber-500/40 hover:text-amber-100")}
+                    >
+                       <UserMinus size={14} /> Экипаж
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('coco')}
+                      className={cn("px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2", activeTab === 'coco' ? "bg-amber-600 text-black shadow-lg" : "text-amber-500/40 hover:text-amber-100")}
+                    >
+                       <MessageCircle size={14} /> Сеанс у Коко
+                    </button>
+                 </div>
+                 <span className="text-amber-500/20 text-xs font-mono">ID: 404_SHIP</span>
               </div>
 
-              <div className="space-y-2">
-                 <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/40">Первый порт приписки</p>
-                 <h4 className="text-3xl font-bold text-amber-100 italic">17 марта 2026</h4>
-                 <p className="text-xs text-amber-100/40 max-w-[250px] mx-auto">День, когда наши корабли встретились в тумане и решили плыть вместе.</p>
-              </div>
+              {/* Content Panels */}
+              <AnimatePresence mode="wait">
+                 {activeTab === 'ship' && (
+                    <motion.div
+                      key="ship"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-6"
+                    >
+                       {/* Status Bars */}
+                       <div className="grid grid-cols-3 gap-4">
+                          <div className="p-4 bg-black/40 rounded-xl border border-amber-900/20 space-y-2">
+                             <p className="text-[10px] font-black uppercase tracking-widest text-amber-500/40 flex items-center gap-1">
+                                <Shield size={12} /> Прочность
+                             </p>
+                             <div className="w-full h-1.5 bg-black rounded-full overflow-hidden">
+                                <div className="h-full bg-orange-600 rounded-full" style={{ width: '92%' }} />
+                             </div>
+                             <p className="text-right text-[10px] font-bold text-orange-400">92%</p>
+                          </div>
+                          <div className="p-4 bg-black/40 rounded-xl border border-amber-900/20 space-y-2">
+                             <p className="text-[10px] font-black uppercase tracking-widest text-amber-500/40 flex items-center gap-1">
+                                <Package size={12} /> Трюм
+                             </p>
+                             <div className="w-full h-1.5 bg-black rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-600 rounded-full" style={{ width: '85%' }} />
+                             </div>
+                             <p className="text-right text-[10px] font-bold text-blue-400">85%</p>
+                          </div>
+                          <div className="p-4 bg-black/40 rounded-xl border border-amber-900/20 space-y-2">
+                             <p className="text-[10px] font-black uppercase tracking-widest text-amber-500/40 flex items-center gap-1">
+                                <Heart size={12} /> Боевой Дух
+                             </p>
+                             <div className="w-full h-1.5 bg-black rounded-full overflow-hidden">
+                                <div className="h-full bg-red-600 rounded-full" style={{ width: '94%' }} />
+                             </div>
+                             <p className="text-right text-[10px] font-bold text-red-400">94%</p>
+                          </div>
+                       </div>
 
-              <div className="grid grid-cols-3 gap-8 w-full pt-4 border-t border-amber-500/10">
-                 <div>
-                    <p className="text-xl font-bold text-amber-100">12</p>
-                    <p className="text-[8px] uppercase font-black tracking-widest text-amber-500/30">Островов</p>
-                 </div>
-                 <div>
-                    <p className="text-xl font-bold text-amber-100">850</p>
-                    <p className="text-[8px] uppercase font-black tracking-widest text-amber-500/30">Миль</p>
-                 </div>
-                 <div>
-                    <p className="text-xl font-bold text-amber-100">∞</p>
-                    <p className="text-[8px] uppercase font-black tracking-widest text-amber-500/30">Любви</p>
-                 </div>
-              </div>
+                       {/* Action Buttons */}
+                       <div className="grid grid-cols-3 gap-4">
+                          <button className="p-5 bg-[#2d1b10] hover:bg-[#3d271a] rounded-xl border border-amber-900/30 flex flex-col items-center gap-3 transition-all group">
+                             <Hammer size={20} className="text-amber-500" />
+                             <span className="font-bold text-sm text-amber-100">Починить</span>
+                          </button>
+                          <button className="p-5 bg-[#2d1b10] hover:bg-[#3d271a] rounded-xl border border-amber-900/30 flex flex-col items-center gap-3 transition-all group">
+                             <Package size={20} className="text-amber-500" />
+                             <span className="font-bold text-sm text-amber-100">Загрузить</span>
+                          </button>
+                          <button className="p-5 bg-[#2d1b10] hover:bg-[#3d271a] rounded-xl border border-amber-900/30 flex flex-col items-center gap-3 transition-all group">
+                             <Beer size={20} className="text-amber-500" />
+                             <span className="text-[10px] font-black uppercase text-stone-700">Выдать ром</span>
+                          </button>
+                       </div>
+                    </motion.div>
+                 )}
+
+                 {activeTab === 'crew' && (
+                    <motion.div
+                      key="crew"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-4"
+                    >
+                       <h3 className="text-sm font-bold uppercase text-amber-500/40 tracking-widest">Офицерский Состав</h3>
+                       <div className="space-y-3">
+                          {crew.map(member => (
+                             <div key={member.id} className="p-4 bg-black/40 rounded-xl border border-amber-900/20 flex items-center justify-between hover:border-amber-500/20 transition-colors">
+                                <div className="flex items-center gap-3">
+                                   <div className="w-10 h-10 bg-[#2d1b10] rounded-lg flex items-center justify-center text-xl border border-amber-900/10">{member.avatar}</div>
+                                   <div>
+                                      <p className="font-bold text-sm text-amber-100">{member.name}</p>
+                                      <p className="text-[10px] uppercase tracking-widest text-amber-500/40">{member.role}</p>
+                                   </div>
+                                </div>
+                                <div className="text-right">
+                                   <span className="text-xs font-bold text-amber-100">{member.status}</span>
+                                   <div className="text-[10px] text-amber-500/40 mt-0.5">Лояльность: {member.loyalty}%</div>
+                                </div>
+                             </div>
+                          ))}
+                       </div>
+                    </motion.div>
+                 )}
+
+                 {activeTab === 'coco' && (
+                    <motion.div
+                      key="coco"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex flex-col items-center justify-center text-center space-y-6 py-6"
+                    >
+                       <div className="w-20 h-20 bg-[#2d1b10] rounded-full flex items-center justify-center border-2 border-amber-900/40 shadow-2xl relative">
+                          <Bird size={40} className="text-amber-500" />
+                          <div className="absolute -bottom-1 -right-1 bg-emerald-500 w-4 h-4 rounded-full border-2 border-[#1a100a] flex items-center justify-center text-[10px] text-white font-bold">✓</div>
+                       </div>
+                       
+                       <div className="space-y-2 max-w-md">
+                          <h3 className="text-lg font-bold text-amber-100">Психологическая помощь от Коко</h3>
+                          <p className="text-sm text-amber-100/60 italic leading-relaxed">
+                             "{cocoMessage}"
+                          </p>
+                       </div>
+
+                       <button 
+                         onClick={handleTalkToCoco}
+                         className="px-6 py-3 bg-amber-600 text-black rounded-xl text-xs font-black uppercase tracking-widest hover:bg-amber-700 transition-colors shadow-lg flex items-center gap-2"
+                       >
+                          <RefreshCw size={14} /> Спросить совета
+                       </button>
+                    </motion.div>
+                 )}
+              </AnimatePresence>
            </div>
         </div>
-
       </div>
-
-      {/* Decorative Background Icons */}
-      <div className="fixed bottom-[-10%] right-[-5%] opacity-[0.02] pointer-events-none select-none z-0">
-        <Anchor size={600} />
-      </div>
-      <div className="fixed top-[20%] left-[-10%] opacity-[0.02] pointer-events-none select-none z-0">
-        <Compass size={400} />
-      </div>
-
-      {/* Dossier Modal */}
-      <AnimatePresence>
-        {showDossier && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-             <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               exit={{ opacity: 0 }}
-               onClick={() => setShowDossier(false)}
-               className="absolute inset-0 bg-black/80 backdrop-blur-xl"
-             />
-             
-             <motion.div
-               initial={{ scale: 0.9, y: 20, opacity: 0 }}
-               animate={{ scale: 1, y: 0, opacity: 1 }}
-               exit={{ scale: 0.9, y: 20, opacity: 0 }}
-               className="relative w-full max-w-2xl bg-slate-950 border-4 border-amber-500/20 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row"
-             >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50" />
-                
-                {/* Left Side: Avatar & Action */}
-                <div className="w-full md:w-1/3 p-8 bg-amber-500/5 flex flex-col items-center justify-center gap-6 border-r border-amber-500/10">
-                   <div className="w-32 h-32 rounded-3xl bg-amber-500/10 border-2 border-amber-500/20 flex items-center justify-center text-6xl shadow-xl">
-                      {currentUser === 'Grinch' ? '🏴‍☠️' : '🧜‍♀️'}
-                   </div>
-                   <div className="text-center">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-amber-500/40">Звание</p>
-                      <h4 className="text-xl font-bold text-amber-100">Капитан</h4>
-                   </div>
-                   <button 
-                    onClick={() => {
-                      alert('Любовь отправлена по всем канонам пиратского кодекса! ❤️🏴‍☠️');
-                    }}
-                    className="w-full py-4 bg-amber-500 text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 active:scale-95 transition-all shadow-lg"
-                   >
-                     Подать сигнал любви
-                   </button>
-                </div>
-
-                {/* Right Side: Content */}
-                <div className="flex-1 p-8 md:p-12 space-y-8 relative">
-                   <button 
-                    onClick={() => setShowDossier(false)}
-                    className="absolute top-6 right-6 text-amber-500/20 hover:text-amber-500 transition-colors"
-                   >
-                     <X size={24} />
-                   </button>
-
-                   <div className="space-y-1">
-                      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500/60">Засекречено • Dossier</p>
-                      <h3 className="text-4xl font-bold text-amber-100">{currentUser === 'Grinch' ? 'Гринч' : 'Синди Лу'}</h3>
-                   </div>
-
-                   <div className="space-y-4">
-                      <p className="text-sm italic text-amber-100/60 leading-relaxed">
-                         {currentUser === 'Grinch' 
-                           ? "Гроза северных морей и мастер скрытых подарков. Обладает уникальным даром находить сокровища там, где другие видят лишь туман."
-                           : "Прекрасная Сирена, чья улыбка способна успокоить самый свирепый шторм. Единственная, кто знает истинные координаты сердца Гринча."
-                         }
-                      </p>
-                   </div>
-
-                   {/* Stats Grid */}
-                   <div className="grid grid-cols-2 gap-4">
-                      <DossierStat label="Харизма" value="MAX" icon={<Sparkles size={14} />} />
-                      <DossierStat label="Удача" value="99%" icon={<Star size={14} />} />
-                      <DossierStat label="Сила" value="100%" icon={<Sword size={14} />} />
-                      <DossierStat label="Преданность" value="∞" icon={<Heart size={14} />} />
-                   </div>
-                </div>
-             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function DossierStat({ label, value, icon }: any) {
-  return (
-    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-3">
-       <div className="text-amber-500/40">{icon}</div>
-       <div>
-          <p className="text-[8px] font-black uppercase tracking-widest text-amber-500/20 leading-none">{label}</p>
-          <p className="text-sm font-bold text-amber-100">{value}</p>
-       </div>
-    </div>
-  );
-}
-
-function Badge({ icon, label, color }: any) {
-  return (
-    <div className={cn("flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-widest", color)}>
-       {icon}
-       <span>{label}</span>
-    </div>
-  );
-}
-
-function NavCard({ title, desc, icon, href }: any) {
-  return (
-    <Link href={href} className="group relative p-6 rounded-[2.5rem] bg-slate-900/60 border-2 border-amber-500/5 hover:border-amber-500/30 hover:bg-slate-900/80 transition-all shadow-xl flex items-center justify-between">
-       <div className="flex items-center gap-6">
-          <div className="p-4 bg-amber-500/10 rounded-2xl text-amber-500 group-hover:scale-110 transition-transform shadow-lg">
-             {icon}
-          </div>
-          <div>
-             <h4 className="text-xl font-bold text-amber-100 group-hover:text-amber-400 transition-colors">{title}</h4>
-             <p className="text-[10px] text-amber-100/40 uppercase tracking-widest font-black">{desc}</p>
-          </div>
-       </div>
-       <ChevronRight size={20} className="text-amber-500/20 group-hover:text-amber-500 transition-colors" />
-    </Link>
-  );
-}
-
-function MiniStat({ label, value, icon }: any) {
-  return (
-    <div className="p-6 rounded-[2rem] bg-slate-900/40 border border-white/5 text-center space-y-1">
-       <div className="flex justify-center mb-1 text-amber-500/40">{icon}</div>
-       <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/20">{label}</p>
-       <p className="text-xl font-bold text-amber-100">{value}</p>
     </div>
   );
 }
