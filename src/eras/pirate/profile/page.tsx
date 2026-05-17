@@ -659,7 +659,7 @@ export default function PirateProfile() {
                                       log.type === 'victory' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
                                       'bg-red-500/10 text-red-400 border border-red-500/20')}
                                     >
-                                      {log.dmg}
+                                       {log.dmg}
                                     </div>
                                  </div>
                                ))}
@@ -675,130 +675,130 @@ export default function PirateProfile() {
         )}
       </AnimatePresence>
 
-      {/* 2. Commander Detail Modal */}
+      {/* 2. Commander Detail Modal (RPG Character Menu) */}
       <AnimatePresence>
         {selectedProfileId && selectedProfile && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProfileId(null)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
             <motion.div initial={{ scale: 0.9, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 50 }}
-              className="relative w-full max-w-2xl bg-[#0a0a0a] p-12 rounded-[3rem] border-8 border-amber-900/40 shadow-[0_0_100px_rgba(245,158,11,0.2)] overflow-hidden"
-              style={{ perspective: 1000 }}
+              className="relative w-full max-w-5xl bg-[#0a0a0a] p-8 rounded-[3rem] border-8 border-amber-900/40 shadow-[0_0_100px_rgba(245,158,11,0.2)] overflow-hidden"
             >
-               <button onClick={() => {setSelectedProfileId(null); setIsCreatingPoster(false);}} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-100 transition-colors z-20"><X size={32} /></button>
+               <button onClick={() => setSelectedProfileId(null)} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-100 transition-colors z-20"><X size={32} /></button>
 
-               {isCreatingPoster ? (
-                 <motion.div initial={{ rotateY: -90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-6 relative z-10 bg-[#f4ebd8] p-8 -m-4 rounded-[2.5rem] text-slate-900 shadow-[inset_0_0_100px_rgba(0,0,0,0.3)]">
-                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] pointer-events-none rounded-[2.5rem]" />
-                    
-                    <div className="flex justify-between items-center border-b-2 border-slate-900/20 pb-4 relative z-10">
-                       <h3 className="text-3xl font-black uppercase tracking-tighter text-slate-900 flex items-center gap-3">
-                          <Edit3 size={28} /> Судовая Роль
-                       </h3>
-                    </div>
-                    
-                    <div className="space-y-6 relative z-10 font-serif">
-                       <div className="space-y-1 border-b border-slate-900/20 pb-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Пиратское Имя:</label>
-                          <input id="edit-name" type="text" defaultValue={selectedProfile.name} className="w-full bg-transparent text-3xl font-black text-slate-900 outline-none placeholder-slate-400" placeholder="Капитан..." />
-                       </div>
-                       
-                       <div className="space-y-1 border-b border-slate-900/20 pb-4">
-                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Главная Слабость (Цитата):</label>
-                          <textarea id="edit-pref" defaultValue={selectedProfile.pref} className="w-full bg-transparent text-lg italic text-slate-800 outline-none resize-none h-16 placeholder-slate-400" placeholder="Молчание — золото..." />
-                       </div>
-                       
-                       <div className="grid grid-cols-2 gap-6 border-b border-slate-900/20 pb-4">
-                          <div className="space-y-1">
-                             <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Любимое Оружие:</label>
-                             <select className="w-full bg-transparent text-xl font-bold text-slate-900 outline-none border-b border-dashed border-slate-900/50 pb-1 cursor-pointer">
-                                <option>Двойные Сабли</option>
-                                <option>Испанский Мушкет</option>
-                                <option>Бутылка Рома</option>
-                                <option>Острый Язык</option>
-                             </select>
-                          </div>
-                          <div className="space-y-1">
-                             <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Особые приметы:</label>
-                             <input type="text" defaultValue="Хитрая улыбка" className="w-full bg-transparent text-xl font-bold text-slate-900 outline-none border-b border-dashed border-slate-900/50 pb-1" />
-                          </div>
-                       </div>
-                       
-                       <div className="bg-slate-900/5 p-4 rounded-xl border border-slate-900/10 text-center">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Награда за голову</p>
-                          <div className="flex items-center justify-center gap-4">
-                             <Coins size={24} className="text-amber-600" />
-                             <input type="number" defaultValue="10000" className="bg-transparent text-4xl font-black text-slate-900 outline-none w-40 text-center" />
-                          </div>
-                       </div>
-                    </div>
-                    
-                    <div className="pt-4 relative z-10 flex gap-4">
-                       <button onClick={() => setIsCreatingPoster(false)} className="flex-1 py-4 bg-transparent border-2 border-slate-900 text-slate-900 font-black uppercase tracking-widest rounded-xl hover:bg-slate-900 hover:text-[#f4ebd8] transition-colors">Отмена</button>
-                       <button 
-                         onClick={() => {
-                           const nameInput = document.getElementById('edit-name') as HTMLInputElement;
-                           const prefInput = document.getElementById('edit-pref') as HTMLTextAreaElement;
-                           if (selectedProfileId && nameInput && prefInput) {
-                             setLocalProfiles((prev: any) => ({
-                               ...prev,
-                               [selectedProfileId]: {
-                                 ...prev[selectedProfileId],
-                                 name: nameInput.value,
-                                 pref: prefInput.value
-                               }
-                             }));
-                             setIsCreatingPoster(false);
-                           }
-                         }} 
-                         className="flex-[2] py-4 bg-red-700 text-[#f4ebd8] font-black uppercase tracking-widest rounded-xl hover:bg-red-800 transition-colors shadow-lg shadow-red-900/20 flex items-center justify-center gap-2"
-                       >
-                          Запечатать Сургучом
-                       </button>
-                    </div>
-                 </motion.div>
-               ) : (
-                 <motion.div initial={{ rotateY: 90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-8 relative z-10">
-                    <div className="flex flex-col md:flex-row items-center gap-8 border-b-2 border-white/5 pb-8">
-                       <div className={cn("w-32 h-32 rounded-3xl bg-slate-900 shadow-2xl overflow-hidden shrink-0 border-4 transition-colors", hasBlackSpot ? 'border-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.3)]' : 'border-amber-500/50')}>
-                          <img src={selectedProfile.id === 'Grinch' ? "https://api.dicebear.com/7.x/avataaars/svg?seed=Grinch&beard=0.5" : "https://api.dicebear.com/7.x/avataaars/svg?seed=Cindy&hair=long"} alt="Profile" className="w-full h-full object-cover" />
-                       </div>
-                       <div className="text-center md:text-left">
-                          <p className="text-amber-500 font-bold uppercase text-[10px] tracking-[0.4em] mb-2 flex items-center justify-center md:justify-start gap-2">
-                            <Scroll size={12} /> Личное дело №{selectedProfile.id.slice(0, 4)}
-                          </p>
-                          <h2 className={cn("text-5xl font-black uppercase tracking-tighter mb-2", hasBlackSpot ? 'text-emerald-400' : 'text-slate-100')}>{selectedProfile.name}</h2>
-                          {hasBlackSpot && <p className="text-emerald-500 font-black uppercase tracking-widest text-[10px] mb-2 animate-pulse">☠️ Проклят(а) Черной Меткой</p>}
-                          <p className="text-slate-400 italic font-serif">"{selectedProfile.pref || 'Сведений нет...'}"</p>
-                       </div>
-                    </div>
+               <div className="flex flex-col md:flex-row gap-8 relative z-10">
+                  {/* Left Side: 3D Avatar */}
+                  <div className="w-full md:w-2/5 bg-[#020a17] rounded-3xl overflow-hidden border-4 border-amber-900/50 relative group shadow-2xl h-[500px]">
+                     <img 
+                       src={selectedProfile.id === 'Grinch' 
+                         ? "/pirate_man.png" 
+                         : "/pirate_girl.png"} 
+                       alt="Avatar" 
+                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                     />
+                     <div className="absolute inset-0 bg-gradient-to-t from-[#020a17] via-transparent to-transparent opacity-80" />
+                     <div className="absolute bottom-6 left-6 right-6 text-center">
+                        <h3 className="text-4xl font-black text-amber-100 uppercase drop-shadow-lg">{selectedProfile.name}</h3>
+                        <p className="text-amber-500 text-xs font-black uppercase tracking-widest mt-1">{selectedProfile.id === 'Grinch' ? 'Грозный Капитан' : 'Прекрасная Сирена'}</p>
+                     </div>
+                  </div>
 
-                    <div className="bg-black/60 p-8 rounded-3xl border border-white/5 space-y-6">
-                       <div className="flex justify-between items-end mb-4">
-                          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/50">Характеристики</h4>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-red-500">Награда: {Number(bounty).toLocaleString()} Золота</p>
-                       </div>
-                       
-                       <div className="space-y-4">
-                          <div>
-                            <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-300 mb-2"><span>Харизма</span> <span>99/100</span></div>
-                            <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div className="h-full bg-amber-500 w-[99%]" /></div>
-                          </div>
-                          <div>
-                            <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-300 mb-2"><span>Владение саблей</span> <span>85/100</span></div>
-                            <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div className="h-full bg-red-500 w-[85%]" /></div>
-                          </div>
-                          <div>
-                            <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-300 mb-2"><span>Выпито Рома</span> <span>Безлимит</span></div>
-                            <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div className="h-full bg-blue-500 w-full" /></div>
-                          </div>
-                       </div>
-                    </div>
+                  {/* Right Side: RPG Controls */}
+                  <div className="flex-1 space-y-6">
+                     <div className="flex justify-between items-center border-b border-amber-900/30 pb-4">
+                        <h2 className="text-3xl font-black text-amber-100 uppercase tracking-tighter">Каюта Командира</h2>
+                     </div>
 
-                    <button onClick={() => setIsCreatingPoster(true)} className="w-full py-5 bg-amber-500 text-slate-950 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                       <Edit3 size={18} /> Переписать Судовую Роль
-                    </button>
-                 </motion.div>
-               )}
+                     {/* Stats Section */}
+                     <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
+                        <div className="flex justify-between items-center mb-4">
+                           <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Характеристики</h4>
+                           <span className="text-[10px] font-black uppercase text-slate-500">Очки опыта: 5</span>
+                        </div>
+                        <div className="space-y-4">
+                           {/* Сила */}
+                           <div className="flex items-center justify-between gap-4">
+                              <span className="text-xs font-bold text-slate-300 w-24">Сила</span>
+                              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                 <div className="h-full bg-red-500" style={{ width: `75%` }} />
+                              </div>
+                              <span className="text-sm font-bold text-amber-400 w-8 text-right">75</span>
+                              <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
+                           </div>
+                           {/* Ловкость */}
+                           <div className="flex items-center justify-between gap-4">
+                              <span className="text-xs font-bold text-slate-300 w-24">Ловкость</span>
+                              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                 <div className="h-full bg-emerald-500" style={{ width: `90%` }} />
+                              </div>
+                              <span className="text-sm font-bold text-amber-400 w-8 text-right">90</span>
+                              <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
+                           </div>
+                           {/* Удача */}
+                           <div className="flex items-center justify-between gap-4">
+                              <span className="text-xs font-bold text-slate-300 w-24">Удача</span>
+                              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                 <div className="h-full bg-blue-500" style={{ width: `60%` }} />
+                              </div>
+                              <span className="text-sm font-bold text-amber-400 w-8 text-right">60</span>
+                              <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
+                           </div>
+                           {/* Харизма */}
+                           <div className="flex items-center justify-between gap-4">
+                              <span className="text-xs font-bold text-slate-300 w-24">Харизма</span>
+                              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                 <div className="h-full bg-amber-500" style={{ width: `100%` }} />
+                              </div>
+                              <span className="text-sm font-bold text-amber-400 w-8 text-right">100</span>
+                              <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Equipment Section */}
+                     <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-4">Снаряжение</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="p-4 bg-[#0a0a0a] border border-amber-900/30 rounded-xl flex flex-col gap-1 cursor-pointer hover:border-amber-500 transition-colors group">
+                              <div className="flex justify-between items-center">
+                                 <span className="text-[9px] font-black uppercase text-amber-500/50">Оружие</span>
+                                 <Sword size={12} className="text-amber-500/30 group-hover:text-amber-500" />
+                              </div>
+                              <span className="text-sm font-bold text-slate-100">Золотая Сабля</span>
+                           </div>
+                           <div className="p-4 bg-[#0a0a0a] border border-amber-900/30 rounded-xl flex flex-col gap-1 cursor-pointer hover:border-amber-500 transition-colors group">
+                              <div className="flex justify-between items-center">
+                                 <span className="text-[9px] font-black uppercase text-amber-500/50">Головной убор</span>
+                                 <Crown size={12} className="text-amber-500/30 group-hover:text-amber-500" />
+                              </div>
+                              <span className="text-sm font-bold text-slate-100">Капитанская Треуголка</span>
+                           </div>
+                           <div className="p-4 bg-[#0a0a0a] border border-amber-900/30 rounded-xl flex flex-col gap-1 cursor-pointer hover:border-amber-500 transition-colors group">
+                              <div className="flex justify-between items-center">
+                                 <span className="text-[9px] font-black uppercase text-amber-500/50">Костюм</span>
+                                 <User size={12} className="text-amber-500/30 group-hover:text-amber-500" />
+                              </div>
+                              <span className="text-sm font-bold text-slate-100">Камзол</span>
+                           </div>
+                           <div className="p-4 bg-[#0a0a0a] border border-amber-900/30 rounded-xl flex flex-col gap-1 cursor-pointer hover:border-amber-500 transition-colors group">
+                              <div className="flex justify-between items-center">
+                                 <span className="text-[9px] font-black uppercase text-amber-500/50">Артефакт</span>
+                                 <Eye size={12} className="text-amber-500/30 group-hover:text-amber-500" />
+                              </div>
+                              <span className="text-sm font-bold text-slate-100">Стеклянный Глаз</span>
+                           </div>
+                        </div>
+                     </div>
+
+                     {/* Motto Section */}
+                     <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20 relative group">
+                        <div className="flex justify-between items-center mb-2">
+                           <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Девиз</h4>
+                           <Edit3 size={14} className="text-amber-500/50 group-hover:text-amber-500 cursor-pointer" />
+                        </div>
+                        <p className="text-amber-100/80 italic font-serif">"{selectedProfile.pref || 'Молчание — золото.'}"</p>
+                     </div>
+                  </div>
+               </div>
             </motion.div>
           </div>
         )}
