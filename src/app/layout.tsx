@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/Navbar";
 import { AuthGuard } from "@/components/AuthGuard";
+import { DataProvider } from "@/components/DataProvider";
+import { EraProvider } from "@/context/EraContext";
+import { EraContent } from "@/components/EraContent";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -28,8 +30,6 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-import { DataProvider } from "@/components/DataProvider";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -40,13 +40,13 @@ export default function RootLayout({
       <body className="font-sans text-foreground">
         <AuthGuard>
           <DataProvider>
-            <main className="min-h-screen pb-24">
-              {children}
-            </main>
-            <Navbar />
+            <EraProvider>
+              <EraContent>{children}</EraContent>
+            </EraProvider>
           </DataProvider>
         </AuthGuard>
       </body>
     </html>
   );
 }
+

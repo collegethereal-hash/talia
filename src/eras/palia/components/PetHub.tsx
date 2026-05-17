@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card } from './Card';
+import { Card } from '@/components/Card';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dog, Heart, Zap, Utensils, Droplets, X, Star, Settings2, Flame, MessageCircle, Clock, Book, Quote, Info, Sparkles, User, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,13 @@ interface CareAction {
   timestamp: number;
 }
 
+interface PetCustomization {
+  furColor: string;
+  eyeType: 'normal' | 'sparkle' | 'cool' | 'tired';
+  hatType: 'none' | 'pirate' | 'crown' | 'flower';
+  accessoryType: 'none' | 'scarf' | 'glasses' | 'bow';
+}
+
 interface PetState {
   hunger: number;
   happiness: number;
@@ -36,6 +43,7 @@ interface PetState {
   streak: number;
   lastVisitDay: string; // YYYY-MM-DD
   careLog: CareAction[];
+  customization: PetCustomization;
 }
 
 const PET_CONFIGS: Record<PetType, { icon: any; color: string; bgColor: string; name: string; species: string; hexColor: string }> = {
@@ -87,9 +95,16 @@ export const PetHub = () => {
     isHydrated: false,
     streak: 0,
     lastVisitDay: '',
-    careLog: []
+    careLog: [],
+    customization: {
+      furColor: '#5c4a33',
+      eyeType: 'normal',
+      hatType: 'none',
+      accessoryType: 'none'
+    }
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState<'status' | 'closet'>('status');
 
   // Body scroll lock
   useEffect(() => {
@@ -135,9 +150,15 @@ export const PetHub = () => {
 
       setState({ 
         ...parsed, 
-        hunger: Math.max(0, parsed.hunger - hungerDecay),
-        thirst: Math.max(0, parsed.thirst - thirstDecay),
-        happiness: Math.max(0, parsed.happiness - happinessDecay),
+        customization: parsed.customization || {
+          furColor: '#5c4a33',
+          eyeType: 'normal',
+          hatType: 'none',
+          accessoryType: 'none'
+        },
+        hunger: Math.max(0, (parsed.hunger || 0) - hungerDecay),
+        thirst: Math.max(0, (parsed.thirst || 0) - thirstDecay),
+        happiness: Math.max(0, (parsed.happiness || 0) - happinessDecay),
         streak: newStreak,
         lastInteraction: now,
       });
@@ -155,7 +176,13 @@ export const PetHub = () => {
         isHydrated: false,
         streak: 0,
         lastVisitDay: new Date().toISOString().split('T')[0],
-        careLog: []
+        careLog: [],
+        customization: {
+          furColor: '#5c4a33',
+          eyeType: 'normal',
+          hatType: 'none',
+          accessoryType: 'none'
+        }
       };
       setState(defaultState);
       saveArchiState(defaultState);
@@ -171,7 +198,14 @@ export const PetHub = () => {
         value: newState
       });
     
-    if (error) console.error('Error syncing Archi state:', error);
+    if (error) {
+      console.error('Error syncing Archi state:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+    }
     setIsSyncing(false);
   };
 
@@ -431,7 +465,7 @@ export const PetHub = () => {
                 </AnimatePresence>
 
                 <div className="relative w-full aspect-square md:aspect-auto md:flex-1 bg-[#f5e6d3]/30 rounded-[3rem] overflow-hidden border-4 border-[#e6d5bc]/50 shadow-inner group">
-                <ArchiScene color={currentPet.hexColor} mood={avgMood} />
+                <ArchiScene color={currentPet.hexColor} mood={avgMood} customization={state.customization} />
                 
                 {/* Floating status badges */}
                   <AnimatePresence>
@@ -492,6 +526,12 @@ export const PetHub = () => {
                     label="Уход" 
                   />
                   <TabButton 
+                    active={activeTab === 'closet'} 
+                    onClick={() => setActiveTab('closet')} 
+                    icon={<Sparkles size={18} />} 
+                    label="Гардероб" 
+                  />
+                  <TabButton 
                     active={activeTab === 'progress'} 
                     onClick={() => setActiveTab('progress')} 
                     icon={<Star size={18} />} 
@@ -503,17 +543,93 @@ export const PetHub = () => {
                     icon={<Book size={18} />} 
                     label="История" 
                   />
-                  <TabButton 
-                    active={activeTab === 'log'} 
-                    onClick={() => setActiveTab('log')} 
-                    icon={<Clock size={18} />} 
-                    label="Журнал" 
-                  />
                 </div>
 
                 {/* Tab Content */}
                 <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar overscroll-contain touch-pan-y">
                   <AnimatePresence mode="wait">
+                    {activeTab === 'closet' && (
+                      <motion.div
+                        key="closet"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        className="space-y-8"
+                      >
+                         <div className="space-y-4">
+                           <h4 className="text-sm font-black uppercase tracking-widest text-[#8b7355]">Цвет шерсти</h4>
+                           <div className="flex flex-wrap gap-3">
+                             {['#5c4a33', '#1a1a1a', '#ffffff', '#ffb7b7', '#b7d8ff', '#d1ffb7'].map(color => (
+                               <button 
+                                 key={color}
+                                 onClick={() => setState(prev => ({ ...prev, customization: { ...prev.customization, furColor: color } }))}
+                                 className={cn(
+                                   "w-10 h-10 rounded-full border-4 transition-transform hover:scale-110",
+                                   state.customization.furColor === color ? "border-[#5c4a33]" : "border-transparent shadow-sm"
+                                 )}
+                                 style={{ backgroundColor: color }}
+                               />
+                             ))}
+                           </div>
+                         </div>
+
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                              <h4 className="text-sm font-black uppercase tracking-widest text-[#8b7355]">Глаза</h4>
+                              <div className="grid grid-cols-2 gap-2">
+                                {['normal', 'sparkle', 'cool', 'tired'].map(eye => (
+                                  <button 
+                                    key={eye}
+                                    onClick={() => setState(prev => ({ ...prev, customization: { ...prev.customization, eyeType: eye as any } }))}
+                                    className={cn(
+                                      "px-4 py-3 rounded-xl border-2 font-bold capitalize transition-all",
+                                      state.customization.eyeType === eye ? "bg-[#5c4a33] text-white border-[#5c4a33]" : "bg-white text-[#8b7355] border-[#e6d5bc] hover:bg-[#f5e6d3]"
+                                    )}
+                                  >
+                                    {eye}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <h4 className="text-sm font-black uppercase tracking-widest text-[#8b7355]">Головной убор</h4>
+                              <div className="grid grid-cols-2 gap-2">
+                                {['none', 'pirate', 'crown', 'flower'].map(hat => (
+                                  <button 
+                                    key={hat}
+                                    onClick={() => setState(prev => ({ ...prev, customization: { ...prev.customization, hatType: hat as any } }))}
+                                    className={cn(
+                                      "px-4 py-3 rounded-xl border-2 font-bold capitalize transition-all",
+                                      state.customization.hatType === hat ? "bg-[#5c4a33] text-white border-[#5c4a33]" : "bg-white text-[#8b7355] border-[#e6d5bc] hover:bg-[#f5e6d3]"
+                                    )}
+                                  >
+                                    {hat}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <h4 className="text-sm font-black uppercase tracking-widest text-[#8b7355]">Аксессуар</h4>
+                              <div className="grid grid-cols-2 gap-2">
+                                {['none', 'scarf', 'glasses', 'bow'].map(acc => (
+                                  <button 
+                                    key={acc}
+                                    onClick={() => setState(prev => ({ ...prev, customization: { ...prev.customization, accessoryType: acc as any } }))}
+                                    className={cn(
+                                      "px-4 py-3 rounded-xl border-2 font-bold capitalize transition-all",
+                                      state.customization.accessoryType === acc ? "bg-[#5c4a33] text-white border-[#5c4a33]" : "bg-white text-[#8b7355] border-[#e6d5bc] hover:bg-[#f5e6d3]"
+                                    )}
+                                  >
+                                    {acc}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                         </div>
+                      </motion.div>
+                    )}
                     {activeTab === 'status' && (
                       <motion.div
                         key="status"

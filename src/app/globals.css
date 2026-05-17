@@ -1,12 +1,34 @@
 @import "tailwindcss";
 
 :root {
+  /* Common variables */
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+}
+
+.era-palia {
   --background: #fefce8;
   --foreground: #4a3728;
   --talia-lavender: #d8b4fe;
   --talia-peach: #ffedd5;
   --talia-sand: #fefce8;
+  --era-accent: #e6d5bc;
 }
+
+.era-pirate {
+  --background: #020617; /* Deep Navy */
+  --foreground: #fef3c7; /* Amber/Parchment */
+  --talia-lavender: #0c4a6e; /* Deep Ocean */
+  --talia-peach: #78350f; /* Mahogany */
+  --talia-sand: #020617;
+  --era-accent: #fbbf24; /* Gold */
+  
+  --wood-dark: #2d1a12;
+  --wood-light: #4d2f1e;
+  --ocean-blue: #0ea5e9;
+  --gold-glow: rgba(251, 191, 36, 0.2);
+}
+
 
 @theme inline {
   --color-background: var(--background);
@@ -48,6 +70,18 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+.era-pirate .glass {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+.pirate-wood {
+  background: linear-gradient(135deg, var(--wood-dark), var(--wood-light));
+  border: 2px solid #5a3e2b;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5);
 }
 
 .cozy-border {

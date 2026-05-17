@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card } from './Card';
+import { Card } from '@/components/Card';
 import { Cloud, Sun, MapPin, Clock, Plane, Navigation, Globe, Zap, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
