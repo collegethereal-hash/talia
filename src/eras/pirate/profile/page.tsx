@@ -6,7 +6,7 @@ import {
   Users, Skull, Anchor, Sword, Scroll, 
   Map as MapIcon, Compass, Coins, Heart,
   Lock, Calendar, Sparkles, Trash2, Mail,
-  Ship, Wind, User, Edit3, Save, X, Flame, Target, Trophy, Crown, Eye, Crosshair, Shield, CheckCircle, Info, Beer
+  Ship, Wind, User, Edit3, Save, X, Flame, Target, Trophy, Crown, Eye, Crosshair, Shield, CheckCircle, Info, Beer, Wrench, History
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useData } from '@/components/DataProvider';
@@ -21,6 +21,18 @@ export default function PirateProfile() {
   const [crew, setCrew] = useState(0);
   const [inventory, setInventory] = useState<string[]>([]);
   const [sunkShips, setSunkShips] = useState(0);
+  const [shipHealth, setShipHealth] = useState(45); // e.g. 45% damaged
+
+  const handleRepair = () => {
+    if (gold >= 100 && shipHealth < 100) {
+      setGold(prev => {
+        const newGold = prev - 100;
+        localStorage.setItem('pirate_gold', newGold.toString());
+        return newGold;
+      });
+      setShipHealth(100);
+    }
+  };
 
   useEffect(() => {
     const savedGold = localStorage.getItem('pirate_gold');
@@ -341,65 +353,124 @@ export default function PirateProfile() {
 
       {/* MODALS */}
 
-      {/* 1. Flagship Details Modal */}
+      {/* 1. Flagship Details / Garage Modal */}
       <AnimatePresence>
         {showShipDetails && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowShipDetails(false)} className="absolute inset-0 bg-sky-950/90 backdrop-blur-xl" />
              
              <motion.div initial={{ scale: 0.9, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 50 }} 
-               className="relative w-full max-w-4xl bg-[#020a17] p-8 md:p-12 rounded-[3rem] border-4 border-sky-500/30 shadow-[0_0_100px_rgba(14,165,233,0.3)] overflow-hidden"
+               className="relative w-full max-w-6xl h-[85vh] bg-[#020a17] rounded-[3rem] border-4 border-sky-500/30 shadow-[0_0_100px_rgba(14,165,233,0.3)] overflow-hidden flex flex-col"
              >
                 {/* Blueprint Aesthetic Background */}
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(14,165,233,0.1)_2px,transparent_2px),linear-gradient(90deg,rgba(14,165,233,0.1)_2px,transparent_2px)] bg-[size:40px_40px] pointer-events-none opacity-50" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#020a17_0%,transparent_100%)] opacity-80" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#020a17_0%,transparent_100%)] opacity-80 pointer-events-none" />
 
-                <button onClick={() => setShowShipDetails(false)} className="absolute top-6 right-6 text-sky-500/40 hover:text-sky-300 transition-colors z-20">
-                  <X size={32} />
-                </button>
-
-                <div className="relative z-10 space-y-10">
-                   <div className="text-center space-y-2">
-                      <p className="text-[12px] font-black uppercase tracking-[0.5em] text-sky-500/80">Чертежи Флагмана</p>
-                      <h2 className="text-6xl font-black uppercase tracking-tighter text-sky-100">{flagship.name}</h2>
-                   </div>
-
-                   <div className="flex flex-col md:flex-row gap-10 items-center">
-                      {/* Big Blueprint Graphic */}
-                      <div className="w-64 h-64 border-2 border-sky-500/30 rounded-full flex items-center justify-center bg-sky-900/10 shadow-[inset_0_0_50px_rgba(14,165,233,0.2)] shrink-0 relative">
-                         <div className="absolute inset-0 rounded-full border border-sky-400/20 animate-spin-slow border-dashed" />
-                         <div className="scale-150 opacity-80">{flagship.icon}</div>
-                         
-                         {/* Callout lines */}
-                         <div className="absolute -left-10 top-20 w-16 h-[1px] bg-sky-500/50" />
-                         <div className="absolute -right-10 bottom-20 w-16 h-[1px] bg-sky-500/50" />
-                      </div>
-
-                      <div className="flex-1 space-y-8">
-                         <div className="bg-sky-900/20 p-6 rounded-2xl border border-sky-500/20">
-                            <p className="text-sky-200/80 font-serif italic text-lg leading-relaxed">"{flagship.blueprint}"</p>
-                         </div>
-                         
-                         <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-1">
-                               <p className="text-[10px] font-black uppercase tracking-widest text-sky-500/60">Материал корпуса</p>
-                               <p className="text-lg font-bold text-sky-200">{flagship.modules.hull}</p>
-                            </div>
-                            <div className="space-y-1">
-                               <p className="text-[10px] font-black uppercase tracking-widest text-sky-500/60">Парусное вооружение</p>
-                               <p className="text-lg font-bold text-sky-200">{flagship.modules.sails}</p>
-                            </div>
-                            <div className="space-y-1">
-                               <p className="text-[10px] font-black uppercase tracking-widest text-sky-500/60">Ростровая фигура</p>
-                               <p className="text-lg font-bold text-sky-200">{flagship.modules.figurehead}</p>
-                            </div>
-                            <div className="space-y-1">
-                               <p className="text-[10px] font-black uppercase tracking-widest text-sky-500/60">Грузоподъемность</p>
-                               <p className="text-lg font-bold text-amber-400">{flagship.stats.cargo} бочек рома</p>
-                            </div>
-                         </div>
+                {/* Header */}
+                <div className="relative z-20 flex items-center justify-between p-8 border-b border-sky-500/20 bg-black/40">
+                   <div className="flex items-center gap-4">
+                      <Wrench size={32} className="text-sky-400" />
+                      <div>
+                         <p className="text-[10px] font-black uppercase tracking-widest text-sky-500/60">Верфь и Ангар</p>
+                         <h2 className="text-3xl font-black uppercase tracking-tighter text-sky-100">Сборка: {flagship.name}</h2>
                       </div>
                    </div>
+                   <button onClick={() => setShowShipDetails(false)} className="p-3 bg-sky-500/10 rounded-full text-sky-500/40 hover:text-sky-300 hover:bg-sky-500/20 transition-colors">
+                     <X size={24} />
+                   </button>
+                </div>
+
+                {/* Main Garage Content */}
+                <div className="flex-1 relative z-10 flex flex-col lg:flex-row overflow-hidden">
+                   
+                   {/* Left Column: Ship 3D View & Health */}
+                   <div className="w-full lg:w-1/3 border-r border-sky-500/20 p-8 flex flex-col items-center justify-center space-y-8 bg-sky-900/5">
+                      <div className="relative group">
+                         <div className="absolute inset-0 bg-sky-500/20 rounded-full blur-[50px] group-hover:bg-sky-400/30 transition-colors" />
+                         <div className="w-64 h-64 border-4 border-sky-500/30 rounded-full flex items-center justify-center bg-[#020a17] shadow-[inset_0_0_50px_rgba(14,165,233,0.2)] relative z-10">
+                            <div className="absolute inset-0 rounded-full border-2 border-sky-400/20 animate-spin-slow border-dashed" />
+                            <div className="scale-[2] opacity-90 drop-shadow-[0_0_20px_rgba(56,189,248,0.8)]">{flagship.icon}</div>
+                         </div>
+                      </div>
+
+                      <div className="w-full space-y-4 bg-black/60 p-6 rounded-3xl border border-sky-500/20 shadow-xl">
+                         <div className="flex justify-between items-center text-sm font-black uppercase tracking-widest">
+                            <span className="text-sky-200">Целостность</span>
+                            <span className={shipHealth > 50 ? "text-emerald-400" : "text-red-400"}>{shipHealth}%</span>
+                         </div>
+                         <div className="h-4 bg-slate-900 rounded-full overflow-hidden border border-sky-500/10">
+                            <motion.div 
+                              initial={{ width: 0 }} 
+                              animate={{ width: `${shipHealth}%` }} 
+                              className={cn("h-full transition-all duration-1000", shipHealth > 50 ? "bg-emerald-500" : "bg-red-500")}
+                            />
+                         </div>
+
+                         <button 
+                           onClick={handleRepair}
+                           disabled={shipHealth === 100 || gold < 100}
+                           className={cn(
+                             "w-full py-4 mt-2 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all shadow-lg",
+                             shipHealth === 100 ? "bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 cursor-not-allowed" 
+                             : gold >= 100 ? "bg-amber-500 text-slate-950 hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(245,158,11,0.3)]" 
+                             : "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700"
+                           )}
+                         >
+                           <Wrench size={14} /> 
+                           {shipHealth === 100 ? 'Ремонт не требуется' : 'Заделать пробоины (100 Золота)'}
+                         </button>
+                      </div>
+                   </div>
+
+                   {/* Middle Column: Ship Parts / Modules */}
+                   <div className="flex-1 p-8 overflow-y-auto space-y-8 custom-scrollbar">
+                      <div className="flex items-center gap-3 border-b border-sky-500/20 pb-4">
+                         <Shield size={24} className="text-sky-400" />
+                         <h3 className="text-2xl font-black uppercase tracking-widest text-sky-100">Модули Корабля</h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <ModuleSlot title="Корпус" icon={<Anchor size={20}/>} item={flagship.modules.hull} stat={`Броня: ${flagship.stats.armor}`} type="hull" />
+                         <ModuleSlot title="Паруса" icon={<Wind size={20}/>} item={flagship.modules.sails} stat={`Скорость: ${flagship.stats.speed}`} type="sails" />
+                         <ModuleSlot title="Орудия" icon={<Flame size={20}/>} item={inventory.includes('b3') ? 'Бронзовые Пушки' : 'Стандартные Пушки'} stat={`Огневая мощь: ${flagship.stats.cannons}`} type="cannons" />
+                         <ModuleSlot title="Фигура" icon={<Skull size={20}/>} item={flagship.modules.figurehead} stat="Устрашение: Высокое" type="figurehead" />
+                      </div>
+
+                      <div className="bg-sky-900/10 p-6 rounded-2xl border border-sky-500/20 mt-8">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-sky-500/60 mb-2">Техническое описание</p>
+                         <p className="text-sky-200/80 font-serif italic leading-relaxed">"{flagship.blueprint}"</p>
+                      </div>
+                   </div>
+
+                   {/* Right Column: Battle Log */}
+                   <div className="w-full lg:w-1/3 bg-black/60 p-8 overflow-y-auto custom-scrollbar border-l border-sky-500/20">
+                      <div className="flex items-center gap-3 border-b border-sky-500/20 pb-4 mb-6">
+                         <History size={24} className="text-amber-400" />
+                         <h3 className="text-2xl font-black uppercase tracking-widest text-amber-100">Журнал Боёв</h3>
+                      </div>
+
+                      <div className="space-y-4">
+                         {[
+                           { date: 'Сегодня', title: 'Побег от Королевского Флота', desc: 'Ушли в шторм, порвали два паруса.', dmg: '-15% корпуса', type: 'escape' },
+                           { date: 'Вчера', title: 'Ограбление Галеона', desc: 'Захватили груз специй и рома.', dmg: '+2500 золота', type: 'victory' },
+                           { date: '3 дня назад', title: 'Нападение Кракена', desc: 'Щупальца пробили нижнюю палубу.', dmg: '-40% корпуса', type: 'danger' },
+                           { date: 'Неделю назад', title: 'Столкновение с Рифом', desc: 'Штурман был пьян.', dmg: '-10% корпуса', type: 'danger' },
+                         ].map((log, i) => (
+                           <div key={i} className="p-4 rounded-2xl bg-[#020a17] border border-sky-500/10 hover:border-amber-500/30 transition-colors">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/50">{log.date}</p>
+                              <h4 className="text-sm font-bold text-sky-100 mt-1 mb-2">{log.title}</h4>
+                              <p className="text-xs text-sky-200/60 italic mb-3">"{log.desc}"</p>
+                              <div className={cn("text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg inline-block", 
+                                log.type === 'victory' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                                'bg-red-500/10 text-red-400 border border-red-500/20')}
+                              >
+                                {log.dmg}
+                              </div>
+                           </div>
+                         ))}
+                      </div>
+                   </div>
+
                 </div>
              </motion.div>
           </div>
@@ -470,6 +541,21 @@ function StatBlock({ icon, label, value, color }: any) {
       <div className="mb-3 opacity-80">{icon}</div>
       <p className="text-4xl font-black tracking-tighter text-slate-100 leading-none mb-2">{value}</p>
       <p className="text-[9px] font-black uppercase tracking-widest opacity-60">{label}</p>
+    </div>
+  );
+}
+
+function ModuleSlot({ title, icon, item, stat, type }: any) {
+  return (
+    <div className="bg-sky-900/10 p-4 rounded-2xl border border-sky-500/20 flex items-center gap-4 group hover:border-sky-500/50 hover:bg-sky-500/5 transition-colors cursor-pointer">
+       <div className="w-12 h-12 bg-sky-500/10 rounded-xl flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform">
+          {icon}
+       </div>
+       <div className="flex-1">
+          <p className="text-[9px] font-black uppercase tracking-widest text-sky-500/50">{title}</p>
+          <p className="font-bold text-sky-100 text-sm leading-tight">{item}</p>
+          <p className="text-[10px] text-amber-400/80 mt-1">{stat}</p>
+       </div>
     </div>
   );
 }
