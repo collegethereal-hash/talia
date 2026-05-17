@@ -30,29 +30,30 @@ interface Zone {
 
 export default function LairPage() {
   const [battleLog, setBattleLog] = useState<string[]>([
-    "Капитан! Корабли сошлись бортами. Перекидывайте мостики!",
-    "Кликайте на зоны кораблей, чтобы отправлять туда людей."
+    "Корабли сошлись бортами по вертикали! Наш корабль СВЕРХУ.",
+    "Кликайте на зоны, чтобы отправлять людей. Корабли стали больше!"
   ]);
   
   const arenaRef = useRef<HTMLDivElement>(null);
   const [sailors, setSailors] = useState<Sailor[]>([]);
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
 
-  // Define zones with absolute pixel coordinates within the 900x600 arena
+  // Define zones for VERTICAL STACKING (Horizontal ships)
+  // Arena size: 900x800
   const zones: Zone[] = [
-    // Player Ship (Left) - Center X around 250
-    { id: 'p_helm', name: 'Штурвал', x: 250, y: 100, team: 'player' },
-    { id: 'p_masts', name: 'Мачты', x: 250, y: 250, team: 'player' },
-    { id: 'p_cannons_f', name: 'Носовые Пушки', x: 150, y: 350, team: 'player' },
-    { id: 'p_cannons_b', name: 'Кормовые Пушки', x: 350, y: 350, team: 'player' },
-    { id: 'p_deck', name: 'Палуба', x: 250, y: 500, team: 'player' },
+    // Player Ship (Top) - Y around 200, X from 150 to 750
+    { id: 'p_helm', name: 'Штурвал', x: 200, y: 200, team: 'player' },
+    { id: 'p_masts', name: 'Мачты', x: 350, y: 200, team: 'player' },
+    { id: 'p_cannons_f', name: 'Верхние Пушки', x: 500, y: 150, team: 'player' },
+    { id: 'p_cannons_b', name: 'Нижние Пушки', x: 500, y: 250, team: 'player' },
+    { id: 'p_deck', name: 'Палуба', x: 700, y: 200, team: 'player' },
     
-    // Enemy Ship (Right) - Center X around 650
-    { id: 'e_helm', name: 'Мостик', x: 650, y: 100, team: 'enemy' },
-    { id: 'e_masts', name: 'Мачты', x: 650, y: 250, team: 'enemy' },
-    { id: 'e_cannons_f', name: 'Носовые Пушки', x: 550, y: 350, team: 'enemy' },
-    { id: 'e_cannons_b', name: 'Кормовые Пушки', x: 750, y: 350, team: 'enemy' },
-    { id: 'e_deck', name: 'Каюты', x: 650, y: 500, team: 'enemy' },
+    // Enemy Ship (Bottom) - Y around 600, X from 150 to 750
+    { id: 'e_helm', name: 'Мостик', x: 200, y: 600, team: 'enemy' },
+    { id: 'e_masts', name: 'Мачты', x: 350, y: 600, team: 'enemy' },
+    { id: 'e_cannons_f', name: 'Верхние Пушки', x: 500, y: 550, team: 'enemy' },
+    { id: 'e_cannons_b', name: 'Нижние Пушки', x: 500, y: 650, team: 'enemy' },
+    { id: 'e_deck', name: 'Каюты', x: 700, y: 600, team: 'enemy' },
   ];
 
   // Initialize sailors
@@ -62,11 +63,11 @@ export default function LairPage() {
 
     // Player sailors
     zones.filter(z => z.team === 'player').forEach(zone => {
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 6; i++) {
         initialSailors.push({
           id: id++,
-          x: zone.x + (Math.random() * 40 - 20),
-          y: zone.y + (Math.random() * 40 - 20),
+          x: zone.x + (Math.random() * 50 - 25),
+          y: zone.y + (Math.random() * 50 - 25),
           targetX: zone.x,
           targetY: zone.y,
           color: 'bg-cyan-400 shadow-cyan-500/50',
@@ -77,11 +78,11 @@ export default function LairPage() {
 
     // Enemy sailors
     zones.filter(z => z.team === 'enemy').forEach(zone => {
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 6; i++) {
         initialSailors.push({
           id: id++,
-          x: zone.x + (Math.random() * 40 - 20),
-          y: zone.y + (Math.random() * 40 - 20),
+          x: zone.x + (Math.random() * 50 - 25),
+          y: zone.y + (Math.random() * 50 - 25),
           targetX: zone.x,
           targetY: zone.y,
           color: 'bg-red-500 shadow-red-500/50',
@@ -106,8 +107,7 @@ export default function LairPage() {
             return { ...sailor, x: sailor.targetX, y: sailor.targetY };
           }
           
-          // Move towards target
-          const speed = 3;
+          const speed = 4; // Slightly faster
           return {
             ...sailor,
             x: sailor.x + (dx / dist) * speed,
@@ -115,7 +115,7 @@ export default function LairPage() {
           };
         })
       );
-    }, 50); // 20 FPS
+    }, 50);
 
     return () => clearInterval(interval);
   }, []);
@@ -132,26 +132,22 @@ export default function LairPage() {
       setSelectedZone(zoneId);
       addLog(`Выбрана зона: ${zone.name}. Кликните куда отправить людей.`);
     } else {
-      // Move sailors from selectedZone to clicked zone
       const sourceZone = zones.find(z => z.id === selectedZone);
       if (!sourceZone) return;
 
-      addLog(`Приказ: Переместить людей из ${sourceZone.name} в ${zone.name}!`);
+      addLog(`Приказ: Идти из ${sourceZone.name} в ${zone.name}!`);
 
       setSailors(prevSailors => 
         prevSailors.map(sailor => {
-          // If sailor is close to the source zone, give them the new target
           const dx = sailor.x - sourceZone.x;
           const dy = sailor.y - sourceZone.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           
-          if (dist < 50 && sailor.team === 'player') { // Only move player sailors
-            // If moving to enemy ship, check if we need to go through the bridge
-            // Bridge is around Y=300, between X=350 and X=550
+          if (dist < 60 && sailor.team === 'player') {
             return { 
               ...sailor, 
-              targetX: zone.x + (Math.random() * 40 - 20), 
-              targetY: zone.y + (Math.random() * 40 - 20) 
+              targetX: zone.x + (Math.random() * 50 - 25), 
+              targetY: zone.y + (Math.random() * 50 - 25) 
             };
           }
           return sailor;
@@ -168,15 +164,15 @@ export default function LairPage() {
       const clickX = e.clientX - rect.left;
       const clickY = e.clientY - rect.top;
 
-      addLog(`Приказ: Всем свободным стягиваться в точку (${Math.floor(clickX)}, ${Math.floor(clickY)})!`);
+      addLog(`Приказ: Всем стягиваться в точку (${Math.floor(clickX)}, ${Math.floor(clickY)})!`);
 
       setSailors(prevSailors => 
         prevSailors.map(sailor => {
           if (sailor.team === 'player') {
             return { 
               ...sailor, 
-              targetX: clickX + (Math.random() * 30 - 15), 
-              targetY: clickY + (Math.random() * 30 - 15) 
+              targetX: clickX + (Math.random() * 40 - 20), 
+              targetY: clickY + (Math.random() * 40 - 20) 
             };
           }
           return sailor;
@@ -198,39 +194,42 @@ export default function LairPage() {
          <div className="flex justify-between items-center border-b-2 border-amber-500/30 pb-4">
             <div>
                <p className="text-[12px] font-black uppercase tracking-[0.5em] text-amber-500">Симуляция Абордажа</p>
-               <h1 className="text-5xl font-black uppercase text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500">Битва в Реальном Времени</h1>
+               <h1 className="text-5xl font-black uppercase text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500">Вертикальное Сражение</h1>
             </div>
             <div className="text-xs text-amber-500/60">
-               Кликните на зону для выбора, затем на другую для отправки. <br />
-               Клик по пустой палубе стянет всех туда.
+               Наш корабль СВЕРХУ. Враг СНИЗУ. <br />
+               Корабли увеличены для удобства!
             </div>
          </div>
 
          {/* Arena and Journal */}
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* Arena (900x600 fixed size for coordinate mapping) */}
+            {/* Arena (900x800 - Taller) */}
             <div 
                ref={arenaRef}
                onClick={handleArenaClick}
-               className="lg:col-span-9 bg-gradient-to-b from-[#110a03] to-black rounded-[3rem] border-2 border-amber-500/20 relative h-[600px] overflow-hidden cursor-crosshair"
+               className="lg:col-span-9 bg-gradient-to-b from-[#110a03] to-black rounded-[3rem] border-2 border-amber-500/20 relative h-[800px] overflow-hidden cursor-crosshair"
             >
                {/* Grid background */}
                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')]" />
                
-               {/* Bridge (Мостик) */}
-               <div className="absolute top-[280px] left-[350px] w-[200px] h-[40px] bg-amber-900/40 border-t-2 border-b-2 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center">
-                  <span className="text-[10px] font-black uppercase text-amber-500/60">Абордажный Мостик</span>
+               {/* Vertical Bridges (Абордажные мостики) */}
+               <div className="absolute top-[350px] left-[300px] w-[40px] h-[100px] bg-amber-900/40 border-l-2 border-r-2 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center">
+                  <span className="text-[8px] font-black uppercase text-amber-500/60 rotate-90">Мостик 1</span>
+               </div>
+               <div className="absolute top-[350px] left-[600px] w-[40px] h-[100px] bg-amber-900/40 border-l-2 border-r-2 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center">
+                  <span className="text-[8px] font-black uppercase text-amber-500/60 rotate-90">Мостик 2</span>
                </div>
 
-               {/* PLAYER SHIP HULL */}
-               <div className="absolute top-[50px] left-[100px] w-[300px] h-[500px] border-4 border-cyan-500/20 rounded-[80px] bg-cyan-900/5 pointer-events-none">
-                  <div className="absolute top-[-15px] left-1/2 -translate-x-1/2 text-cyan-400 font-black uppercase text-xs">Твой Флагман</div>
+               {/* PLAYER SHIP HULL (Horizontal, on top) */}
+               <div className="absolute top-[100px] left-[100px] w-[700px] h-[200px] border-4 border-cyan-500/20 rounded-[50px] bg-cyan-900/5 pointer-events-none">
+                  <div className="absolute top-[-25px] left-1/2 -translate-x-1/2 text-cyan-400 font-black uppercase text-sm">Твой Флагман (Огромный)</div>
                </div>
 
-               {/* ENEMY SHIP HULL */}
-               <div className="absolute top-[50px] left-[500px] w-[300px] h-[500px] border-4 border-red-500/20 rounded-[80px] bg-red-900/5 pointer-events-none">
-                  <div className="absolute top-[-15px] left-1/2 -translate-x-1/2 text-red-400 font-black uppercase text-xs">Вражеский Галеон</div>
+               {/* ENEMY SHIP HULL (Horizontal, on bottom) */}
+               <div className="absolute top-[500px] left-[100px] w-[700px] h-[200px] border-4 border-red-500/20 rounded-[50px] bg-red-900/5 pointer-events-none">
+                  <div className="absolute bottom-[-25px] left-1/2 -translate-x-1/2 text-red-400 font-black uppercase text-sm">Вражеский Галеон (Огромный)</div>
                </div>
 
                {/* Zones (Clickable Areas) */}
@@ -240,19 +239,19 @@ export default function LairPage() {
                      <div 
                         key={zone.id}
                         onClick={(e) => {
-                           e.stopPropagation(); // Prevent arena click
+                           e.stopPropagation();
                            handleZoneClick(zone.id);
                         }}
                         className={cn(
-                          "absolute -translate-x-1/2 -translate-y-1/2 p-4 rounded-2xl border-2 transition-all cursor-pointer",
+                          "absolute -translate-x-1/2 -translate-y-1/2 p-5 rounded-2xl border-2 transition-all cursor-pointer",
                           isSelected ? "border-amber-400 bg-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.5)]" : "border-white/10 bg-black/60 hover:border-white/30",
                           zone.team === 'player' ? "hover:border-cyan-500/50" : "hover:border-red-500/50"
                         )}
                         style={{ left: zone.x, top: zone.y }}
                      >
-                        {/* LARGER TEXT */}
-                        <p className="text-xl font-black text-white uppercase tracking-tighter">{zone.name}</p>
-                        <p className="text-[10px] text-slate-500 uppercase font-black">{zone.team === 'player' ? 'Наш отсек' : 'Враг'}</p>
+                        {/* VERY LARGE TEXT */}
+                        <p className="text-2xl font-black text-white uppercase tracking-tighter drop-shadow-lg">{zone.name}</p>
+                        <p className="text-xs text-slate-400 uppercase font-black">{zone.team === 'player' ? 'Наш сектор' : 'Враг'}</p>
                      </div>
                   );
                })}
@@ -261,11 +260,11 @@ export default function LairPage() {
                {sailors.map(sailor => (
                   <div
                      key={sailor.id}
-                     className={cn("w-3 h-3 rounded-full absolute transition-all duration-500 ease-linear shadow-lg", sailor.color)}
+                     className={cn("w-3.5 h-3.5 rounded-full absolute transition-all duration-500 ease-linear shadow-lg", sailor.color)}
                      style={{ 
                         left: `${sailor.x}px`, 
                         top: `${sailor.y}px`,
-                        transform: 'translate(-50%, -50%)' // Center the dot
+                        transform: 'translate(-50%, -50%)'
                      }}
                   />
                ))}
@@ -273,7 +272,7 @@ export default function LairPage() {
             </div>
 
             {/* Right: Journal */}
-            <div className="lg:col-span-3 h-[600px] flex flex-col">
+            <div className="lg:col-span-3 h-[800px] flex flex-col">
                <div className="bg-gradient-to-br from-[#1a0f00] to-[#0a0501] p-6 rounded-[2rem] border-2 border-amber-500/30 flex-1 flex flex-col shadow-[0_0_30px_rgba(245,158,11,0.1)]">
                   <div className="flex items-center gap-2 border-b border-amber-500/20 pb-4 mb-4">
                      <Scroll size={20} className="text-amber-500" />
