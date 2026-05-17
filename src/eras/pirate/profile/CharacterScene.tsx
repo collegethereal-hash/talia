@@ -23,6 +23,7 @@ function PirateCharacter3D({ customization }: { customization: any }) {
   const coreRef = useRef<any>(null);
   const headRef = useRef<THREE.Mesh>(null);
   const { skinColor, hat, clothes, weapon, accessory } = customization;
+  const isMale = skinColor === '#e0ac69'; // Grinch fallback
 
   useFrame((state) => {
     if (groupRef.current) {
@@ -31,16 +32,20 @@ function PirateCharacter3D({ customization }: { customization: any }) {
     if (headRef.current) {
       headRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 2) * 0.1;
     }
-    if (coreRef.current) {
+    if (coreRef.current && coreRef.current.material) {
       // Dynamic color shift for the magical substance
       const t = (Math.sin(state.clock.elapsedTime * 2) + 1) / 2;
       const color1 = new THREE.Color(isMale ? '#ffaa00' : '#00ffff');
       const color2 = new THREE.Color(isMale ? '#ff0055' : '#aa00ff');
-      coreRef.current.material.emissive.lerpColors(color1, color2, t);
+      
+      // Safe check for emissive property
+      if (coreRef.current.material.emissive) {
+        coreRef.current.material.emissive.lerpColors(color1, color2, t);
+      } else if (coreRef.current.material.color) {
+        coreRef.current.material.color.lerpColors(color1, color2, t);
+      }
     }
   });
-
-  const isMale = customization.skinColor === '#e0ac69'; // Grinch fallback
 
   return (
     <group ref={groupRef} position={[0, -0.5, 0]}>
