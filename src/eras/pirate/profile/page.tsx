@@ -6,13 +6,14 @@ import {
   Users, Skull, Anchor, Sword, Scroll, 
   Map as MapIcon, Compass, Coins, Heart,
   Lock, Calendar, Sparkles, Trash2, Mail,
-  Ship, Wind, User, Edit3, Save, X, Flame, Target, Trophy, Crown, Eye, Crosshair, Shield, CheckCircle, Info, Beer, Wrench, History
+  Ship, Wind, User, Edit3, Save, X, Flame, Target, Trophy, Crown, Eye, Crosshair, Shield, CheckCircle, Info, Beer, Wrench, History, Navigation
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useData } from '@/components/DataProvider';
 
 export default function PirateProfile() {
   const { currentUser, profiles, capsules } = useData();
+  const [localProfiles, setLocalProfiles] = useState(profiles);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
   const [showShipDetails, setShowShipDetails] = useState(false);
   
@@ -117,7 +118,12 @@ export default function PirateProfile() {
     else setSunkShips(Math.floor(Math.random() * 20) + 5); 
   }, []);
 
-  const selectedProfile = selectedProfileId ? profiles[selectedProfileId] : null;
+  const selectedProfile = selectedProfileId ? localProfiles[selectedProfileId] : null;
+
+  const handleSaveProfile = (id: string) => {
+    // Simulated save functionality
+    console.log("Saving changes to profile", id);
+  };
 
   // Determine Ship based on inventory
   const getFlagship = () => {
@@ -156,7 +162,7 @@ export default function PirateProfile() {
   const flagship = getFlagship();
 
   return (
-    <div className="relative min-h-screen bg-[#020a17] text-amber-100 pb-32 font-serif overflow-hidden">
+    <div className="relative min-h-screen bg-[#020a17] text-amber-100 pb-32 font-serif">
       
       {/* Background Decor */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -188,7 +194,7 @@ export default function PirateProfile() {
            <div className="absolute -inset-4 bg-sky-900/10 blur-2xl rounded-[4rem] -z-10" />
            <div 
              onClick={() => setShowShipDetails(true)}
-             className="pirate-wood p-8 md:p-12 rounded-[3rem] border-4 border-sky-900/50 shadow-2xl overflow-hidden relative group cursor-pointer hover:border-sky-500/50 transition-colors"
+             className="pirate-wood p-8 md:p-12 rounded-[3rem] border-4 border-sky-900/50 shadow-2xl relative group cursor-pointer hover:border-sky-500/50 transition-colors"
            >
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors z-0" />
               <div className="absolute top-6 right-6 p-3 bg-sky-500/10 rounded-full text-sky-400 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -247,7 +253,7 @@ export default function PirateProfile() {
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              {Object.values(profiles).map((profile: any, index: number) => {
+              {Object.values(localProfiles).map((profile: any, index: number) => {
                  const isGrinch = profile.id === 'Grinch';
                  const accentColor = isGrinch ? 'border-red-500/30 text-red-400' : 'border-purple-500/30 text-purple-400';
                  const bgAccent = isGrinch ? 'bg-red-500/5' : 'bg-purple-500/5';
@@ -418,7 +424,64 @@ export default function PirateProfile() {
                 </div>
               ))}
            </div>
-        </section>
+         </section>
+
+         {/* SECTION 6: PIRATE COMPASS (NEW) */}
+         <section className="space-y-8 pt-16 border-t-4 border-emerald-500/10 pb-20">
+            <div className="flex items-center justify-center">
+              <h2 className="text-4xl font-black uppercase tracking-tighter text-emerald-500 flex items-center gap-4 drop-shadow-lg">
+                <Navigation size={36} /> Компас Желаний <Navigation size={36} />
+              </h2>
+            </div>
+            
+            <div className="max-w-2xl mx-auto p-12 bg-[#020a17] rounded-[4rem] border-4 border-emerald-900/50 shadow-[0_0_100px_rgba(16,185,129,0.1)] relative overflow-hidden flex flex-col items-center text-center">
+               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.1)_0%,transparent_100%)] pointer-events-none" />
+               <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/nautical-map.png')]" />
+               
+               <p className="text-emerald-100/60 font-serif italic mb-10 relative z-10 max-w-sm">"Сломанный компас? Нет... Он указывает не на север, а на то, чего вы хотите больше всего прямо сейчас."</p>
+               
+               <div className="relative w-64 h-64 mb-10 group cursor-pointer" onClick={handleCompassSpin}>
+                  {/* Outer Ring */}
+                  <div className="absolute inset-0 rounded-full border-8 border-[#0a1a10] shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]" />
+                  <div className="absolute -inset-4 rounded-full border-2 border-emerald-900/30 border-dashed animate-[spin_10s_linear_infinite] pointer-events-none" />
+                  
+                  {/* Engraved Details */}
+                  <div className="absolute inset-4 rounded-full border border-emerald-500/10" />
+                  
+                  {/* The Compass Needle */}
+                  <div className="absolute inset-0 flex items-center justify-center transition-transform duration-[3000ms] ease-out" style={{ transform: `rotate(${compassRotation}deg)` }}>
+                     <div className="h-56 w-6 bg-gradient-to-b from-red-600 via-red-900 to-slate-900 rounded-full shadow-2xl relative">
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-b-[32px] border-l-transparent border-r-transparent border-b-red-500" />
+                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-t-[32px] border-l-transparent border-r-transparent border-t-slate-800" />
+                     </div>
+                  </div>
+                  
+                  {/* Center Pin */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-amber-500 rounded-full border-4 border-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.5)] z-20 flex items-center justify-center">
+                     <div className="w-3 h-3 bg-amber-200 rounded-full" />
+                  </div>
+               </div>
+               
+               <div className="h-24 flex items-center justify-center relative z-10 w-full">
+                  <AnimatePresence mode="wait">
+                     {compassResult && (
+                       <motion.div key={compassResult} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="p-4 bg-emerald-900/20 rounded-2xl border border-emerald-500/30 w-full backdrop-blur-sm">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/50 mb-1">Стрелка указала на:</p>
+                          <h3 className="text-xl font-black text-emerald-100">{compassResult}</h3>
+                       </motion.div>
+                     )}
+                  </AnimatePresence>
+               </div>
+               
+               <button 
+                 onClick={handleCompassSpin}
+                 disabled={isSpinning}
+                 className="mt-4 px-8 py-4 w-full bg-emerald-600 text-slate-950 font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-500 transition-colors shadow-[0_0_30px_rgba(16,185,129,0.3)] disabled:opacity-50 disabled:cursor-not-allowed relative z-10"
+               >
+                 {isSpinning ? 'Судьба решает...' : 'Раскрутить Компас'}
+               </button>
+            </div>
+         </section>
       </div>
 
       {/* MODALS */}
@@ -624,50 +687,74 @@ export default function PirateProfile() {
                <button onClick={() => {setSelectedProfileId(null); setIsCreatingPoster(false);}} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-100 transition-colors z-20"><X size={32} /></button>
 
                {isCreatingPoster ? (
-                 <motion.div initial={{ rotateY: -90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-6 relative z-10 bg-[#e3d5b8] p-8 -m-4 rounded-[2.5rem] text-slate-900 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]">
-                    <div className="flex justify-between items-center border-b-2 border-slate-900/20 pb-4">
-                       <h3 className="text-3xl font-black uppercase tracking-tighter text-slate-900">Редактор Листовки</h3>
+                 <motion.div initial={{ rotateY: -90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-6 relative z-10 bg-[#f4ebd8] p-8 -m-4 rounded-[2.5rem] text-slate-900 shadow-[inset_0_0_100px_rgba(0,0,0,0.3)]">
+                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] pointer-events-none rounded-[2.5rem]" />
+                    
+                    <div className="flex justify-between items-center border-b-2 border-slate-900/20 pb-4 relative z-10">
+                       <h3 className="text-3xl font-black uppercase tracking-tighter text-slate-900 flex items-center gap-3">
+                          <Edit3 size={28} /> Судовая Роль
+                       </h3>
                     </div>
                     
-                    {/* The Poster Preview */}
-                    <div className="border-8 border-double border-slate-900 p-8 flex flex-col items-center text-center bg-[#f0e6d2] shadow-2xl relative overflow-hidden rotate-1">
-                       <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')]" />
-                       
-                       <h1 className="text-7xl font-black uppercase tracking-tighter mb-2 text-slate-900 drop-shadow-sm font-serif">WANTED</h1>
-                       <h2 className="text-xl font-bold uppercase tracking-[0.4em] mb-6 text-slate-800">DEAD OR ALIVE</h2>
-                       
-                       <div className="w-56 h-56 border-8 border-slate-900 bg-white mb-6 relative shadow-lg transform -rotate-2">
-                          <img src={selectedProfile.id === 'Grinch' ? "https://api.dicebear.com/7.x/avataaars/svg?seed=Grinch&beard=0.5" : "https://api.dicebear.com/7.x/avataaars/svg?seed=Cindy&hair=long"} className="w-full h-full object-cover grayscale contrast-150 sepia-[.8]" />
-                          {posterStamp && (
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 border-4 border-red-700 text-red-700 px-6 py-2 font-black text-4xl tracking-widest uppercase bg-white/80 mix-blend-multiply whitespace-nowrap shadow-sm pointer-events-none">
-                              {posterStamp}
-                            </div>
-                          )}
+                    <div className="space-y-6 relative z-10 font-serif">
+                       <div className="space-y-1 border-b border-slate-900/20 pb-4">
+                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Пиратское Имя:</label>
+                          <input id="edit-name" type="text" defaultValue={selectedProfile.name} className="w-full bg-transparent text-3xl font-black text-slate-900 outline-none placeholder-slate-400" placeholder="Капитан..." />
                        </div>
                        
-                       <input type="text" value={posterAlias} onChange={e=>setPosterAlias(e.target.value)} className="bg-transparent text-center text-3xl font-black uppercase border-b-2 border-slate-900/50 border-dashed outline-none w-full mb-6 font-serif relative z-10" placeholder="ВВЕДИТЕ ПРОЗВИЩЕ" />
-                       
-                       <p className="font-bold text-sm uppercase tracking-widest mb-2 border-b border-slate-900/20 w-full pb-1">Разыскивается за:</p>
-                       <textarea value={posterCrime} onChange={e=>setPosterCrime(e.target.value)} className="bg-transparent text-center text-xl italic border-none outline-none w-full resize-none h-20 font-serif leading-relaxed relative z-10" placeholder="Кража рома, разбитые сердца..." />
-                       
-                       <div className="text-5xl font-black mt-2 border-y-8 border-double border-slate-900 py-4 w-full font-serif flex items-center justify-center gap-2">
-                          <Coins size={36} className="text-slate-800" /> {Number(bounty).toLocaleString()}
+                       <div className="space-y-1 border-b border-slate-900/20 pb-4">
+                          <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Главная Слабость (Цитата):</label>
+                          <textarea id="edit-pref" defaultValue={selectedProfile.pref} className="w-full bg-transparent text-lg italic text-slate-800 outline-none resize-none h-16 placeholder-slate-400" placeholder="Молчание — золото..." />
                        </div>
-                    </div>
-
-                    {/* Controls */}
-                    <div className="space-y-4">
-                       <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest block text-center">Награда за голову</label>
-                       <input type="range" min="1000" max="9999999" step="1000" value={bounty} onChange={e => setBounty(Number(e.target.value))} className="w-full accent-slate-900" />
                        
-                       <div className="grid grid-cols-2 gap-3">
-                          <button onClick={() => setPosterStamp('CAPTURED')} className="py-3 border-2 border-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-900 hover:text-[#f0e6d2] transition-colors">CAPTURED</button>
-                          <button onClick={() => setPosterStamp('DANGEROUS')} className="py-3 border-2 border-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-900 hover:text-[#f0e6d2] transition-colors">DANGEROUS</button>
-                          <button onClick={() => setPosterStamp(null)} className="py-3 border-2 border-slate-900/50 rounded-xl font-black uppercase tracking-widest text-[10px] text-slate-500 hover:border-slate-900 hover:text-slate-900 col-span-2 transition-colors">Очистить Печать</button>
+                       <div className="grid grid-cols-2 gap-6 border-b border-slate-900/20 pb-4">
+                          <div className="space-y-1">
+                             <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Любимое Оружие:</label>
+                             <select className="w-full bg-transparent text-xl font-bold text-slate-900 outline-none border-b border-dashed border-slate-900/50 pb-1 cursor-pointer">
+                                <option>Двойные Сабли</option>
+                                <option>Испанский Мушкет</option>
+                                <option>Бутылка Рома</option>
+                                <option>Острый Язык</option>
+                             </select>
+                          </div>
+                          <div className="space-y-1">
+                             <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Особые приметы:</label>
+                             <input type="text" defaultValue="Хитрая улыбка" className="w-full bg-transparent text-xl font-bold text-slate-900 outline-none border-b border-dashed border-slate-900/50 pb-1" />
+                          </div>
+                       </div>
+                       
+                       <div className="bg-slate-900/5 p-4 rounded-xl border border-slate-900/10 text-center">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Награда за голову</p>
+                          <div className="flex items-center justify-center gap-4">
+                             <Coins size={24} className="text-amber-600" />
+                             <input type="number" defaultValue="10000" className="bg-transparent text-4xl font-black text-slate-900 outline-none w-40 text-center" />
+                          </div>
                        </div>
                     </div>
                     
-                    <button onClick={() => setIsCreatingPoster(false)} className="w-full py-5 bg-slate-900 text-[#e3d5b8] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-800 shadow-xl mt-4">Готово</button>
+                    <div className="pt-4 relative z-10 flex gap-4">
+                       <button onClick={() => setIsCreatingPoster(false)} className="flex-1 py-4 bg-transparent border-2 border-slate-900 text-slate-900 font-black uppercase tracking-widest rounded-xl hover:bg-slate-900 hover:text-[#f4ebd8] transition-colors">Отмена</button>
+                       <button 
+                         onClick={() => {
+                           const nameInput = document.getElementById('edit-name') as HTMLInputElement;
+                           const prefInput = document.getElementById('edit-pref') as HTMLTextAreaElement;
+                           if (selectedProfileId && nameInput && prefInput) {
+                             setLocalProfiles((prev: any) => ({
+                               ...prev,
+                               [selectedProfileId]: {
+                                 ...prev[selectedProfileId],
+                                 name: nameInput.value,
+                                 pref: prefInput.value
+                               }
+                             }));
+                             setIsCreatingPoster(false);
+                           }
+                         }} 
+                         className="flex-[2] py-4 bg-red-700 text-[#f4ebd8] font-black uppercase tracking-widest rounded-xl hover:bg-red-800 transition-colors shadow-lg shadow-red-900/20 flex items-center justify-center gap-2"
+                       >
+                          Запечатать Сургучом
+                       </button>
+                    </div>
                  </motion.div>
                ) : (
                  <motion.div initial={{ rotateY: 90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-8 relative z-10">
@@ -708,7 +795,7 @@ export default function PirateProfile() {
                     </div>
 
                     <button onClick={() => setIsCreatingPoster(true)} className="w-full py-5 bg-amber-500 text-slate-950 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                       <Edit3 size={18} /> Создать Листовку Розыска
+                       <Edit3 size={18} /> Переписать Судовую Роль
                     </button>
                  </motion.div>
                )}
