@@ -67,7 +67,7 @@ export default function LairPage() {
   const [sailors, setSailors] = useState<Sailor[]>([]);
   const [cannonballs, setCannonballs] = useState<Cannonball[]>([]);
   
-  // RESTORED POSITIONS & SHAPES FROM IMAGE
+  // FIXED POSITIONS TO MATCH THE IMAGE PERFECTLY
   const [zones, setZones] = useState<Zone[]>([
     // Player Ship (Left)
     { id: 'p_helm', name: 'Штурвал', x: 250, y: 150, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 } },
@@ -315,7 +315,7 @@ export default function LairPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#0d0702] text-amber-100 font-sans overflow-x-hidden p-4 md:p-8">
+    <div className="relative min-h-screen bg-[#070402] text-amber-100 font-sans overflow-x-hidden p-4 md:p-8">
       
       <div className="relative z-10 max-w-[1600px] mx-auto space-y-4">
          
@@ -337,55 +337,71 @@ export default function LairPage() {
          {/* Main Grid */}
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             
-            {/* Arena - RESTORED IMAGE STYLE */}
+            {/* Arena - EXACTLY AS IN THE PHOTO */}
             <div className="lg:col-span-9 flex justify-start">
                <div 
-                  className="bg-[#0c0a09] bg-[linear-gradient(rgba(255,255,255,0.02)_1px,_transparent_1px),_linear-gradient(90deg,_rgba(255,255,255,0.02)_1px,_transparent_1px)] bg-[size:30px:30px] rounded-3xl border border-amber-500/10 relative h-[700px] w-[900px] overflow-hidden shadow-inner"
+                  className="bg-[#0c0a09] bg-[linear-gradient(rgba(255,255,255,0.03)_1px,_transparent_1px),_linear-gradient(90deg,_rgba(255,255,255,0.03)_1px,_transparent_1px)] bg-[size:30px_30px] rounded-3xl border border-amber-500/10 relative h-[700px] w-[900px] overflow-hidden shadow-inner"
                >
                   {/* Bridge */}
                   <div className="absolute top-[300px] left-[375px] w-[150px] h-[40px] bg-[#1a0f05] border-t border-b border-amber-500/20 flex items-center justify-center">
                      <span className="text-[10px] font-bold uppercase text-amber-500/40 tracking-widest">Мост</span>
                   </div>
 
-                  {/* Ships - CAPSULE SHAPE WITH POINTED BOTTOM */}
+                  {/* Ships - EXACT SHIELD/CAPSULE SHAPE WITH POINTED BOTTOM */}
                   {/* Player Ship */}
-                  <div className="absolute top-[50px] left-[125px] w-[250px] h-[550px] border-2 border-cyan-500/50 rounded-t-full rounded-b-[100px] bg-[#0a0a0a]/90 shadow-[0_0_20px_rgba(6,182,212,0.2)] pointer-events-none flex flex-col items-center pt-8">
-                     <div className="bg-cyan-500 text-black text-[10px] font-black uppercase px-3 py-1 rounded-full mb-4">Твой Корабль</div>
+                  <div 
+                     className="absolute top-[50px] left-[125px] w-[250px] h-[550px] bg-[#0c0a09]/90 border-2 border-cyan-500/50 flex flex-col items-center pt-8"
+                     style={{ 
+                        borderRadius: '125px 125px 0 0',
+                        clipPath: 'polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%)',
+                        filter: 'drop-shadow(0 0 15px rgba(6,182,212,0.3))'
+                     }}
+                  >
+                     {/* Label from image */}
+                     <div className="bg-cyan-500 text-black text-[10px] font-black uppercase px-4 py-1 rounded-full mb-4">Твой Корабль</div>
                      
                      {/* Zones inside ship */}
-                     <div className="space-y-16 mt-10">
-                        <div className="flex flex-col items-center">
-                           <span className="text-sm font-serif font-bold text-white">Штурвал</span>
-                           <span className="text-[10px] text-cyan-400 font-mono">5 👤</span>
+                     <div className="space-y-16 mt-10 text-center">
+                        <div>
+                           <h4 className="text-sm font-serif font-bold text-white">Штурвал</h4>
+                           <p className="text-[10px] text-cyan-400 font-mono">5 👤</p>
                         </div>
-                        <div className="flex flex-col items-center">
-                           <span className="text-sm font-serif font-bold text-white">Пушки</span>
-                           <span className="text-[10px] text-cyan-400 font-mono">15 👤</span>
+                        <div>
+                           <h4 className="text-sm font-serif font-bold text-white">Пушки</h4>
+                           <p className="text-[10px] text-cyan-400 font-mono">15 👤</p>
                         </div>
-                        <div className="flex flex-col items-center">
-                           <span className="text-sm font-serif font-bold text-white">Палуба</span>
-                           <span className="text-[10px] text-cyan-400 font-mono">20 👤</span>
+                        <div>
+                           <h4 className="text-sm font-serif font-bold text-white">Палуба</h4>
+                           <p className="text-[10px] text-cyan-400 font-mono">20 👤</p>
                         </div>
                      </div>
                   </div>
                   
                   {/* Enemy Ship */}
-                  <div className="absolute top-[50px] left-[525px] w-[250px] h-[550px] border-2 border-red-500/50 rounded-t-full rounded-b-[100px] bg-[#0a0a0a]/90 shadow-[0_0_20px_rgba(239,68,68,0.2)] pointer-events-none flex flex-col items-center pt-8">
-                     <div className="bg-red-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full mb-4">Галеон Врага</div>
+                  <div 
+                     className="absolute top-[50px] left-[525px] w-[250px] h-[550px] bg-[#0c0a09]/90 border-2 border-red-500/50 flex flex-col items-center pt-8"
+                     style={{ 
+                        borderRadius: '125px 125px 0 0',
+                        clipPath: 'polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%)',
+                        filter: 'drop-shadow(0 0 15px rgba(239,68,68,0.3))'
+                     }}
+                  >
+                     {/* Label from image */}
+                     <div className="bg-red-500 text-white text-[10px] font-black uppercase px-4 py-1 rounded-full mb-4">Галлеон Врага</div>
                      
                      {/* Zones inside ship */}
-                     <div className="space-y-16 mt-10">
-                        <div className="flex flex-col items-center">
-                           <span className="text-sm font-serif font-bold text-white">Мостик</span>
-                           <span className="text-[10px] text-red-400 font-mono">5 👤</span>
+                     <div className="space-y-16 mt-10 text-center">
+                        <div>
+                           <h4 className="text-sm font-serif font-bold text-white">Мостик</h4>
+                           <p className="text-[10px] text-red-400 font-mono">5 👤</p>
                         </div>
-                        <div className="flex flex-col items-center">
-                           <span className="text-sm font-serif font-bold text-white">Батарея</span>
-                           <span className="text-[10px] text-red-400 font-mono">15 👤</span>
+                        <div>
+                           <h4 className="text-sm font-serif font-bold text-white">Батарея</h4>
+                           <p className="text-[10px] text-red-400 font-mono">15 👤</p>
                         </div>
-                        <div className="flex flex-col items-center">
-                           <span className="text-sm font-serif font-bold text-white">Каюты</span>
-                           <span className="text-[10px] text-red-400 font-mono">10 👤</span>
+                        <div>
+                           <h4 className="text-sm font-serif font-bold text-white">Каюты</h4>
+                           <p className="text-[10px] text-red-400 font-mono">10 👤</p>
                         </div>
                      </div>
                   </div>
