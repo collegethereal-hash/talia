@@ -18,7 +18,7 @@ interface Sailor {
   targetY: number;
   color: string;
   team: 'player' | 'enemy';
-  isFighting?: boolean;
+  path: { x: number, y: number }[]; // Waypoints for bridge crossing
 }
 
 interface Zone {
@@ -32,42 +32,33 @@ interface Zone {
     gunners: number;
     sappers: number;
   };
-  isAmbush: boolean;
-  isTrap: boolean;
 }
 
 export default function LairPage() {
   const [battleLog, setBattleLog] = useState<string[]>([
-    "Корабли сошлись бортами. Команда ждет приказов.",
-    "Нажмите «НАЧАТЬ БОЙ», чтобы враги пошли на абордаж!"
+    "Корабли выровнены горизонтально. Мостик по центру.",
+    "Клик по арене отправляет ваших матросов в эту точку."
   ]);
   
   const arenaRef = useRef<HTMLDivElement>(null);
   const [sailors, setSailors] = useState<Sailor[]>([]);
-  const [selectedZone, setSelectedZone] = useState<string | null>(null);
-  const [activePanelZone, setActivePanelZone] = useState<string | null>(null);
+  const [zones, setZones] = useState<Zone[]>([
+    // Player Ship (Top) - Y around 150
+    { id: 'p_helm', name: 'Рубка', x: 200, y: 150, team: 'player', crewTypes: { swordsmen: 5, gunners: 0, sappers: 0 } },
+    { id: 'p_deck', name: 'Палуба', x: 450, y: 150, team: 'player', crewTypes: { swordsmen: 10, gunners: 5, sappers: 5 } },
+    { id: 'p_bow', name: 'Нос', x: 700, y: 150, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
+    
+    // Enemy Ship (Bottom) - Y around 450
+    { id: 'e_helm', name: 'Каюта', x: 200, y: 450, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 } },
+    { id: 'e_deck', name: 'Палуба', x: 450, y: 450, team: 'enemy', crewTypes: { swordsmen: 15, gunners: 0, sappers: 0 } },
+    { id: 'e_stern', name: 'Корма', x: 700, y: 450, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 10, sappers: 5 } },
+  ]);
+  
   const [battleStarted, setBattleStarted] = useState(false);
 
-  // Define zones with FIXED ALIGNMENT (Center is 325 for Player)
-  // Arena size: 1200x1000
-  // Player Ship: left-[150px], width 350px -> Center is 325px!
-  const [zones, setZones] = useState<Zone[]>([
-    // Player Ship (Left) - Center X=325
-    { id: 'p_helm', name: 'Капитанский Мостик', x: 325, y: 150, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 }, isAmbush: false, isTrap: false },
-    { id: 'p_masts', name: 'Грот-Мачта', x: 325, y: 300, team: 'player', crewTypes: { swordsmen: 5, gunners: 5, sappers: 2 }, isAmbush: false, isTrap: false },
-    { id: 'p_cannons_l', name: 'Батарея Слева', x: 225, y: 450, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 }, isAmbush: false, isTrap: false },
-    { id: 'p_cannons_r', name: 'Батарея Справа', x: 425, y: 450, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 }, isAmbush: false, isTrap: false },
-    { id: 'p_deck', name: 'Центральная Палуба', x: 325, y: 600, team: 'player', crewTypes: { swordsmen: 15, gunners: 5, sappers: 5 }, isAmbush: false, isTrap: false },
-    { id: 'p_hold', name: 'Трюм (Арсенал)', x: 325, y: 750, team: 'player', crewTypes: { swordsmen: 5, gunners: 2, sappers: 10 }, isAmbush: false, isTrap: false },
-    
-    // Enemy Ship (Right) - Center X=850, Width=360
-    { id: 'e_cabin', name: 'Адмиральская Каюта', x: 850, y: 120, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 }, isAmbush: false, isTrap: false },
-    { id: 'e_battery', name: 'Тяжелая Батарея', x: 850, y: 280, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 }, isAmbush: false, isTrap: false },
-    { id: 'e_deck_f', name: 'Носовая Палуба', x: 750, y: 450, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 }, isAmbush: false, isTrap: false },
-    { id: 'e_deck_b', name: 'Кормовая Палуба', x: 950, y: 450, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 }, isAmbush: false, isTrap: false },
-    { id: 'e_barracks', name: 'Казармы', x: 850, y: 620, team: 'enemy', crewTypes: { swordsmen: 20, gunners: 0, sappers: 0 }, isAmbush: false, isTrap: false },
-    { id: 'e_hold', name: 'Пороховой Погреб', x: 850, y: 780, team: 'enemy', crewTypes: { swordsmen: 2, gunners: 2, sappers: 10 }, isAmbush: false, isTrap: false },
-  ]);
+  const addLog = (msg: string) => {
+    setBattleLog(prev => [...prev, msg]);
+  };
 
   // Initialize sailors
   useEffect(() => {
@@ -80,11 +71,12 @@ export default function LairPage() {
         initialSailors.push({
           id: id++,
           x: zone.x + (Math.random() * 60 - 30),
-          y: zone.y + (Math.random() * 60 - 30),
+          y: zone.y + (Math.random() * 40 - 20),
           targetX: zone.x,
           targetY: zone.y,
           color: zone.team === 'player' ? 'bg-cyan-400 shadow-cyan-500/50' : 'bg-red-500 shadow-red-500/50',
-          team: zone.team
+          team: zone.team,
+          path: []
         });
       }
     });
@@ -92,111 +84,155 @@ export default function LairPage() {
     setSailors(initialSailors);
   }, []);
 
-  // Real-time movement loop
+  // Real-time movement and killing loop
   useEffect(() => {
     const interval = setInterval(() => {
-      setSailors(prevSailors => 
-        prevSailors.map(sailor => {
-          const dx = sailor.targetX - sailor.x;
-          const dy = sailor.targetY - sailor.y;
+      setSailors(prevSailors => {
+        // 1. Move sailors
+        const movedSailors = prevSailors.map(sailor => {
+          let currentTargetX = sailor.targetX;
+          let currentTargetY = sailor.targetY;
+          let newPath = [...sailor.path];
+
+          // If we have waypoints, go to the first one
+          if (newPath.length > 0) {
+            currentTargetX = newPath[0].x;
+            currentTargetY = newPath[0].y;
+          }
+
+          const dx = currentTargetX - sailor.x;
+          const dy = currentTargetY - sailor.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           
           if (dist < 5) {
-            return { ...sailor, x: sailor.targetX, y: sailor.targetY, isFighting: false };
+            if (newPath.length > 0) {
+              newPath.shift(); // Reached waypoint
+              return { ...sailor, path: newPath };
+            }
+            return { ...sailor, x: sailor.targetX, y: sailor.targetY };
           }
           
-          const speed = 4;
+          const speed = 1.5; // SLOWER MOVEMENT
           return {
             ...sailor,
             x: sailor.x + (dx / dist) * speed,
             y: sailor.y + (dy / dist) * speed,
-            isFighting: true // Show active movement/fighting state
+            path: newPath
           };
-        })
-      );
+        });
+
+        // 2. Killing Logic (If player and enemy are close, they fight and can die)
+        const survivors: Sailor[] = [];
+        const deadIds = new Set<number>();
+
+        for (let i = 0; i < movedSailors.length; i++) {
+          const s1 = movedSailors[i];
+          if (deadIds.has(s1.id)) continue;
+
+          let killed = false;
+          for (let j = i + 1; j < movedSailors.length; j++) {
+            const s2 = movedSailors[j];
+            if (deadIds.has(s2.id)) continue;
+
+            if (s1.team !== s2.team) {
+              const dx = s1.x - s2.x;
+              const dy = s1.y - s2.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+
+              if (dist < 15) { // Collision distance
+                // Fight! 50/50 chance who dies
+                if (Math.random() > 0.5) {
+                  deadIds.add(s1.id);
+                  killed = true;
+                  break;
+                } else {
+                  deadIds.add(s2.id);
+                }
+              }
+            }
+          }
+          if (!killed) survivors.push(s1);
+        }
+
+        if (deadIds.size > 0 && Math.random() < 0.1) {
+          addLog(`⚔️ В бою погибло ${deadIds.size} матросов!`);
+        }
+
+        return survivors;
+      });
     }, 50);
 
     return () => clearInterval(interval);
   }, []);
 
-  // Enemy AI Attack Logic
-  useEffect(() => {
-    if (!battleStarted) return;
+  // Bridge Pathfinding Helper
+  const setTargetWithPath = (sailor: Sailor, targetX: number, targetY: number): Sailor => {
+    const isPlayer = sailor.team === 'player';
+    const startY = sailor.y;
+    const endY = targetY;
 
-    const enemyAttackInterval = setInterval(() => {
+    // Bridge is around X: 450-550, Y: 250-350
+    const bridgeX = 500;
+    const bridgeTopY = 230;
+    const bridgeBottomY = 370;
+
+    // If crossing from Top (Player) to Bottom (Enemy)
+    if (startY < 250 && endY > 350) {
+      return {
+        ...sailor,
+        targetX,
+        targetY,
+        path: [
+          { x: bridgeX, y: bridgeTopY },
+          { x: bridgeX, y: bridgeBottomY }
+        ]
+      };
+    }
+    // If crossing from Bottom to Top
+    if (startY > 350 && endY < 250) {
+      return {
+        ...sailor,
+        targetX,
+        targetY,
+        path: [
+          { x: bridgeX, y: bridgeBottomY },
+          { x: bridgeX, y: bridgeTopY }
+        ]
+      };
+    }
+
+    // Direct movement if on the same ship
+    return { ...sailor, targetX, targetY, path: [] };
+  };
+
+  const handleArenaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (arenaRef.current) {
+      const rect = arenaRef.current.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      addLog(`Приказ: Всем свободным идти в точку (${Math.floor(clickX)}, ${Math.floor(clickY)})!`);
+
       setSailors(prevSailors => 
         prevSailors.map(sailor => {
-          // 20% chance for an enemy sailor to attack a player zone
-          if (sailor.team === 'enemy' && Math.random() < 0.2) {
-            const playerZonesList = zones.filter(z => z.team === 'player');
-            const targetZone = playerZonesList[Math.floor(Math.random() * playerZonesList.length)];
-            
-            // Move through the bridge (waypoint)
-            return { 
-              ...sailor, 
-              targetX: targetZone.x + (Math.random() * 50 - 25),
-              targetY: targetZone.y + (Math.random() * 50 - 25)
-            };
+          if (sailor.team === 'player') {
+            return setTargetWithPath(sailor, clickX + (Math.random() * 40 - 20), clickY + (Math.random() * 40 - 20));
           }
           return sailor;
         })
       );
-      addLog("⚠️ Вражеские матросы бегут на наш корабль!");
-    }, 5000); // Every 5 seconds
-
-    return () => clearInterval(enemyAttackInterval);
-  }, [battleStarted]);
-
-  const addLog = (msg: string) => {
-    setBattleLog(prev => [...prev, msg]);
-  };
-
-  const handleZoneClick = (zoneId: string) => {
-    const zone = zones.find(z => z.id === zoneId);
-    if (!zone) return;
-
-    if (zone.team === 'player') {
-      setActivePanelZone(zoneId);
-      addLog(`Открыт тактический обзор сектора: ${zone.name}.`);
-    } else {
-      addLog(`Это вражеский сектор: ${zone.name}. Вы можете атаковать его.`);
     }
   };
 
-  const toggleAmbush = (zoneId: string) => {
-    setZones(prev => prev.map(z => z.id === zoneId ? { ...z, isAmbush: !z.isAmbush } : z));
-    const zone = zones.find(z => z.id === zoneId);
-    addLog(`Засада в секторе ${zone?.name} ${!zone?.isAmbush ? 'УСТАНОВЛЕНА' : 'СНЯТА'}.`);
-  };
-
-  const toggleTrap = (zoneId: string) => {
-    setZones(prev => prev.map(z => z.id === zoneId ? { ...z, isTrap: !z.isTrap } : z));
-    const zone = zones.find(z => z.id === zoneId);
-    addLog(`Ловушка в секторе ${zone?.name} ${!zone?.isTrap ? 'УСТАНОВЛЕНА' : 'СНЯТА'}.`);
-  };
-
-  const sendAttack = (sourceZoneId: string) => {
-    const sourceZone = zones.find(z => z.id === sourceZoneId);
-    if (!sourceZone) return;
-
-    // Target a random enemy zone
-    const enemyZonesList = zones.filter(z => z.team === 'enemy');
-    const targetZone = enemyZonesList[Math.floor(Math.random() * enemyZonesList.length)];
-
-    addLog(`⚔️ АТАКА! Люди из ${sourceZone.name} бегут штурмовать ${targetZone.name}!`);
-
+  const startAttack = () => {
+    setBattleStarted(true);
+    addLog("⚔️ БИТВА НАЧАЛАСЬ! Враги идут на абордаж!");
+    
+    // Send enemy sailors to player ship through bridge
     setSailors(prevSailors => 
       prevSailors.map(sailor => {
-        const dx = sailor.x - sourceZone.x;
-        const dy = sailor.y - sourceZone.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        
-        if (dist < 60 && sailor.team === 'player') {
-          return { 
-            ...sailor, 
-            targetX: targetZone.x + (Math.random() * 50 - 25), 
-            targetY: targetZone.y + (Math.random() * 50 - 25) 
-          };
+        if (sailor.team === 'enemy') {
+          return setTargetWithPath(sailor, 450 + (Math.random() * 100 - 50), 150 + (Math.random() * 50 - 25));
         }
         return sailor;
       })
@@ -206,107 +242,70 @@ export default function LairPage() {
   return (
     <div className="relative min-h-screen bg-[#020202] text-amber-100 font-sans overflow-x-hidden p-6 md:p-12">
       
-      {/* Huge Glowing Orbs */}
-      <div className="absolute top-[-100px] left-[-100px] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-100px] right-[-100px] w-[700px] h-[700px] bg-red-600/10 rounded-full blur-[150px] pointer-events-none" />
-      
-      <div className="relative z-10 max-w-[1600px] mx-auto space-y-6">
+      <div className="relative z-10 max-w-[1200px] mx-auto space-y-6">
          
          {/* Header */}
          <div className="flex justify-between items-center border-b border-amber-500/20 pb-4">
             <div>
-               <p className="text-[10px] font-black uppercase tracking-[0.5em] text-amber-500">Глобальная Тактика</p>
-               <h1 className="text-5xl font-serif font-black uppercase text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500">Симуляция Сражения</h1>
+               <p className="text-[10px] font-black uppercase tracking-[0.5em] text-amber-500">Симуляция</p>
+               <h1 className="text-4xl font-serif font-black uppercase text-amber-100">Абордаж через Мост</h1>
             </div>
-            <div className="flex gap-4">
-               <button 
-                  onClick={() => setBattleStarted(!battleStarted)}
-                  className={cn(
-                    "px-6 py-3 rounded-xl font-black uppercase text-xs tracking-wider transition-all hover:scale-105 shadow-lg flex items-center gap-2",
-                    battleStarted ? "bg-red-600 text-white" : "bg-gradient-to-r from-amber-500 to-orange-600 text-black"
-                  )}
-               >
-                  {battleStarted ? <ShieldAlert size={14} /> : <Sword size={14} />}
-                  {battleStarted ? "Остановить Бой" : "Начать Бой"}
-               </button>
-            </div>
+            <button 
+               onClick={startAttack}
+               className="px-6 py-3 bg-red-600 text-white rounded-xl font-black uppercase text-xs tracking-wider hover:scale-105 transition-all"
+            >
+               Начать Бой
+            </button>
          </div>
 
-         {/* Main Layout: Arena + Side Panel */}
+         {/* Arena and Journal */}
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* Arena (1200x1000 - Super Large) */}
+            {/* Arena (1000x600) */}
             <div 
                ref={arenaRef}
-               className="lg:col-span-9 bg-gradient-to-b from-[#0a0602] to-black rounded-[2.5rem] border border-amber-500/20 relative h-[1000px] overflow-hidden"
+               onClick={handleArenaClick}
+               className="lg:col-span-9 bg-gradient-to-b from-[#0a0602] to-black rounded-[2.5rem] border border-amber-500/20 relative h-[600px] overflow-hidden cursor-crosshair"
             >
-               {/* Grid background */}
-               <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')]" />
-               
                {/* Bridge (Мостик) */}
-               <div className="absolute top-[480px] left-[500px] w-[150px] h-[40px] bg-amber-900/40 border-t border-b border-amber-500/30 flex items-center justify-center">
-                  <span className="text-[10px] font-black uppercase text-amber-500/40 tracking-widest">Абордаж</span>
+               <div className="absolute top-[230px] left-[450px] w-[100px] h-[140px] bg-amber-900/40 border-l border-r border-amber-500/30 flex items-center justify-center">
+                  <span className="text-[10px] font-black uppercase text-amber-500/40 tracking-widest rotate-90">Мостик</span>
                </div>
 
-               {/* PLAYER SHIP HULL (Huge Vertical) */}
-               <div className="absolute top-[50px] left-[150px] w-[350px] h-[850px] border-2 border-cyan-500/20 rounded-[80px] bg-cyan-900/5 pointer-events-none">
-                  <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 text-cyan-400 font-black uppercase text-[10px] tracking-widest">Наш Линейный Галеон</div>
-                  <div className="absolute inset-0 border-t border-dashed border-cyan-500/10 top-1/4" />
-                  <div className="absolute inset-0 border-t border-dashed border-cyan-500/10 top-1/2" />
-                  <div className="absolute inset-0 border-t border-dashed border-cyan-500/10 top-3/4" />
+               {/* PLAYER SHIP (Top) - Rounded & Long Horizontally */}
+               <div className="absolute top-[50px] left-[100px] w-[800px] h-[180px] border-2 border-cyan-500/20 rounded-[50px] bg-cyan-900/5 pointer-events-none">
+                  <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 text-cyan-400 font-black uppercase text-[10px] tracking-widest">Наш Корабль (Закругленный)</div>
                </div>
 
-               {/* ENEMY SHIP HULL (Even Huger!) */}
-               <div className="absolute top-[25px] left-[650px] w-[400px] h-[900px] border-2 border-red-500/20 rounded-[100px_100px_40px_40px] bg-red-900/5 pointer-events-none">
-                  <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 text-red-400 font-black uppercase text-[10px] tracking-widest">Проклятый Линкор Врага</div>
-                  <div className="absolute inset-0 border-t border-dashed border-red-500/10 top-1/5" />
-                  <div className="absolute inset-0 border-t border-dashed border-red-500/10 top-2/5" />
-                  <div className="absolute inset-0 border-t border-dashed border-red-500/10 top-3/5" />
-                  <div className="absolute inset-0 border-t border-dashed border-red-500/10 top-4/5" />
+               {/* ENEMY SHIP (Bottom) - Strange Shape (Sharp edges) */}
+               <div className="absolute top-[370px] left-[100px] w-[800px] h-[180px] border-2 border-red-500/20 rounded-[10px_100px_10px_100px] bg-red-900/5 pointer-events-none">
+                  <div className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 text-red-400 font-black uppercase text-[10px] tracking-widest">Вражеский Линкор (Странный)</div>
                </div>
 
-               {/* Zones (Clickable Areas) */}
+               {/* Zones */}
                {zones.map(zone => {
-                  const isSelected = activePanelZone === zone.id;
-                  const totalCrew = sailors.filter(s => s.team === zone.team && Math.sqrt(Math.pow(s.x - zone.x, 2) + Math.pow(s.y - zone.y, 2)) < 50).length;
+                  const count = sailors.filter(s => s.team === zone.team && Math.sqrt(Math.pow(s.x - zone.x, 2) + Math.pow(s.y - zone.y, 2)) < 50).length;
                   
                   return (
                      <div 
                         key={zone.id}
-                        onClick={(e) => {
-                           e.stopPropagation();
-                           handleZoneClick(zone.id);
-                        }}
                         className={cn(
-                          "absolute -translate-x-1/2 -translate-y-1/2 p-3 rounded-xl border transition-all cursor-pointer w-[140px] text-center backdrop-blur-sm",
-                          isSelected ? "border-amber-400 bg-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.3)]" : "border-white/5 bg-black/80 hover:border-white/20",
-                          zone.team === 'player' ? "hover:border-cyan-500/30" : "hover:border-red-500/30",
-                          zone.isAmbush && "border-yellow-500/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]",
-                          zone.isTrap && "border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.2)]"
+                          "absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg border w-[100px] text-center bg-black/80",
+                          zone.team === 'player' ? "border-cyan-500/30" : "border-red-500/30"
                         )}
                         style={{ left: zone.x, top: zone.y }}
                      >
-                        {/* DELICATE FONT */}
-                        <p className="text-xs font-bold text-white uppercase tracking-wider">{zone.name}</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 font-mono">{totalCrew} чел.</p>
-                        
-                        <div className="flex justify-center gap-1 mt-1">
-                           {zone.isAmbush && <Eye size={10} className="text-yellow-500" />}
-                           {zone.isTrap && <ShieldAlert size={10} className="text-purple-500" />}
-                        </div>
+                        <p className="text-[10px] font-bold text-white uppercase">{zone.name}</p>
+                        <p className="text-[10px] text-slate-500 font-mono">{count} чел.</p>
                      </div>
                   );
                })}
 
-               {/* Sailors (Dots moving in real time) */}
+               {/* Sailors */}
                {sailors.map(sailor => (
                   <div
                      key={sailor.id}
-                     className={cn(
-                       "w-2.5 h-2.5 rounded-full absolute transition-all duration-500 ease-linear shadow-lg", 
-                       sailor.color,
-                       sailor.isFighting && "animate-pulse scale-125"
-                     )}
+                     className={cn("w-2 h-2 rounded-full absolute transition-all duration-500 ease-linear shadow-lg", sailor.color)}
                      style={{ 
                         left: `${sailor.x}px`, 
                         top: `${sailor.y}px`,
@@ -317,127 +316,22 @@ export default function LairPage() {
 
             </div>
 
-            {/* Right Side: Detailed Control Panel */}
-            <div className="lg:col-span-3 h-[1000px] flex flex-col gap-6">
-               
-               {/* Detailed Zone Panel */}
-               <div className="bg-gradient-to-br from-[#110a03] to-black p-6 rounded-[2rem] border border-amber-500/20 flex-1 flex flex-col shadow-2xl">
-                  {activePanelZone ? (
-                     (() => {
-                        const zone = zones.find(z => z.id === activePanelZone);
-                        if (!zone) return null;
-                        const totalCrew = sailors.filter(s => s.team === zone.team && Math.sqrt(Math.pow(s.x - zone.x, 2) + Math.pow(s.y - zone.y, 2)) < 50).length;
-                        
-                        return (
-                           <div className="space-y-6 flex-1 flex flex-col">
-                              <div className="border-b border-amber-500/10 pb-4">
-                                 <h4 className="text-xl font-serif font-black text-white uppercase tracking-tighter">{zone.name}</h4>
-                                 <p className="text-[10px] text-amber-500/60 font-black uppercase tracking-widest mt-1">Тактический Сектор</p>
-                              </div>
-
-                              {/* Crew Breakdown */}
-                              <div className="space-y-3">
-                                 <h5 className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Личный Состав ({totalCrew})</h5>
-                                 <div className="grid grid-cols-1 gap-2">
-                                    <div className="bg-black/60 p-3 rounded-lg border border-white/5 flex justify-between items-center">
-                                       <span className="text-xs text-amber-100">Фехтовальщики</span>
-                                       <span className="text-sm font-bold text-cyan-400">{zone.crewTypes.swordsmen}</span>
-                                    </div>
-                                    <div className="bg-black/60 p-3 rounded-lg border border-white/5 flex justify-between items-center">
-                                       <span className="text-xs text-amber-100">Канониры</span>
-                                       <span className="text-sm font-bold text-cyan-400">{zone.crewTypes.gunners}</span>
-                                    </div>
-                                    <div className="bg-black/60 p-3 rounded-lg border border-white/5 flex justify-between items-center">
-                                       <span className="text-xs text-amber-100">Саперы</span>
-                                       <span className="text-sm font-bold text-cyan-400">{zone.crewTypes.sappers}</span>
-                                    </div>
-                                 </div>
-                              </div>
-
-                              {/* Commands (The serious logic) */}
-                              <div className="space-y-3 flex-1">
-                                 <h5 className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Приказы и Тактика</h5>
-                                 
-                                 {/* Ambush */}
-                                 <button 
-                                    onClick={() => toggleAmbush(zone.id)}
-                                    className={cn(
-                                      "w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between",
-                                      zone.isAmbush ? "border-yellow-500 bg-yellow-500/10" : "border-white/10 bg-black/40 hover:border-white/20"
-                                    )}
-                                 >
-                                    <div>
-                                       <p className="text-sm font-bold text-white">Устроить засаду</p>
-                                       <p className="text-[10px] text-slate-400 mt-1">Скрытый урон при входе врага</p>
-                                    </div>
-                                    <div className={cn("w-5 h-5 rounded border flex items-center justify-center", zone.isAmbush ? "bg-yellow-500 border-yellow-500" : "border-white/30")}>
-                                       {zone.isAmbush && <X size={12} className="text-black font-black" />}
-                                    </div>
-                                 </button>
-
-                                 {/* Trap */}
-                                 <button 
-                                    onClick={() => toggleTrap(zone.id)}
-                                    className={cn(
-                                      "w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between",
-                                      zone.isTrap ? "border-purple-500 bg-purple-500/10" : "border-white/10 bg-black/40 hover:border-white/20"
-                                    )}
-                                 >
-                                    <div>
-                                       <p className="text-sm font-bold text-white">Поставить ловушку</p>
-                                       <p className="text-[10px] text-slate-400 mt-1">Замедляет врагов в секторе</p>
-                                    </div>
-                                    <div className={cn("w-5 h-5 rounded border flex items-center justify-center", zone.isTrap ? "bg-purple-500 border-purple-500" : "border-white/30")}>
-                                       {zone.isTrap && <X size={12} className="text-black font-black" />}
-                                    </div>
-                                 </button>
-
-                                 {/* Attack Action */}
-                                 <button 
-                                    onClick={() => sendAttack(zone.id)}
-                                    className="w-full p-4 rounded-xl border border-red-500/30 bg-red-500/5 hover:bg-red-500/10 hover:border-red-500 text-left transition-all flex items-center justify-between group"
-                                 >
-                                    <div>
-                                       <p className="text-sm font-bold text-white">Атаковать Врага</p>
-                                       <p className="text-[10px] text-red-400 mt-1">Послать людей на вражеский корабль</p>
-                                    </div>
-                                    <ChevronRight size={16} className="text-red-500 group-hover:translate-x-1 transition-transform" />
-                                 </button>
-                              </div>
-
-                              <button 
-                                 onClick={() => setActivePanelZone(null)}
-                                 className="w-full p-3 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-black uppercase tracking-wider text-slate-400 transition-all"
-                              >
-                                 Закрыть Обзор
-                              </button>
-                           </div>
-                        );
-                     })()
-                  ) : (
-                     <div className="flex-1 flex flex-col items-center justify-center text-center text-slate-600">
-                        <Compass size={40} className="mb-4 opacity-20" />
-                        <p className="text-sm">Выберите сектор своего корабля,<br />чтобы отдать приказы</p>
-                     </div>
-                  )}
-               </div>
-
-               {/* Mini Journal at the bottom */}
-               <div className="bg-gradient-to-br from-[#0a0501] to-black p-4 rounded-[2rem] border border-amber-500/20 h-[300px] flex flex-col">
+            {/* Right Side: Journal */}
+            <div className="lg:col-span-3 h-[600px] flex flex-col">
+               <div className="bg-gradient-to-br from-[#110a03] to-black p-4 rounded-[2rem] border border-amber-500/20 flex-1 flex flex-col">
                   <div className="flex items-center gap-2 border-b border-amber-500/10 pb-2 mb-2">
                      <Scroll size={14} className="text-amber-500" />
                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">Журнал</h4>
                   </div>
-                  <div className="flex-1 overflow-y-auto space-y-2 text-[10px] text-amber-100/70 font-sans leading-relaxed">
+                  <div className="flex-1 overflow-y-auto space-y-2 text-[10px] text-amber-100/70 font-sans">
                      {battleLog.map((log, i) => (
                         <div key={i} className="border-b border-amber-900/5 pb-1 flex gap-1">
-                           <span className="text-amber-500 font-black">&gt;</span>
+                           <span className="text-amber-500">&gt;</span>
                            <p>{log}</p>
                         </div>
                      ))}
                   </div>
                </div>
-
             </div>
          </div>
 
