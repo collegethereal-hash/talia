@@ -66,28 +66,31 @@ export default function LairPage() {
   const arenaRef = useRef<HTMLDivElement>(null);
   const [sailors, setSailors] = useState<Sailor[]>([]);
   const [cannonballs, setCannonballs] = useState<Cannonball[]>([]);
+  
+  // REDUCED Y COORDINATES FOR SHORTER SHIPS
   const [zones, setZones] = useState<Zone[]>([
-    { id: 'p_helm', name: 'Капитанский Мостик', x: 325, y: 150, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 } },
-    { id: 'p_masts', name: 'Грот-Мачта', x: 325, y: 300, team: 'player', crewTypes: { swordsmen: 5, gunners: 5, sappers: 2 } },
-    { id: 'p_cannons_l', name: 'Батарея Слева', x: 225, y: 450, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
-    { id: 'p_cannons_r', name: 'Батарея Справа', x: 425, y: 450, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
-    { id: 'p_deck', name: 'Центральная Палуба', x: 325, y: 600, team: 'player', crewTypes: { swordsmen: 15, gunners: 5, sappers: 5 } },
-    { id: 'p_hold', name: 'Трюм (Арсенал)', x: 325, y: 750, team: 'player', crewTypes: { swordsmen: 5, gunners: 2, sappers: 10 } },
+    // Player Ship (Left) - Height reduced to 750 (was 850)
+    { id: 'p_helm', name: 'Капитанский Мостик', x: 325, y: 130, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 } },
+    { id: 'p_masts', name: 'Грот-Мачта', x: 325, y: 260, team: 'player', crewTypes: { swordsmen: 5, gunners: 5, sappers: 2 } },
+    { id: 'p_cannons_l', name: 'Батарея Слева', x: 225, y: 390, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
+    { id: 'p_cannons_r', name: 'Батарея Справа', x: 425, y: 390, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
+    { id: 'p_deck', name: 'Центральная Палуба', x: 325, y: 520, team: 'player', crewTypes: { swordsmen: 15, gunners: 5, sappers: 5 } },
+    { id: 'p_hold', name: 'Трюм (Арсенал)', x: 325, y: 650, team: 'player', crewTypes: { swordsmen: 5, gunners: 2, sappers: 10 } },
     
-    { id: 'e_cabin', name: 'Адмиральская Каюта', x: 850, y: 120, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 } },
-    { id: 'e_battery', name: 'Тяжелая Батарея', x: 850, y: 280, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 } },
-    { id: 'e_deck_f', name: 'Носовая Палуба', x: 750, y: 450, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
-    { id: 'e_deck_b', name: 'Кормовая Палуба', x: 950, y: 450, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
-    { id: 'e_barracks', name: 'Казармы', x: 850, y: 620, team: 'enemy', crewTypes: { swordsmen: 20, gunners: 0, sappers: 0 } },
-    { id: 'e_hold', name: 'Пороховой Погреб', x: 850, y: 780, team: 'enemy', crewTypes: { swordsmen: 2, gunners: 2, sappers: 10 } },
+    // Enemy Ship (Right) - Height reduced to 800 (was 900)
+    { id: 'e_cabin', name: 'Адмиральская Каюта', x: 850, y: 110, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 } },
+    { id: 'e_battery', name: 'Тяжелая Батарея', x: 850, y: 240, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 } },
+    { id: 'e_deck_f', name: 'Носовая Палуба', x: 750, y: 390, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
+    { id: 'e_deck_b', name: 'Кормовая Палуба', x: 950, y: 390, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
+    { id: 'e_barracks', name: 'Казармы', x: 850, y: 540, team: 'enemy', crewTypes: { swordsmen: 20, gunners: 0, sappers: 0 } },
+    { id: 'e_hold', name: 'Пороховой Погреб', x: 850, y: 680, team: 'enemy', crewTypes: { swordsmen: 2, gunners: 2, sappers: 10 } },
   ]);
 
   const [battleStarted, setBattleStarted] = useState(false);
   const [activeModalZone, setActiveModalZone] = useState<string | null>(null);
   const [stats, setStats] = useState({ playerCasualties: 0, enemyCasualties: 0, playerShipHp: 100, enemyShipHp: 100 });
-  const [battleEvent, setBattleEvent] = useState<string | null>(null);
 
-  // Initialize sailors with CLEAN COLORS (No more rainbow!)
+  // Initialize sailors
   useEffect(() => {
     const initialSailors: Sailor[] = [];
     let id = 0;
@@ -101,7 +104,7 @@ export default function LairPage() {
           y: zone.y + (Math.random() * 60 - 30), 
           targetX: zone.x, 
           targetY: zone.y, 
-          color: zone.team === 'player' ? 'bg-sky-500' : 'bg-rose-500', // Clean blue and red
+          color: zone.team === 'player' ? 'bg-sky-500' : 'bg-rose-500', 
           team: zone.team, 
           state: 'idle', 
           path: [], 
@@ -114,11 +117,11 @@ export default function LairPage() {
     setSailors(initialSailors);
   }, []);
 
-  // Bridge Pathfinding
+  // Bridge Pathfinding (Adjusted Y for shorter ships)
   const getBridgePath = (startX: number, endX: number, targetX: number, targetY: number) => {
     const leftBridgeX = 500;
     const rightBridgeX = 650;
-    const bridgeY = 500;
+    const bridgeY = 390; // Moved up slightly to match deck
 
     if (startX < leftBridgeX && endX > rightBridgeX) {
       return [{ x: leftBridgeX, y: bridgeY }, { x: rightBridgeX, y: bridgeY }, { x: targetX, y: targetY }];
@@ -129,7 +132,7 @@ export default function LairPage() {
     return [{ x: targetX, y: targetY }];
   };
 
-  // Real-time loop (CLEANER, NO FLASHING)
+  // Real-time loop
   useEffect(() => {
     const interval = setInterval(() => {
       setSailors(prevSailors => {
@@ -203,7 +206,7 @@ export default function LairPage() {
         return updatedSailors.filter(s => s.hp > 0);
       });
 
-      // Move Cannonballs smoothly
+      // Move Cannonballs
       setCannonballs(prev => 
         prev.map(ball => {
           const dx = ball.targetX - ball.x;
@@ -271,62 +274,64 @@ export default function LairPage() {
   }, [battleStarted]);
 
   return (
-    <div className="relative min-h-screen bg-[#0f172a] text-slate-100 font-sans overflow-x-hidden p-6 md:p-12">
+    <div className="relative min-h-screen bg-[#0d0702] text-amber-100 font-sans overflow-x-hidden p-6 md:p-12">
+      
+      {/* Warm Pirate Glow */}
+      <div className="absolute top-[-100px] left-[-100px] w-[600px] h-[600px] bg-amber-600/5 rounded-full blur-[150px] pointer-events-none" />
       
       <div className="relative z-10 max-w-[1400px] mx-auto space-y-6">
          
-         {/* Scoreboard - CLEAN & FLAT */}
-         <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-6 flex justify-between items-center shadow-lg">
+         {/* Scoreboard - PIRATE STYLE (Wood/Amber) */}
+         <div className="bg-gradient-to-br from-[#1a0f05] to-[#0a0501] border-2 border-amber-500/20 rounded-2xl p-6 flex justify-between items-center shadow-2xl">
             <div className="flex flex-col gap-2 w-[250px]">
-               <div className="flex justify-between text-xs font-bold text-slate-400">
-                  <span>ФЛАГМАН</span>
+               <div className="flex justify-between text-xs font-bold text-amber-500/80">
+                  <span className="font-serif">НАШ ФЛАГМАН</span>
                   <span>{stats.playerShipHp}%</span>
                </div>
-               <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-sky-500" style={{ width: `${stats.playerShipHp}%` }} />
+               <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden border border-amber-500/10">
+                  <div className="h-full bg-gradient-to-r from-amber-600 to-amber-400" style={{ width: `${stats.playerShipHp}%` }} />
                </div>
                <p className="text-[10px] text-slate-500 font-mono">Экипаж: {sailors.filter(s => s.team === 'player').length}</p>
             </div>
 
             <div className="flex flex-col items-center">
-               <h1 className="text-xl font-bold uppercase tracking-wider text-white">Тактическая Карта</h1>
+               <h1 className="text-2xl font-serif font-black uppercase tracking-wider text-amber-100">Каюта Стратега</h1>
                <button 
                   onClick={() => setBattleStarted(!battleStarted)}
                   className={cn(
-                    "mt-2 px-6 py-2 rounded-lg font-bold uppercase text-xs tracking-wider transition-all hover:opacity-90",
-                    battleStarted ? "bg-rose-600 text-white" : "bg-sky-600 text-white"
+                    "mt-2 px-6 py-2 rounded-lg font-black uppercase text-xs tracking-wider transition-all hover:scale-105 shadow-lg",
+                    battleStarted ? "bg-red-700 text-white" : "bg-gradient-to-r from-amber-500 to-amber-600 text-black"
                   )}
                >
-                  {battleStarted ? "Пауза" : "В Бой"}
+                  {battleStarted ? "Пауза" : "В Бой!"}
                </button>
             </div>
 
             <div className="flex flex-col gap-2 w-[250px]">
-               <div className="flex justify-between text-xs font-bold text-slate-400">
-                  <span>ВРАЖЕСКИЙ ЛИНКОР</span>
+               <div className="flex justify-between text-xs font-bold text-amber-500/80">
+                  <span className="font-serif">ВРАЖЕСКИЙ ЛИНКОР</span>
                   <span>{stats.enemyShipHp}%</span>
                </div>
-               <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-rose-500" style={{ width: `${stats.enemyShipHp}%` }} />
+               <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden border border-amber-500/10">
+                  <div className="h-full bg-gradient-to-r from-red-700 to-red-500" style={{ width: `${stats.enemyShipHp}%` }} />
                </div>
                <p className="text-[10px] text-slate-500 text-right font-mono">Экипаж: {sailors.filter(s => s.team === 'enemy').length}</p>
             </div>
          </div>
 
-         {/* Arena - CLEAN SLATE BG */}
+         {/* Arena - Clean Dark Background with Ships */}
          <div className="relative flex justify-center">
             <div 
-               ref={arenaRef}
-               className="bg-[#1e293b] rounded-3xl border border-slate-700 relative h-[1000px] w-[1200px] overflow-hidden shadow-inner"
+               className="bg-[#0a0501] rounded-3xl border border-amber-500/10 relative h-[850px] w-[1200px] overflow-hidden shadow-inner"
             >
                {/* Bridge */}
-               <div className="absolute top-[480px] left-[500px] w-[150px] h-[40px] bg-[#334155] border-t border-b border-slate-600 flex items-center justify-center">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Мостик</span>
+               <div className="absolute top-[370px] left-[500px] w-[150px] h-[40px] bg-[#1a0f05] border-t border-b border-amber-500/20 flex items-center justify-center">
+                  <span className="text-[10px] font-bold uppercase text-amber-500/40 tracking-widest">Мостик</span>
                </div>
 
-               {/* Ships - CLEAN RECTANGLES */}
-               <div className="absolute top-[50px] left-[150px] w-[350px] h-[850px] border border-sky-500/30 rounded-2xl bg-[#334155]/20 pointer-events-none" />
-               <div className="absolute top-[25px] left-[650px] w-[400px] h-[900px] border border-rose-500/30 rounded-2xl bg-[#334155]/20 pointer-events-none" />
+               {/* Ships - SHORTER VERTICALLY */}
+               <div className="absolute top-[30px] left-[150px] w-[350px] h-[750px] border border-amber-500/20 rounded-2xl bg-[#1a0f05]/30 pointer-events-none" />
+               <div className="absolute top-[10px] left-[650px] w-[400px] h-[800px] border border-red-500/20 rounded-2xl bg-[#1a0f05]/30 pointer-events-none" />
 
                {/* Zones */}
                {zones.map(zone => {
@@ -337,18 +342,18 @@ export default function LairPage() {
                         key={zone.id}
                         onClick={() => setActiveModalZone(zone.id)}
                         className={cn(
-                          "absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg border transition-all cursor-pointer w-[130px] text-center bg-[#0f172a]/90",
-                          zone.team === 'player' ? "border-sky-500/30 hover:border-sky-500" : "border-rose-500/30 hover:border-rose-500"
+                          "absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg border transition-all cursor-pointer w-[130px] text-center bg-[#0d0702]/90",
+                          zone.team === 'player' ? "border-amber-500/20 hover:border-amber-500" : "border-red-500/20 hover:border-red-500"
                         )}
                         style={{ left: zone.x, top: zone.y }}
                      >
-                        <p className="text-xs font-bold text-white">{zone.name}</p>
-                        <p className="text-[10px] text-slate-400 font-mono">{count} чел.</p>
+                        <p className="text-xs font-serif font-bold text-amber-100">{zone.name}</p>
+                        <p className="text-[10px] text-amber-500/60 font-mono">{count} чел.</p>
                      </div>
                   );
                })}
 
-               {/* Sailors - SIMPLE DOTS, NO ANIMATIONS */}
+               {/* Sailors - Clean dots */}
                {sailors.map(sailor => (
                   <div
                      key={sailor.id}
@@ -369,7 +374,7 @@ export default function LairPage() {
                {cannonballs.map(ball => (
                   <div 
                      key={ball.id}
-                     className="w-3 h-3 bg-yellow-400 rounded-full absolute shadow-md"
+                     className="w-3 h-3 bg-yellow-500 rounded-full absolute shadow-lg"
                      style={{ left: `${ball.x}px`, top: `${ball.y}px`, transform: 'translate(-50%, -50%)' }}
                   />
                ))}
@@ -377,19 +382,19 @@ export default function LairPage() {
             </div>
          </div>
 
-         {/* CLEAN & INFORMATIVE MODAL (No more boring/neon mix) */}
+         {/* PIRATE STYLE MODAL (Parchment/Wood) */}
          <AnimatePresence>
             {activeModalZone && (
-               <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+               <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                   <motion.div 
                      initial={{ opacity: 0, scale: 0.95 }}
                      animate={{ opacity: 1, scale: 1 }}
                      exit={{ opacity: 0, scale: 0.95 }}
-                     className="bg-[#1e293b] border border-slate-700 rounded-2xl p-8 max-w-2xl w-full shadow-2xl relative"
+                     className="bg-[#1a0f05] border-2 border-amber-500/30 rounded-2xl p-8 max-w-2xl w-full shadow-[0_0_50px_rgba(0,0,0,0.5)] relative"
                   >
                      <button 
                         onClick={() => setActiveModalZone(null)}
-                        className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors"
+                        className="absolute top-6 right-6 text-amber-500/50 hover:text-amber-500 transition-colors"
                      >
                         <X size={20} />
                      </button>
@@ -402,13 +407,13 @@ export default function LairPage() {
                         
                         return (
                            <div className="space-y-6">
-                              <div className="flex items-center gap-4 border-b border-slate-700 pb-4">
-                                 <div className="bg-slate-800 p-3 rounded-xl border border-slate-700">
-                                    <Icon size={24} className={zone.team === 'player' ? "text-sky-500" : "text-rose-500"} />
+                              <div className="flex items-center gap-4 border-b border-amber-500/10 pb-4">
+                                 <div className="bg-[#0a0501] p-3 rounded-xl border border-amber-500/20">
+                                    <Icon size={24} className="text-amber-500" />
                                  </div>
                                  <div>
-                                    <h4 className="text-2xl font-bold text-white">{zone.name}</h4>
-                                    <p className="text-xs text-slate-400 uppercase tracking-wider">
+                                    <h4 className="text-2xl font-serif font-black text-amber-100">{zone.name}</h4>
+                                    <p className="text-[10px] text-amber-500/60 uppercase tracking-wider">
                                        {zone.team === 'player' ? 'Наш Сектор' : 'Вражеский Сектор'}
                                     </p>
                                  </div>
@@ -417,11 +422,11 @@ export default function LairPage() {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                  {/* Left: Lore */}
                                  <div className="space-y-3">
-                                    <h5 className="text-xs font-bold text-slate-300 uppercase">Описание</h5>
-                                    <p className="text-sm text-slate-300 font-sans leading-relaxed">
-                                       {lore?.desc || "Описание этого сектора утеряно."}
+                                    <h5 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Описание</h5>
+                                    <p className="text-sm text-amber-100/80 font-sans leading-relaxed">
+                                       "{lore?.desc || "Описание этого сектора утеряно в пучинах океана..."}"
                                     </p>
-                                    <div className="bg-slate-800 p-3 rounded-lg border border-slate-700 mt-2">
+                                    <div className="bg-[#0a0501] p-3 rounded-lg border border-amber-500/10 mt-2">
                                        <p className="text-xs font-bold text-amber-400">{lore?.perk}</p>
                                        <p className="text-xs text-slate-400">{lore?.bonus}</p>
                                     </div>
@@ -429,18 +434,18 @@ export default function LairPage() {
 
                                  {/* Right: Garrison */}
                                  <div className="space-y-3">
-                                    <h5 className="text-xs font-bold text-slate-300 uppercase">Гарнизон</h5>
+                                    <h5 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Гарнизон</h5>
                                     <div className="space-y-2">
-                                       <div className="bg-slate-800 p-3 rounded-lg flex justify-between items-center border border-slate-700">
-                                          <span className="text-sm text-slate-300">Головорезы</span>
+                                       <div className="bg-[#0a0501] p-3 rounded-lg flex justify-between items-center border border-amber-500/10">
+                                          <span className="text-xs text-amber-100/70">Головорезы</span>
                                           <span className="text-sm font-bold text-white font-mono">{zone.crewTypes.swordsmen}</span>
                                        </div>
-                                       <div className="bg-slate-800 p-3 rounded-lg flex justify-between items-center border border-slate-700">
-                                          <span className="text-sm text-slate-300">Стрелки</span>
+                                       <div className="bg-[#0a0501] p-3 rounded-lg flex justify-between items-center border border-amber-500/10">
+                                          <span className="text-xs text-amber-100/70">Стрелки</span>
                                           <span className="text-sm font-bold text-white font-mono">{zone.crewTypes.gunners}</span>
                                        </div>
-                                       <div className="bg-slate-800 p-3 rounded-lg flex justify-between items-center border border-slate-700">
-                                          <span className="text-sm text-slate-300">Саперы</span>
+                                       <div className="bg-[#0a0501] p-3 rounded-lg flex justify-between items-center border border-amber-500/10">
+                                          <span className="text-xs text-amber-100/70">Саперы</span>
                                           <span className="text-sm font-bold text-white font-mono">{zone.crewTypes.sappers}</span>
                                        </div>
                                     </div>
@@ -449,9 +454,9 @@ export default function LairPage() {
 
                               <button 
                                  onClick={() => setActiveModalZone(null)}
-                                 className="w-full p-3 bg-slate-700 hover:bg-slate-600 text-white font-bold uppercase text-xs tracking-wider rounded-lg transition-all"
+                                 className="w-full p-3 bg-gradient-to-r from-amber-600 to-amber-700 text-black font-black uppercase text-xs tracking-wider rounded-lg transition-all hover:opacity-90"
                               >
-                                 Закрыть
+                                 Вернуться к бою
                               </button>
                            </div>
                         );
