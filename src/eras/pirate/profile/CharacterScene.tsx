@@ -3,7 +3,7 @@
 import { Canvas } from '@react-three/fiber';
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Float, Sphere, Cylinder, Box, Cone } from '@react-three/drei';
+import { Float, Sphere, Cylinder, Box, Cone, Sparkles, Torus } from '@react-three/drei';
 import * as THREE from 'three';
 
 export default function CharacterScene({ customization }: { customization: any }) {
@@ -12,6 +12,7 @@ export default function CharacterScene({ customization }: { customization: any }
       <ambientLight intensity={0.6} />
       <pointLight position={[10, 10, 10]} intensity={1.5} />
       <pointLight position={[-10, -10, -10]} intensity={0.5} color="#00ffff" />
+      <Sparkles count={40} scale={2} size={3} speed={0.5} color="#ffd700" />
       <PirateCharacter3D customization={customization} />
     </Canvas>
   );
@@ -40,8 +41,20 @@ function PirateCharacter3D({ customization }: { customization: any }) {
         {/* Body */}
         <mesh position={[0, 0.2, 0]}>
           <Cylinder args={[0.3, 0.4, 1, 32]}>
-            <meshStandardMaterial color={clothes === 'jacket' ? '#8b0000' : clothes === 'vest' ? '#1e3a8a' : '#4a3c31'} />
+            <meshStandardMaterial color={clothes === 'jacket' ? '#8b0000' : clothes === 'vest' ? '#1e3a8a' : clothes === 'armor' ? '#475569' : '#4a3c31'} metalness={clothes === 'armor' ? 0.8 : 0} roughness={clothes === 'armor' ? 0.2 : 1} />
           </Cylinder>
+        </mesh>
+
+        {/* Belt */}
+        <mesh position={[0, 0, 0]}>
+          <Cylinder args={[0.32, 0.32, 0.1, 32]}>
+            <meshStandardMaterial color="#111" />
+          </Cylinder>
+        </mesh>
+        <mesh position={[0, 0, 0.32]}>
+          <Box args={[0.1, 0.1, 0.02]}>
+            <meshStandardMaterial color="gold" metalness={1} roughness={0.2} />
+          </Box>
         </mesh>
 
         {/* Eyes */}
@@ -64,10 +77,12 @@ function PirateCharacter3D({ customization }: { customization: any }) {
         {/* Hats */}
         {hat === 'captain' && <CaptainHat position={[0, 1.4, 0]} />}
         {hat === 'bandana' && <Bandana position={[0, 1.3, 0]} />}
+        {hat === 'crown' && <Crown position={[0, 1.4, 0]} />}
 
         {/* Weapons */}
         {weapon === 'saber' && <Saber position={[0.5, 0.2, 0.2]} rotation={[0, 0, -0.5]} />}
         {weapon === 'hook' && <Hook position={[-0.5, 0.2, 0.2]} />}
+        {weapon === 'pistol' && <Pistol position={[0.5, 0.2, 0.3]} rotation={[0, Math.PI/2, 0]} />}
 
         {/* Legs */}
         <mesh position={[-0.15, -0.5, 0]}>
@@ -133,7 +148,7 @@ function CaptainHat({ position }: any) {
       {/* Gold trim */}
       <mesh position={[0, 0.05, 0.31]}>
         <Box args={[0.4, 0.05, 0.01]}>
-          <meshStandardMaterial color="gold" />
+          <meshStandardMaterial color="gold" metalness={1} roughness={0.2} />
         </Box>
       </mesh>
     </group>
@@ -154,6 +169,25 @@ function Bandana({ position }: any) {
           <meshStandardMaterial color="#991b1b" />
         </Sphere>
       </mesh>
+    </group>
+  );
+}
+
+function Crown({ position }: any) {
+  return (
+    <group position={position}>
+      <mesh>
+        <Cylinder args={[0.3, 0.2, 0.2, 6]}>
+          <meshStandardMaterial color="gold" metalness={1} roughness={0.2} />
+        </Cylinder>
+      </mesh>
+      {[0, 1, 2, 3, 4, 5].map(i => (
+        <mesh key={i} position={[Math.cos(i * 1.04) * 0.25, 0.15, Math.sin(i * 1.04) * 0.25]}>
+          <Cone args={[0.05, 0.1, 4]}>
+            <meshStandardMaterial color="gold" metalness={1} roughness={0.2} />
+          </Cone>
+        </mesh>
+      ))}
     </group>
   );
 }
@@ -197,6 +231,25 @@ function Hook({ position }: any) {
         <Box args={[0.03, 0.03, 0.2]}>
           <meshStandardMaterial color="#cbd5e1" metalness={0.8} roughness={0.2} />
         </Box>
+      </mesh>
+    </group>
+  );
+}
+
+function Pistol({ position, rotation }: any) {
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Handle */}
+      <mesh rotation={[0.5, 0, 0]}>
+        <Box args={[0.04, 0.15, 0.04]}>
+          <meshStandardMaterial color="#4a3c31" />
+        </Box>
+      </mesh>
+      {/* Barrel */}
+      <mesh position={[0, 0.1, 0.1]} rotation={[Math.PI/2, 0, 0]}>
+        <Cylinder args={[0.02, 0.02, 0.2, 16]}>
+          <meshStandardMaterial color="#475569" metalness={0.8} />
+        </Cylinder>
       </mesh>
     </group>
   );

@@ -648,18 +648,17 @@ export default function PirateProfile() {
                             <div className="flex items-center gap-3 border-b border-sky-500/20 pb-4 mb-6">
                                <History size={24} className="text-amber-400" />
                                <h3 className="text-2xl font-black uppercase tracking-widest text-amber-100">Журнал Боёв</h3>
-                            </div>
-
-                            <div className="space-y-4">
-                               {[
-                                 { date: 'Сегодня', title: 'Побег от Королевского Флота', desc: 'Ушли в шторм, порвали два паруса.', dmg: '-15% корпуса', type: 'escape' },
-                                 { date: 'Вчера', title: 'Ограбление Галеона', desc: 'Захватили груз специй и рома.', dmg: '+2500 золота', type: 'victory' },
-                                 { date: '3 дня назад', title: 'Нападение Кракена', desc: 'Щупальца пробили нижнюю палубу.', dmg: '-40% корпуса', type: 'danger' },
-                                 { date: 'Неделю назад', title: 'Столкновение с Рифом', desc: 'Штурман был пьян.', dmg: '-10% корпуса', type: 'danger' },
-                               ].map((log, i) => (
-                                 <div key={i} className="p-4 rounded-2xl bg-[#020a17] border border-sky-500/10 hover:border-amber-500/30 transition-colors">
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/50">{log.date}</p>
-                                    <h4 className="text-sm font-bold text-sky-100 mt-1 mb-2">{log.title}</h4>
+                             </div>
+                               <div className="space-y-4">
+                                  {[
+                                    { date: 'Сегодня', title: 'Побег от Королевского Флота', desc: 'Ушли в шторм, порвали два паруса.', dmg: '-15% корпуса', type: 'escape' },
+                                    { date: 'Вчера', title: 'Ограбление Галеона', desc: 'Захватили груз специй и рома.', dmg: '+2500 золота', type: 'victory' },
+                                    { date: '3 дня назад', title: 'Нападение Кракена', desc: 'Щупальца пробили нижнюю палубу.', dmg: '-40% корпуса', type: 'danger' },
+                                    { date: 'Неделю назад', title: 'Столкновение с Рифом', desc: 'Штурман был пьян.', dmg: '-10% корпуса', type: 'danger' },
+                                  ].map((log, i) => (
+                                    <div key={i} className="p-4 rounded-2xl bg-[#020a17] border border-sky-500/10 hover:border-amber-500/30 transition-colors">
+                                       <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/50">{log.date}</p>
+                                       <h4 className="text-sm font-bold text-sky-100 mt-1 mb-2">{log.title}</h4>
                                     <p className="text-xs text-sky-200/60 italic mb-3">"{log.desc}"</p>
                                     <div className={cn("text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg inline-block", 
                                       log.type === 'victory' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
@@ -690,15 +689,29 @@ export default function PirateProfile() {
               className="relative w-full max-w-5xl bg-[#0a0a0a] p-8 rounded-[3rem] border-8 border-amber-900/40 shadow-[0_0_100px_rgba(245,158,11,0.2)] overflow-hidden"
             >
                <button onClick={() => setSelectedProfileId(null)} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-100 transition-colors z-20"><X size={32} /></button>
+               {/* Decorative Glowing Orbs */}
+               <div className="absolute top-1/4 left-1/4 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+               <div className="absolute bottom-1/4 right-1/4 w-60 h-60 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+               <div className="absolute top-1/2 right-1/3 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
                <div className="flex flex-col md:flex-row gap-8 relative z-10 h-[600px]">
                   {/* Left Side: 3D Avatar */}
-                  <div className="w-full md:w-2/5 bg-[#020a17] rounded-3xl overflow-hidden border-4 border-amber-900/50 relative group shadow-2xl h-full">
+                  <div className="w-full md:w-2/5 bg-gradient-to-b from-[#020a17] to-[#0a0a0a] rounded-3xl overflow-hidden border-4 border-amber-500/30 relative group shadow-[0_0_30px_rgba(245,158,11,0.15)] h-full transition-colors hover:border-amber-500/50">
                      <CharacterScene customization={customizations[selectedProfile.id] || customizations.default} />
+                     
+                     {/* Level Badge */}
+                     <div className="absolute top-4 left-4 bg-gradient-to-r from-amber-500 to-red-600 text-slate-950 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg flex items-center gap-1">
+                        <Flame size={12} /> Уровень 99
+                     </div>
+
                      <div className="absolute inset-0 bg-gradient-to-t from-[#020a17] via-transparent to-transparent opacity-80 pointer-events-none" />
                      <div className="absolute bottom-6 left-6 right-6 text-center pointer-events-none">
-                        <h3 className="text-4xl font-black text-amber-100 uppercase drop-shadow-lg">{selectedProfile.name}</h3>
-                        <p className="text-amber-500 text-xs font-black uppercase tracking-widest mt-1">{selectedProfile.id === 'Grinch' ? 'Грозный Капитан' : 'Прекрасная Сирена'}</p>
+                        <h3 className="text-4xl font-black text-amber-100 uppercase drop-shadow-lg tracking-tighter">{selectedProfile.name}</h3>
+                        <p className="text-amber-500 text-xs font-black uppercase tracking-widest mt-1 flex items-center justify-center gap-2">
+                           <Skull size={12} />
+                           {selectedProfile.id === 'Grinch' ? 'Грозный Капитан' : 'Прекрасная Сирена'}
+                           <Skull size={12} />
+                        </p>
                      </div>
                   </div>
 
@@ -731,18 +744,20 @@ export default function PirateProfile() {
                               {/* Hats */}
                               <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
                                  <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Головной убор</label>
-                                 <div className="grid grid-cols-3 gap-2">
+                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {[
-                                       { id: 'none', name: 'Нет' },
-                                       { id: 'captain', name: 'Треуголка' },
-                                       { id: 'bandana', name: 'Бандана' }
+                                       { id: 'none', name: 'Нет', icon: X },
+                                       { id: 'captain', name: 'Треуголка', icon: Trophy },
+                                       { id: 'bandana', name: 'Бандана', icon: Wind },
+                                       { id: 'crown', name: 'Корона', icon: Crown }
                                     ].map(h => (
                                        <button
                                           key={h.id}
                                           onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), hat: h.id}}))}
-                                          className={cn("p-2 text-xs font-bold rounded-lg border transition-colors", (customizations[selectedProfile.id]?.hat || 'none') === h.id ? "bg-amber-500/20 border-amber-500 text-amber-100" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50")}
+                                          className={cn("p-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center gap-2", (customizations[selectedProfile.id]?.hat || 'none') === h.id ? "bg-amber-500/20 border-amber-500 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50 hover:text-slate-200")}
                                        >
-                                          {h.name}
+                                          <h.icon size={16} className={(customizations[selectedProfile.id]?.hat || 'none') === h.id ? "text-amber-400" : "text-slate-500"} />
+                                          <span>{h.name}</span>
                                        </button>
                                     ))}
                                  </div>
@@ -751,18 +766,20 @@ export default function PirateProfile() {
                               {/* Clothes */}
                               <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
                                  <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Одежда</label>
-                                 <div className="grid grid-cols-3 gap-2">
+                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {[
-                                       { id: 'none', name: 'Нет' },
-                                       { id: 'jacket', name: 'Камзол' },
-                                       { id: 'vest', name: 'Жилет' }
+                                       { id: 'none', name: 'Нет', icon: X },
+                                       { id: 'jacket', name: 'Камзол', icon: User },
+                                       { id: 'vest', name: 'Жилет', icon: User },
+                                       { id: 'armor', name: 'Доспех', icon: Shield }
                                     ].map(c => (
                                        <button
                                           key={c.id}
                                           onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), clothes: c.id}}))}
-                                          className={cn("p-2 text-xs font-bold rounded-lg border transition-colors", (customizations[selectedProfile.id]?.clothes || 'none') === c.id ? "bg-amber-500/20 border-amber-500 text-amber-100" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50")}
+                                          className={cn("p-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center gap-2", (customizations[selectedProfile.id]?.clothes || 'none') === c.id ? "bg-amber-500/20 border-amber-500 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50 hover:text-slate-200")}
                                        >
-                                          {c.name}
+                                          <c.icon size={16} className={(customizations[selectedProfile.id]?.clothes || 'none') === c.id ? "text-amber-400" : "text-slate-500"} />
+                                          <span>{c.name}</span>
                                        </button>
                                     ))}
                                  </div>
@@ -771,18 +788,20 @@ export default function PirateProfile() {
                               {/* Weapons */}
                               <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
                                  <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Оружие</label>
-                                 <div className="grid grid-cols-3 gap-2">
+                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {[
-                                       { id: 'none', name: 'Нет' },
-                                       { id: 'saber', name: 'Сабля' },
-                                       { id: 'hook', name: 'Крюк' }
+                                       { id: 'none', name: 'Нет', icon: X },
+                                       { id: 'saber', name: 'Сабля', icon: Sword },
+                                       { id: 'hook', name: 'Крюк', icon: Anchor },
+                                       { id: 'pistol', name: 'Пистоль', icon: Crosshair }
                                     ].map(w => (
                                        <button
                                           key={w.id}
                                           onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), weapon: w.id}}))}
-                                          className={cn("p-2 text-xs font-bold rounded-lg border transition-colors", (customizations[selectedProfile.id]?.weapon || 'none') === w.id ? "bg-amber-500/20 border-amber-500 text-amber-100" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50")}
+                                          className={cn("p-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center gap-2", (customizations[selectedProfile.id]?.weapon || 'none') === w.id ? "bg-amber-500/20 border-amber-500 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50 hover:text-slate-200")}
                                        >
-                                          {w.name}
+                                          <w.icon size={16} className={(customizations[selectedProfile.id]?.weapon || 'none') === w.id ? "text-amber-400" : "text-slate-500"} />
+                                          <span>{w.name}</span>
                                        </button>
                                     ))}
                                  </div>
@@ -791,17 +810,18 @@ export default function PirateProfile() {
                               {/* Accessories */}
                               <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
                                  <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Аксессуары</label>
-                                 <div className="grid grid-cols-3 gap-2">
+                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {[
-                                       { id: 'none', name: 'Нет' },
-                                       { id: 'eyepatch', name: 'Повязка' }
+                                       { id: 'none', name: 'Нет', icon: X },
+                                       { id: 'eyepatch', name: 'Повязка', icon: Eye }
                                     ].map(a => (
                                        <button
                                           key={a.id}
                                           onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), accessory: a.id}}))}
-                                          className={cn("p-2 text-xs font-bold rounded-lg border transition-colors", (customizations[selectedProfile.id]?.accessory || 'none') === a.id ? "bg-amber-500/20 border-amber-500 text-amber-100" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50")}
+                                          className={cn("p-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center gap-2", (customizations[selectedProfile.id]?.accessory || 'none') === a.id ? "bg-amber-500/20 border-amber-500 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50 hover:text-slate-200")}
                                        >
-                                          {a.name}
+                                          <a.icon size={16} className={(customizations[selectedProfile.id]?.accessory || 'none') === a.id ? "text-amber-400" : "text-slate-500"} />
+                                          <span>{a.name}</span>
                                        </button>
                                     ))}
                                  </div>
