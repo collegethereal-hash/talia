@@ -67,17 +67,17 @@ export default function LairPage() {
   const [sailors, setSailors] = useState<Sailor[]>([]);
   const [cannonballs, setCannonballs] = useState<Cannonball[]>([]);
   
-  // FIXED POSITIONS TO MATCH THE IMAGE PERFECTLY
+  // Positions adjusted to fit the 250x450 ships
   const [zones, setZones] = useState<Zone[]>([
     // Player Ship (Left)
     { id: 'p_helm', name: 'Штурвал', x: 250, y: 150, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 } },
-    { id: 'p_cannons', name: 'Пушки', x: 250, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 20, sappers: 0 } },
-    { id: 'p_deck', name: 'Палуба', x: 250, y: 490, team: 'player', crewTypes: { swordsmen: 20, gunners: 5, sappers: 5 } },
+    { id: 'p_cannons', name: 'Пушки', x: 250, y: 300, team: 'player', crewTypes: { swordsmen: 0, gunners: 20, sappers: 0 } },
+    { id: 'p_deck', name: 'Палуба', x: 250, y: 450, team: 'player', crewTypes: { swordsmen: 20, gunners: 5, sappers: 5 } },
     
     // Enemy Ship (Right)
     { id: 'e_cabin', name: 'Мостик', x: 650, y: 150, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 } },
-    { id: 'e_battery', name: 'Батарея', x: 650, y: 320, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 } },
-    { id: 'e_hold', name: 'Каюты', x: 650, y: 490, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 2, sappers: 10 } },
+    { id: 'e_battery', name: 'Батарея', x: 650, y: 300, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 } },
+    { id: 'e_hold', name: 'Каюты', x: 650, y: 450, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 2, sappers: 10 } },
   ]);
 
   const [battleStarted, setBattleStarted] = useState(false);
@@ -122,7 +122,7 @@ export default function LairPage() {
   const getBridgePath = (startX: number, endX: number, targetX: number, targetY: number) => {
     const leftBridgeX = 375; 
     const rightBridgeX = 525; 
-    const bridgeY = 320; 
+    const bridgeY = 300; 
 
     if (startX < leftBridgeX && endX > rightBridgeX) {
       return [{ x: leftBridgeX, y: bridgeY }, { x: rightBridgeX, y: bridgeY }, { x: targetX, y: targetY }];
@@ -319,8 +319,8 @@ export default function LairPage() {
       
       <div className="relative z-10 max-w-[1600px] mx-auto space-y-4">
          
-         {/* Title from Image */}
-         <div className="flex justify-between items-center">
+         {/* Title */}
+         <div className="flex justify-between items-center border-b-2 border-amber-500/30 pb-4">
             <div>
                <p className="text-[10px] font-serif uppercase tracking-widest text-amber-500/60">Симуляция Сражения</p>
                <h1 className="text-4xl font-serif font-black uppercase text-amber-100">Абордаж</h1>
@@ -337,31 +337,25 @@ export default function LairPage() {
          {/* Main Grid */}
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             
-            {/* Arena - EXACTLY AS IN THE PHOTO */}
+            {/* Arena */}
             <div className="lg:col-span-9 flex justify-start">
                <div 
-                  className="bg-[#0c0a09] bg-[linear-gradient(rgba(255,255,255,0.03)_1px,_transparent_1px),_linear-gradient(90deg,_rgba(255,255,255,0.03)_1px,_transparent_1px)] bg-[size:30px_30px] rounded-3xl border border-amber-500/10 relative h-[700px] w-[900px] overflow-hidden shadow-inner"
+                  className="bg-[#0c0a09] bg-[linear-gradient(rgba(255,255,255,0.02)_1px,_transparent_1px),_linear-gradient(90deg,_rgba(255,255,255,0.02)_1px,_transparent_1px)] bg-[size:30px_30px] rounded-3xl border border-amber-500/10 relative h-[650px] w-[900px] overflow-hidden shadow-inner flex justify-around items-center"
                >
                   {/* Bridge */}
                   <div className="absolute top-[300px] left-[375px] w-[150px] h-[40px] bg-[#1a0f05] border-t border-b border-amber-500/20 flex items-center justify-center">
                      <span className="text-[10px] font-bold uppercase text-amber-500/40 tracking-widest">Мост</span>
                   </div>
 
-                  {/* Ships - EXACT SHIELD/CAPSULE SHAPE WITH POINTED BOTTOM */}
-                  {/* Player Ship */}
-                  <div 
-                     className="absolute top-[50px] left-[125px] w-[250px] h-[550px] bg-[#0c0a09]/90 border-2 border-cyan-500/50 flex flex-col items-center pt-8"
-                     style={{ 
-                        borderRadius: '125px 125px 0 0',
-                        clipPath: 'polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%)',
-                        filter: 'drop-shadow(0 0 15px rgba(6,182,212,0.3))'
-                     }}
-                  >
-                     {/* Label from image */}
-                     <div className="bg-cyan-500 text-black text-[10px] font-black uppercase px-4 py-1 rounded-full mb-4">Твой Корабль</div>
+                  {/* PLAYER SHIP (Left) - EXACT CODE FROM c498597 */}
+                  <div className="relative w-[250px] h-[450px] border-4 border-cyan-500/30 rounded-[80px] bg-cyan-900/10 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+                     <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-cyan-500 text-black px-4 py-1 text-xs font-black uppercase rounded-full">Твой Корабль</div>
+                     
+                     {/* Bow (Triangle at bottom) */}
+                     <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[125px] border-r-[125px] border-t-[60px] border-l-transparent border-r-transparent border-t-cyan-500/20" />
                      
                      {/* Zones inside ship */}
-                     <div className="space-y-16 mt-10 text-center">
+                     <div className="space-y-16 mt-16 text-center relative z-10">
                         <div>
                            <h4 className="text-sm font-serif font-bold text-white">Штурвал</h4>
                            <p className="text-[10px] text-cyan-400 font-mono">5 👤</p>
@@ -377,20 +371,15 @@ export default function LairPage() {
                      </div>
                   </div>
                   
-                  {/* Enemy Ship */}
-                  <div 
-                     className="absolute top-[50px] left-[525px] w-[250px] h-[550px] bg-[#0c0a09]/90 border-2 border-red-500/50 flex flex-col items-center pt-8"
-                     style={{ 
-                        borderRadius: '125px 125px 0 0',
-                        clipPath: 'polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%)',
-                        filter: 'drop-shadow(0 0 15px rgba(239,68,68,0.3))'
-                     }}
-                  >
-                     {/* Label from image */}
-                     <div className="bg-red-500 text-white text-[10px] font-black uppercase px-4 py-1 rounded-full mb-4">Галлеон Врага</div>
+                  {/* ENEMY SHIP (Right) - EXACT CODE FROM c498597 */}
+                  <div className="relative w-[250px] h-[450px] border-4 border-red-500/30 rounded-[80px] bg-red-900/10 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+                     <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-1 text-xs font-black uppercase rounded-full">Галеон Врага</div>
+                     
+                     {/* Bow (Triangle at bottom) */}
+                     <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[125px] border-r-[125px] border-t-[60px] border-l-transparent border-r-transparent border-t-red-500/20" />
                      
                      {/* Zones inside ship */}
-                     <div className="space-y-16 mt-10 text-center">
+                     <div className="space-y-16 mt-16 text-center relative z-10">
                         <div>
                            <h4 className="text-sm font-serif font-bold text-white">Мостик</h4>
                            <p className="text-[10px] text-red-400 font-mono">5 👤</p>
@@ -411,7 +400,7 @@ export default function LairPage() {
                      <div
                         key={sailor.id}
                         className={cn(
-                          "w-2.5 h-2.5 rounded-full absolute transition-all duration-300 ease-linear border border-black/30 shadow-md", 
+                          "w-2.5 h-2.5 rounded-full absolute transition-all duration-300 ease-linear border border-black/30 shadow-md z-20", 
                           sailor.color,
                           sailor.state === 'shooting' && "ring-2 ring-yellow-400"
                         )}
@@ -427,7 +416,7 @@ export default function LairPage() {
                   {cannonballs.map(ball => (
                      <div 
                         key={ball.id}
-                        className="w-3 h-3 bg-yellow-500 rounded-full absolute shadow-lg"
+                        className="w-3 h-3 bg-yellow-500 rounded-full absolute shadow-lg z-20"
                         style={{ left: `${ball.x}px`, top: `${ball.y}px`, transform: 'translate(-50%, -50%)' }}
                      />
                   ))}
@@ -436,7 +425,7 @@ export default function LairPage() {
             </div>
 
             {/* Right Side: Chat with Polina */}
-            <div className="lg:col-span-3 h-[700px] flex flex-col bg-gradient-to-br from-[#1a0f05] to-[#0a0501] border-2 border-amber-500/20 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="lg:col-span-3 h-[650px] flex flex-col bg-gradient-to-br from-[#1a0f05] to-[#0a0501] border-2 border-amber-500/20 rounded-3xl shadow-2xl overflow-hidden">
                
                <div className="p-4 border-b border-amber-500/10 flex items-center gap-3 bg-black/40">
                   <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center border border-amber-500/30">
