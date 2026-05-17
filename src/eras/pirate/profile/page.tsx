@@ -21,6 +21,24 @@ export default function PirateProfile() {
     Grinch: { skinColor: '#e0ac69', hat: 'captain', clothes: 'jacket', weapon: 'saber', accessory: 'eyepatch' },
     default: { skinColor: '#ffdbac', hat: 'bandana', clothes: 'vest', weapon: 'none', accessory: 'none' }
   });
+  
+  const [profileStats, setProfileStats] = useState<Record<string, any>>({
+    Grinch: { strength: 75, agility: 90, luck: 60, charisma: 100, exp: 5 },
+    default: { strength: 50, agility: 50, luck: 50, charisma: 50, exp: 5 }
+  });
+
+  const [profileAbilities, setProfileAbilities] = useState<Record<string, any>>({
+    Grinch: [
+      { id: 'fire_shot', name: 'Огненный Залп', desc: 'Повышает урон от пушек на 20%', level: 3, unlocked: true, icon: Flame },
+      { id: 'strong_hull', name: 'Крепкий Корпус', desc: 'Снижает входящий урон на 15%', level: 1, unlocked: true, icon: Shield },
+      { id: 'kraken_call', name: 'Зов Кракена', desc: 'Призывает щупальца на помощь', level: 0, unlocked: false, price: 500, icon: Anchor }
+    ],
+    default: [
+      { id: 'fire_shot', name: 'Огненный Залп', desc: 'Повышает урон от пушек на 20%', level: 1, unlocked: true, icon: Flame },
+      { id: 'strong_hull', name: 'Крепкий Корпус', desc: 'Снижает входящий урон на 15%', level: 0, unlocked: false, price: 300, icon: Shield }
+    ]
+  });
+
   const [showShipDetails, setShowShipDetails] = useState(false);
   
   // Local Stats from Store/Gameplay
@@ -834,45 +852,47 @@ export default function PirateProfile() {
                               <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
                                  <div className="flex justify-between items-center mb-4">
                                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Характеристики</h4>
-                                    <span className="text-[10px] font-black uppercase text-slate-500">Очки опыта: 5</span>
+                                    <span className="text-[10px] font-black uppercase text-slate-500">Очки опыта: {profileStats[selectedProfile.id]?.exp || 0}</span>
                                  </div>
                                  <div className="space-y-4">
-                                    {/* Сила */}
-                                    <div className="flex items-center justify-between gap-4">
-                                       <span className="text-xs font-bold text-slate-300 w-24">Сила</span>
-                                       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                          <div className="h-full bg-red-500" style={{ width: `75%` }} />
-                                       </div>
-                                       <span className="text-sm font-bold text-amber-400 w-8 text-right">75</span>
-                                       <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
-                                    </div>
-                                    {/* Ловкость */}
-                                    <div className="flex items-center justify-between gap-4">
-                                       <span className="text-xs font-bold text-slate-300 w-24">Ловкость</span>
-                                       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                          <div className="h-full bg-emerald-500" style={{ width: `90%` }} />
-                                       </div>
-                                       <span className="text-sm font-bold text-amber-400 w-8 text-right">90</span>
-                                       <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
-                                    </div>
-                                    {/* Удача */}
-                                    <div className="flex items-center justify-between gap-4">
-                                       <span className="text-xs font-bold text-slate-300 w-24">Удача</span>
-                                       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                          <div className="h-full bg-blue-500" style={{ width: `60%` }} />
-                                       </div>
-                                       <span className="text-sm font-bold text-amber-400 w-8 text-right">60</span>
-                                       <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
-                                    </div>
-                                    {/* Харизма */}
-                                    <div className="flex items-center justify-between gap-4">
-                                       <span className="text-xs font-bold text-slate-300 w-24">Харизма</span>
-                                       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                          <div className="h-full bg-amber-500" style={{ width: `100%` }} />
-                                       </div>
-                                       <span className="text-sm font-bold text-amber-400 w-8 text-right">100</span>
-                                       <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
-                                    </div>
+                                    {[
+                                       { id: 'strength', name: 'Сила', color: 'bg-red-500', icon: Sword },
+                                       { id: 'agility', name: 'Ловкость', color: 'bg-emerald-500', icon: Wind },
+                                       { id: 'luck', name: 'Удача', color: 'bg-blue-500', icon: Sparkles },
+                                       { id: 'charisma', name: 'Харизма', color: 'bg-amber-500', icon: Crown }
+                                    ].map(stat => {
+                                       const val = profileStats[selectedProfile.id]?.[stat.id] || 50;
+                                       const exp = profileStats[selectedProfile.id]?.exp || 0;
+                                       return (
+                                          <div key={stat.id} className="flex items-center justify-between gap-4">
+                                             <div className="flex items-center gap-2 w-24">
+                                                <stat.icon size={14} className="text-slate-500" />
+                                                <span className="text-xs font-bold text-slate-300">{stat.name}</span>
+                                             </div>
+                                             <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                                <div className={cn("h-full", stat.color)} style={{ width: `${val}%` }} />
+                                             </div>
+                                             <span className="text-sm font-bold text-amber-400 w-8 text-right">{val}</span>
+                                             <button 
+                                                onClick={() => {
+                                                   if (exp > 0 && val < 100) {
+                                                      setProfileStats(prev => ({
+                                                         ...prev,
+                                                         [selectedProfile.id]: {
+                                                            ...prev[selectedProfile.id],
+                                                            [stat.id]: Math.min(100, val + 5),
+                                                            exp: exp - 1
+                                                         }
+                                                      }));
+                                                   }
+                                                }}
+                                                className={cn("w-6 h-6 rounded-full flex items-center justify-center transition-colors font-bold", exp > 0 && val < 100 ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-slate-900" : "bg-slate-800 text-slate-600 cursor-not-allowed")}
+                                             >
+                                                +
+                                             </button>
+                                          </div>
+                                       );
+                                    })}
                                  </div>
                               </div>
                            </div>
@@ -883,22 +903,56 @@ export default function PirateProfile() {
                               <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
                                  <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-4">Боевые Умения</h4>
                                  <div className="space-y-4">
-                                    <div className="flex items-center gap-4 p-3 bg-black/60 rounded-xl border border-amber-900/20">
-                                       <Flame size={20} className="text-red-500" />
-                                       <div className="flex-1">
-                                          <h5 className="text-sm font-bold text-amber-100">Огненный Залп</h5>
-                                          <p className="text-xs text-slate-400">Повышает урон от пушек на 20%</p>
+                                    {(profileAbilities[selectedProfile.id] || profileAbilities.default).map((ability: any) => (
+                                       <div key={ability.id} className={cn("flex items-center gap-4 p-3 bg-black/60 rounded-xl border transition-colors", ability.unlocked ? "border-amber-900/20" : "border-red-900/20 opacity-70")}>
+                                          <ability.icon size={20} className={ability.unlocked ? "text-amber-400" : "text-slate-600"} />
+                                          <div className="flex-1">
+                                             <h5 className="text-sm font-bold text-amber-100 flex items-center gap-2">
+                                                {ability.name}
+                                                {!ability.unlocked && <Lock size={12} className="text-red-500" />}
+                                             </h5>
+                                             <p className="text-xs text-slate-400">{ability.desc}</p>
+                                          </div>
+                                          {ability.unlocked ? (
+                                             <div className="flex items-center gap-2">
+                                                <span className="text-xs font-black text-amber-500">Ур. {ability.level}</span>
+                                                <button 
+                                                   onClick={() => {
+                                                      const exp = profileStats[selectedProfile.id]?.exp || 0;
+                                                      if (exp >= 2) {
+                                                         setProfileAbilities(prev => ({
+                                                            ...prev,
+                                                            [selectedProfile.id]: prev[selectedProfile.id].map((a: any) => a.id === ability.id ? {...a, level: a.level + 1} : a)
+                                                         }));
+                                                         setProfileStats(prev => ({
+                                                            ...prev,
+                                                            [selectedProfile.id]: {...prev[selectedProfile.id], exp: exp - 2}
+                                                         }));
+                                                      }
+                                                   }}
+                                                   className={cn("w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs", (profileStats[selectedProfile.id]?.exp || 0) >= 2 ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-slate-900" : "bg-slate-800 text-slate-600 cursor-not-allowed")}
+                                                >
+                                                   +
+                                                </button>
+                                             </div>
+                                          ) : (
+                                             <button 
+                                                onClick={() => {
+                                                   if (gold >= ability.price) {
+                                                      setGold(prev => prev - ability.price);
+                                                      setProfileAbilities(prev => ({
+                                                         ...prev,
+                                                         [selectedProfile.id]: prev[selectedProfile.id].map((a: any) => a.id === ability.id ? {...a, unlocked: true, level: 1} : a)
+                                                      }));
+                                                   }
+                                                }}
+                                                className={cn("px-3 py-1 text-[10px] font-black uppercase rounded-lg border transition-colors", gold >= ability.price ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 hover:bg-emerald-500 hover:text-slate-900" : "bg-slate-800 border-slate-700 text-slate-600 cursor-not-allowed")}
+                                             >
+                                                {gold >= ability.price ? `Купить (${ability.price} 🪙)` : `Нужно ${ability.price} 🪙`}
+                                             </button>
+                                          )}
                                        </div>
-                                       <span className="text-xs font-black text-amber-500">Ур. 3</span>
-                                    </div>
-                                    <div className="flex items-center gap-4 p-3 bg-black/60 rounded-xl border border-amber-900/20">
-                                       <Shield size={20} className="text-sky-500" />
-                                       <div className="flex-1">
-                                          <h5 className="text-sm font-bold text-amber-100">Крепкий Корпус</h5>
-                                          <p className="text-xs text-slate-400">Снижает входящий урон на 15%</p>
-                                       </div>
-                                       <span className="text-xs font-black text-amber-500">Ур. 1</span>
-                                    </div>
+                                    ))}
                                  </div>
                               </div>
                            </div>
