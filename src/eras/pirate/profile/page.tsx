@@ -23,6 +23,38 @@ export default function PirateProfile() {
   const [sunkShips, setSunkShips] = useState(0);
   const [shipHealth, setShipHealth] = useState(45); // e.g. 45% damaged
 
+  const [activeSlot, setActiveSlot] = useState<string | null>(null);
+  const [equippedParts, setEquippedParts] = useState({
+    hull: 'h1',
+    sails: 's1',
+    cannons: 'c1',
+    figurehead: 'f1'
+  });
+
+  const PARTS_DB: Record<string, any[]> = {
+    hull: [
+      { id: 'h1', name: 'Сгнившие доски', stat: 'Броня: 10', desc: 'Базовый каркас.', icon: <Anchor size={20}/> },
+      { id: 'h2', name: 'Железное Дерево', stat: 'Броня: 80', desc: 'Защитит от ядер.', icon: <Shield size={20}/> }
+    ],
+    sails: [
+      { id: 's1', name: 'Штормовая парусина', stat: 'Скорость: 30', desc: 'Медленно, но верно.', icon: <Wind size={20}/> },
+      { id: 's2', name: 'Косые паруса', stat: 'Скорость: 90', desc: 'Ловят любой бриз.', icon: <Wind size={20}/> }
+    ],
+    cannons: [
+      { id: 'c1', name: 'Старые пушки', stat: 'Огневая мощь: 15', desc: 'Часто дают осечку.', icon: <Flame size={20}/> },
+      { id: 'c2', name: 'Бронзовые Фальконеты', stat: 'Огневая мощь: 95', desc: 'Разнесут форт в щепки.', icon: <Target size={20}/> }
+    ],
+    figurehead: [
+      { id: 'f1', name: 'Русалка', stat: 'Харизма: 20', desc: 'Поднимает настроение.', icon: <Eye size={20}/> },
+      { id: 'f2', name: 'Золотой Лев', stat: 'Устрашение: 100', desc: 'Внушает ужас врагам.', icon: <Crown size={20}/> }
+    ]
+  };
+
+  const currentHull = PARTS_DB.hull.find(p => p.id === equippedParts.hull);
+  const currentSails = PARTS_DB.sails.find(p => p.id === equippedParts.sails);
+  const currentCannons = PARTS_DB.cannons.find(p => p.id === equippedParts.cannons);
+  const currentFigurehead = PARTS_DB.figurehead.find(p => p.id === equippedParts.figurehead);
+
   const handleRepair = () => {
     if (gold >= 100 && shipHealth < 100) {
       setGold(prev => {
@@ -430,45 +462,89 @@ export default function PirateProfile() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <ModuleSlot title="Корпус" icon={<Anchor size={20}/>} item={flagship.modules.hull} stat={`Броня: ${flagship.stats.armor}`} type="hull" />
-                         <ModuleSlot title="Паруса" icon={<Wind size={20}/>} item={flagship.modules.sails} stat={`Скорость: ${flagship.stats.speed}`} type="sails" />
-                         <ModuleSlot title="Орудия" icon={<Flame size={20}/>} item={inventory.includes('b3') ? 'Бронзовые Пушки' : 'Стандартные Пушки'} stat={`Огневая мощь: ${flagship.stats.cannons}`} type="cannons" />
-                         <ModuleSlot title="Фигура" icon={<Skull size={20}/>} item={flagship.modules.figurehead} stat="Устрашение: Высокое" type="figurehead" />
+                         <ModuleSlot isActive={activeSlot === 'hull'} onClick={() => setActiveSlot('hull')} title="Корпус" icon={currentHull.icon} item={currentHull.name} stat={currentHull.stat} type="hull" />
+                         <ModuleSlot isActive={activeSlot === 'sails'} onClick={() => setActiveSlot('sails')} title="Паруса" icon={currentSails.icon} item={currentSails.name} stat={currentSails.stat} type="sails" />
+                         <ModuleSlot isActive={activeSlot === 'cannons'} onClick={() => setActiveSlot('cannons')} title="Орудия" icon={currentCannons.icon} item={currentCannons.name} stat={currentCannons.stat} type="cannons" />
+                         <ModuleSlot isActive={activeSlot === 'figurehead'} onClick={() => setActiveSlot('figurehead')} title="Фигура" icon={currentFigurehead.icon} item={currentFigurehead.name} stat={currentFigurehead.stat} type="figurehead" />
                       </div>
 
-                      <div className="bg-sky-900/10 p-6 rounded-2xl border border-sky-500/20 mt-8">
-                         <p className="text-[10px] font-black uppercase tracking-widest text-sky-500/60 mb-2">Техническое описание</p>
-                         <p className="text-sky-200/80 font-serif italic leading-relaxed">"{flagship.blueprint}"</p>
+                      <div className="bg-sky-900/10 p-6 rounded-2xl border border-sky-500/20 mt-8 relative overflow-hidden group">
+                         <div className="absolute inset-0 bg-sky-500/5 -translate-x-full group-hover:translate-x-0 transition-transform duration-1000" />
+                         <p className="text-[10px] font-black uppercase tracking-widest text-sky-500/60 mb-2 relative z-10">Сводка Конструктора</p>
+                         <p className="text-sky-200/80 font-serif italic leading-relaxed relative z-10">Выберите модуль, чтобы перейти на склад деталей и переоборудовать флагман. Каждая деталь влияет на выживаемость судна.</p>
                       </div>
                    </div>
 
-                   {/* Right Column: Battle Log */}
+                   {/* Right Column: Dynamic View (Battle Log OR Inventory) */}
                    <div className="w-full lg:w-1/3 bg-black/60 p-8 overflow-y-auto custom-scrollbar border-l border-sky-500/20">
-                      <div className="flex items-center gap-3 border-b border-sky-500/20 pb-4 mb-6">
-                         <History size={24} className="text-amber-400" />
-                         <h3 className="text-2xl font-black uppercase tracking-widest text-amber-100">Журнал Боёв</h3>
-                      </div>
+                      <AnimatePresence mode="wait">
+                        {activeSlot ? (
+                          <motion.div key="inventory" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
+                            <div className="flex items-center justify-between border-b border-sky-500/20 pb-4 mb-6">
+                               <div className="flex items-center gap-3">
+                                  <Wrench size={24} className="text-sky-400" />
+                                  <h3 className="text-xl font-black uppercase tracking-widest text-sky-100">Склад Деталей</h3>
+                               </div>
+                               <button onClick={() => setActiveSlot(null)} className="text-[10px] font-black uppercase tracking-widest text-sky-500/60 hover:text-sky-300">Назад</button>
+                            </div>
+                            
+                            <div className="space-y-4">
+                               {PARTS_DB[activeSlot].map(part => (
+                                 <div 
+                                   key={part.id} 
+                                   onClick={() => setEquippedParts(prev => ({...prev, [activeSlot]: part.id}))}
+                                   className={cn(
+                                     "p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-4 group",
+                                     equippedParts[activeSlot as keyof typeof equippedParts] === part.id 
+                                       ? "bg-sky-500/20 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]" 
+                                       : "bg-black/40 border-sky-500/10 hover:border-sky-500/40"
+                                   )}
+                                 >
+                                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors", equippedParts[activeSlot as keyof typeof equippedParts] === part.id ? "bg-sky-500 text-slate-900" : "bg-sky-500/10 text-sky-400 group-hover:bg-sky-500/20")}>
+                                       {part.icon}
+                                    </div>
+                                    <div className="flex-1">
+                                       <h4 className="text-sm font-bold text-sky-100">{part.name}</h4>
+                                       <p className="text-xs text-sky-200/60 italic mb-1">"{part.desc}"</p>
+                                       <p className="text-[9px] font-black uppercase tracking-widest text-amber-400">{part.stat}</p>
+                                    </div>
+                                    {equippedParts[activeSlot as keyof typeof equippedParts] === part.id && (
+                                      <CheckCircle size={20} className="text-sky-400" />
+                                    )}
+                                 </div>
+                               ))}
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <motion.div key="history" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                            <div className="flex items-center gap-3 border-b border-sky-500/20 pb-4 mb-6">
+                               <History size={24} className="text-amber-400" />
+                               <h3 className="text-2xl font-black uppercase tracking-widest text-amber-100">Журнал Боёв</h3>
+                            </div>
 
-                      <div className="space-y-4">
-                         {[
-                           { date: 'Сегодня', title: 'Побег от Королевского Флота', desc: 'Ушли в шторм, порвали два паруса.', dmg: '-15% корпуса', type: 'escape' },
-                           { date: 'Вчера', title: 'Ограбление Галеона', desc: 'Захватили груз специй и рома.', dmg: '+2500 золота', type: 'victory' },
-                           { date: '3 дня назад', title: 'Нападение Кракена', desc: 'Щупальца пробили нижнюю палубу.', dmg: '-40% корпуса', type: 'danger' },
-                           { date: 'Неделю назад', title: 'Столкновение с Рифом', desc: 'Штурман был пьян.', dmg: '-10% корпуса', type: 'danger' },
-                         ].map((log, i) => (
-                           <div key={i} className="p-4 rounded-2xl bg-[#020a17] border border-sky-500/10 hover:border-amber-500/30 transition-colors">
-                              <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/50">{log.date}</p>
-                              <h4 className="text-sm font-bold text-sky-100 mt-1 mb-2">{log.title}</h4>
-                              <p className="text-xs text-sky-200/60 italic mb-3">"{log.desc}"</p>
-                              <div className={cn("text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg inline-block", 
-                                log.type === 'victory' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-                                'bg-red-500/10 text-red-400 border border-red-500/20')}
-                              >
-                                {log.dmg}
-                              </div>
-                           </div>
-                         ))}
-                      </div>
+                            <div className="space-y-4">
+                               {[
+                                 { date: 'Сегодня', title: 'Побег от Королевского Флота', desc: 'Ушли в шторм, порвали два паруса.', dmg: '-15% корпуса', type: 'escape' },
+                                 { date: 'Вчера', title: 'Ограбление Галеона', desc: 'Захватили груз специй и рома.', dmg: '+2500 золота', type: 'victory' },
+                                 { date: '3 дня назад', title: 'Нападение Кракена', desc: 'Щупальца пробили нижнюю палубу.', dmg: '-40% корпуса', type: 'danger' },
+                                 { date: 'Неделю назад', title: 'Столкновение с Рифом', desc: 'Штурман был пьян.', dmg: '-10% корпуса', type: 'danger' },
+                               ].map((log, i) => (
+                                 <div key={i} className="p-4 rounded-2xl bg-[#020a17] border border-sky-500/10 hover:border-amber-500/30 transition-colors">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/50">{log.date}</p>
+                                    <h4 className="text-sm font-bold text-sky-100 mt-1 mb-2">{log.title}</h4>
+                                    <p className="text-xs text-sky-200/60 italic mb-3">"{log.desc}"</p>
+                                    <div className={cn("text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg inline-block", 
+                                      log.type === 'victory' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                                      'bg-red-500/10 text-red-400 border border-red-500/20')}
+                                    >
+                                      {log.dmg}
+                                    </div>
+                                 </div>
+                               ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                    </div>
 
                 </div>
@@ -545,10 +621,18 @@ function StatBlock({ icon, label, value, color }: any) {
   );
 }
 
-function ModuleSlot({ title, icon, item, stat, type }: any) {
+function ModuleSlot({ title, icon, item, stat, onClick, isActive }: any) {
   return (
-    <div className="bg-sky-900/10 p-4 rounded-2xl border border-sky-500/20 flex items-center gap-4 group hover:border-sky-500/50 hover:bg-sky-500/5 transition-colors cursor-pointer">
-       <div className="w-12 h-12 bg-sky-500/10 rounded-xl flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform">
+    <div 
+      onClick={onClick}
+      className={cn(
+        "p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-4 group",
+        isActive 
+          ? "bg-sky-500/20 border-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.2)]" 
+          : "bg-sky-900/10 border-sky-500/20 hover:border-sky-500/50 hover:bg-sky-500/5"
+      )}
+    >
+       <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center transition-transform", isActive ? "bg-sky-500 text-slate-900 scale-110" : "bg-sky-500/10 text-sky-400 group-hover:scale-110")}>
           {icon}
        </div>
        <div className="flex-1">
