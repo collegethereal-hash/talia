@@ -24,6 +24,9 @@ export default function PirateProfile() {
   const [shipHealth, setShipHealth] = useState(45); // e.g. 45% damaged
 
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
+  const [isEditingManifest, setIsEditingManifest] = useState(false);
+  const [bounty, setBounty] = useState(1000000);
+  const [hasBlackSpot, setHasBlackSpot] = useState(false);
   const [equippedParts, setEquippedParts] = useState({
     hull: 'h1',
     sails: 's1',
@@ -33,20 +36,20 @@ export default function PirateProfile() {
 
   const PARTS_DB: Record<string, any[]> = {
     hull: [
-      { id: 'h1', name: 'Сгнившие доски', stat: 'Броня: 10', desc: 'Базовый каркас.', icon: <Anchor size={20}/> },
-      { id: 'h2', name: 'Железное Дерево', stat: 'Броня: 80', desc: 'Защитит от ядер.', icon: <Shield size={20}/> }
+      { id: 'h1', name: 'Сгнившие доски', stat: 'Броня: 10', desc: 'Базовый каркас.', pros: 'Низкий вес', cons: 'Легко пробивается', icon: <Anchor size={20}/> },
+      { id: 'h2', name: 'Железное Дерево', stat: 'Броня: 80', desc: 'Защитит от ядер.', pros: 'Непробиваемость', cons: 'Очень тяжелое', icon: <Shield size={20}/> }
     ],
     sails: [
-      { id: 's1', name: 'Штормовая парусина', stat: 'Скорость: 30', desc: 'Медленно, но верно.', icon: <Wind size={20}/> },
-      { id: 's2', name: 'Косые паруса', stat: 'Скорость: 90', desc: 'Ловят любой бриз.', icon: <Wind size={20}/> }
+      { id: 's1', name: 'Штормовая парусина', stat: 'Скорость: 30', desc: 'Медленно, но верно.', pros: 'Надежность', cons: 'Слабая тяга', icon: <Wind size={20}/> },
+      { id: 's2', name: 'Косые паруса', stat: 'Скорость: 90', desc: 'Ловят любой бриз.', pros: 'Высокая маневренность', cons: 'Легко рвутся', icon: <Wind size={20}/> }
     ],
     cannons: [
-      { id: 'c1', name: 'Старые пушки', stat: 'Огневая мощь: 15', desc: 'Часто дают осечку.', icon: <Flame size={20}/> },
-      { id: 'c2', name: 'Бронзовые Фальконеты', stat: 'Огневая мощь: 95', desc: 'Разнесут форт в щепки.', icon: <Target size={20}/> }
+      { id: 'c1', name: 'Старые пушки', stat: 'Огневая мощь: 15', desc: 'Часто дают осечку.', pros: 'Дешевизна', cons: 'Малый радиус', icon: <Flame size={20}/> },
+      { id: 'c2', name: 'Бронзовые Фальконеты', stat: 'Огневая мощь: 95', desc: 'Разнесут форт в щепки.', pros: 'Ужасающий урон', cons: 'Долгая перезарядка', icon: <Target size={20}/> }
     ],
     figurehead: [
-      { id: 'f1', name: 'Русалка', stat: 'Харизма: 20', desc: 'Поднимает настроение.', icon: <Eye size={20}/> },
-      { id: 'f2', name: 'Золотой Лев', stat: 'Устрашение: 100', desc: 'Внушает ужас врагам.', icon: <Crown size={20}/> }
+      { id: 'f1', name: 'Русалка', stat: 'Харизма: 20', desc: 'Поднимает настроение.', pros: 'Удача в бою', cons: 'Отвлекает матросов', icon: <Eye size={20}/> },
+      { id: 'f2', name: 'Золотой Лев', stat: 'Устрашение: 100', desc: 'Внушает ужас врагам.', pros: 'Враги сдаются сами', cons: 'Привлекает пиратов', icon: <Crown size={20}/> }
     ]
   };
 
@@ -417,11 +420,28 @@ export default function PirateProfile() {
                    
                    {/* Left Column: Ship 3D View & Health */}
                    <div className="w-full lg:w-1/3 border-r border-sky-500/20 p-8 flex flex-col items-center justify-center space-y-8 bg-sky-900/5">
-                      <div className="relative group">
-                         <div className="absolute inset-0 bg-sky-500/20 rounded-full blur-[50px] group-hover:bg-sky-400/30 transition-colors" />
-                         <div className="w-64 h-64 border-4 border-sky-500/30 rounded-full flex items-center justify-center bg-[#020a17] shadow-[inset_0_0_50px_rgba(14,165,233,0.2)] relative z-10">
-                            <div className="absolute inset-0 rounded-full border-2 border-sky-400/20 animate-spin-slow border-dashed" />
-                            <div className="scale-[2] opacity-90 drop-shadow-[0_0_20px_rgba(56,189,248,0.8)]">{flagship.icon}</div>
+                      <div className="relative w-full h-64 flex flex-col items-center justify-center opacity-90 scale-90">
+                         {/* Ship Top-Down Schematic View */}
+                         
+                         {/* Nose / Figurehead */}
+                         <div className={cn("absolute top-0 w-16 h-16 rounded-t-full border-4 flex items-center justify-center z-20 shadow-[0_0_30px_currentColor] transition-colors", shipHealth < 30 ? 'border-red-500 bg-red-950 text-red-500 animate-pulse' : 'border-sky-400 bg-sky-950 text-sky-400')}>
+                            {currentFigurehead.icon}
+                         </div>
+                         
+                         {/* Sails Area */}
+                         <div className={cn("absolute top-10 w-32 h-24 border-4 rounded-3xl flex items-center justify-center z-10 shadow-[0_0_20px_currentColor] transition-colors", shipHealth < 50 ? 'border-orange-500 bg-orange-950/80 text-orange-400' : 'border-sky-500 bg-sky-900/60 text-sky-200')}>
+                            {currentSails.icon}
+                         </div>
+                         
+                         {/* Hull / Main Deck */}
+                         <div className={cn("absolute top-16 w-24 h-48 border-4 rounded-b-[4rem] flex flex-col items-center justify-end pb-6 z-0 shadow-[0_0_40px_currentColor] transition-colors", shipHealth < 40 ? 'border-red-600 bg-[#1a0505] text-red-600 animate-pulse' : 'border-sky-700 bg-[#020a17] text-sky-600')}>
+                            <Anchor size={32} />
+                         </div>
+
+                         {/* Cannons Left & Right */}
+                         <div className="absolute top-28 w-40 flex justify-between px-1 z-30 pointer-events-none">
+                            <div className={cn("w-6 h-12 border-y-4 border-l-4 rounded-l-xl flex items-center justify-center shadow-[0_0_15px_currentColor]", shipHealth < 70 ? 'border-red-500 bg-red-900/80 text-red-400' : 'border-sky-400 bg-sky-900 text-sky-400')}>{currentCannons.icon}</div>
+                            <div className={cn("w-6 h-12 border-y-4 border-r-4 rounded-r-xl flex items-center justify-center shadow-[0_0_15px_currentColor]", shipHealth < 70 ? 'border-red-500 bg-red-900/80 text-red-400' : 'border-sky-400 bg-sky-900 text-sky-400')}>{currentCannons.icon}</div>
                          </div>
                       </div>
 
@@ -505,7 +525,11 @@ export default function PirateProfile() {
                                     </div>
                                     <div className="flex-1">
                                        <h4 className="text-sm font-bold text-sky-100">{part.name}</h4>
-                                       <p className="text-xs text-sky-200/60 italic mb-1">"{part.desc}"</p>
+                                       <p className="text-xs text-sky-200/60 italic mb-2">"{part.desc}"</p>
+                                       <div className="flex flex-wrap gap-2 mb-2">
+                                          <span className="text-[8px] uppercase font-black px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-md border border-emerald-500/20">+{part.pros}</span>
+                                          <span className="text-[8px] uppercase font-black px-2 py-0.5 bg-red-500/10 text-red-400 rounded-md border border-red-500/20">-{part.cons}</span>
+                                       </div>
                                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-400">{part.stat}</p>
                                     </div>
                                     {equippedParts[activeSlot as keyof typeof equippedParts] === part.id && (
@@ -560,42 +584,89 @@ export default function PirateProfile() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProfileId(null)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
             <motion.div initial={{ scale: 0.9, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 50 }}
               className="relative w-full max-w-2xl bg-[#0a0a0a] p-12 rounded-[3rem] border-8 border-amber-900/40 shadow-[0_0_100px_rgba(245,158,11,0.2)] overflow-hidden"
+              style={{ perspective: 1000 }}
             >
-               <button onClick={() => setSelectedProfileId(null)} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-100 transition-colors z-20"><X size={32} /></button>
+               <button onClick={() => {setSelectedProfileId(null); setIsEditingManifest(false);}} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-100 transition-colors z-20"><X size={32} /></button>
 
-               <div className="space-y-8 relative z-10">
-                  <div className="flex flex-col md:flex-row items-center gap-8 border-b-2 border-white/5 pb-8">
-                     <div className="w-32 h-32 rounded-3xl bg-slate-900 border-4 border-amber-500/50 shadow-2xl overflow-hidden shrink-0">
-                        <img src={selectedProfile.id === 'Grinch' ? "https://api.dicebear.com/7.x/avataaars/svg?seed=Grinch&beard=0.5" : "https://api.dicebear.com/7.x/avataaars/svg?seed=Cindy&hair=long"} alt="Profile" className="w-full h-full object-cover" />
-                     </div>
-                     <div className="text-center md:text-left">
-                        <p className="text-amber-500 font-bold uppercase text-[10px] tracking-[0.4em] mb-2 flex items-center justify-center md:justify-start gap-2">
-                          <Scroll size={12} /> Личное дело №{selectedProfile.id.slice(0, 4)}
-                        </p>
-                        <h2 className="text-5xl font-black uppercase tracking-tighter text-slate-100 mb-2">{selectedProfile.name}</h2>
-                        <p className="text-slate-400 italic font-serif">"{selectedProfile.pref || 'Сведений нет...'}"</p>
-                     </div>
-                  </div>
+               {isEditingManifest ? (
+                 <motion.div initial={{ rotateY: -90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-6 relative z-10">
+                    <div className="flex items-center justify-between border-b border-amber-900/30 pb-4">
+                       <div className="flex items-center gap-3">
+                         <Crown size={28} className="text-red-500" />
+                         <h3 className="text-3xl font-black text-amber-500 uppercase">Теневой Кабинет</h3>
+                       </div>
+                    </div>
+                    
+                    <div className="space-y-6">
+                       <div className="bg-black/40 p-6 rounded-2xl border border-red-900/50 shadow-inner">
+                          <label className="text-[10px] font-black uppercase text-red-500 tracking-widest block mb-4 flex items-center gap-2"><Target size={14}/> Назначить Награду за Голову</label>
+                          <input type="range" min="1000" max="9999999" step="1000" value={bounty} onChange={e => setBounty(Number(e.target.value))} className="w-full accent-red-500" />
+                          <p className="text-3xl font-black text-red-400 mt-2 text-center drop-shadow-md">{Number(bounty).toLocaleString()} Золотых</p>
+                       </div>
+                       
+                       <div className="grid grid-cols-2 gap-4">
+                          <button onClick={() => setHasBlackSpot(!hasBlackSpot)} className={cn("py-6 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg flex flex-col items-center gap-2", hasBlackSpot ? "bg-[#0a1a10] text-emerald-500 border-2 border-emerald-500" : "bg-slate-900 text-slate-500 border border-slate-700 hover:border-amber-500 hover:text-amber-500")}>
+                             <Skull size={24} />
+                             {hasBlackSpot ? 'Метка Снята' : 'Выдать Черную Метку'}
+                          </button>
+                          
+                          <div className="bg-black/40 p-4 rounded-2xl border border-amber-900/50 flex flex-col justify-center">
+                             <label className="text-[9px] font-black uppercase text-amber-500 tracking-widest block mb-2 opacity-60">Сменить Должность</label>
+                             <select className="w-full bg-transparent text-amber-100 font-bold outline-none cursor-pointer">
+                                <option>Капитан</option>
+                                <option>Квартирмейстер</option>
+                                <option>Канонир</option>
+                                <option>Юнга (Штраф)</option>
+                             </select>
+                          </div>
+                       </div>
+                    </div>
+                    
+                    <button onClick={() => setIsEditingManifest(false)} className="w-full py-5 mt-4 bg-amber-600 text-slate-950 font-black uppercase tracking-widest rounded-2xl hover:bg-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.2)]">Утвердить Указ</button>
+                 </motion.div>
+               ) : (
+                 <motion.div initial={{ rotateY: 90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-8 relative z-10">
+                    <div className="flex flex-col md:flex-row items-center gap-8 border-b-2 border-white/5 pb-8">
+                       <div className={cn("w-32 h-32 rounded-3xl bg-slate-900 shadow-2xl overflow-hidden shrink-0 border-4 transition-colors", hasBlackSpot ? 'border-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.3)]' : 'border-amber-500/50')}>
+                          <img src={selectedProfile.id === 'Grinch' ? "https://api.dicebear.com/7.x/avataaars/svg?seed=Grinch&beard=0.5" : "https://api.dicebear.com/7.x/avataaars/svg?seed=Cindy&hair=long"} alt="Profile" className="w-full h-full object-cover" />
+                       </div>
+                       <div className="text-center md:text-left">
+                          <p className="text-amber-500 font-bold uppercase text-[10px] tracking-[0.4em] mb-2 flex items-center justify-center md:justify-start gap-2">
+                            <Scroll size={12} /> Личное дело №{selectedProfile.id.slice(0, 4)}
+                          </p>
+                          <h2 className={cn("text-5xl font-black uppercase tracking-tighter mb-2", hasBlackSpot ? 'text-emerald-400' : 'text-slate-100')}>{selectedProfile.name}</h2>
+                          {hasBlackSpot && <p className="text-emerald-500 font-black uppercase tracking-widest text-[10px] mb-2 animate-pulse">☠️ Проклят(а) Черной Меткой</p>}
+                          <p className="text-slate-400 italic font-serif">"{selectedProfile.pref || 'Сведений нет...'}"</p>
+                       </div>
+                    </div>
 
-                  <div className="bg-black/60 p-8 rounded-3xl border border-white/5 space-y-6">
-                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/50 mb-4">Характеристики</h4>
-                     
-                     <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-300 mb-2"><span>Харизма</span> <span>99/100</span></div>
-                          <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div className="h-full bg-amber-500 w-[99%]" /></div>
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-300 mb-2"><span>Владение саблей</span> <span>85/100</span></div>
-                          <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div className="h-full bg-red-500 w-[85%]" /></div>
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-300 mb-2"><span>Выпито Рома</span> <span>Безлимит</span></div>
-                          <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div className="h-full bg-blue-500 w-full" /></div>
-                        </div>
-                     </div>
-                  </div>
-               </div>
+                    <div className="bg-black/60 p-8 rounded-3xl border border-white/5 space-y-6">
+                       <div className="flex justify-between items-end mb-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/50">Характеристики</h4>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-red-500">Награда: {Number(bounty).toLocaleString()} Золота</p>
+                       </div>
+                       
+                       <div className="space-y-4">
+                          <div>
+                            <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-300 mb-2"><span>Харизма</span> <span>99/100</span></div>
+                            <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div className="h-full bg-amber-500 w-[99%]" /></div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-300 mb-2"><span>Владение саблей</span> <span>85/100</span></div>
+                            <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div className="h-full bg-red-500 w-[85%]" /></div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-300 mb-2"><span>Выпито Рома</span> <span>Безлимит</span></div>
+                            <div className="h-2 bg-slate-900 rounded-full overflow-hidden"><div className="h-full bg-blue-500 w-full" /></div>
+                          </div>
+                       </div>
+                    </div>
+
+                    <button onClick={() => setIsEditingManifest(true)} className="w-full py-5 bg-amber-500 text-slate-950 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                       <Edit3 size={18} /> Теневой Кабинет
+                    </button>
+                 </motion.div>
+               )}
             </motion.div>
           </div>
         )}
