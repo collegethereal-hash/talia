@@ -67,20 +67,23 @@ export default function LairPage() {
   const [sailors, setSailors] = useState<Sailor[]>([]);
   const [cannonballs, setCannonballs] = useState<Cannonball[]>([]);
   
+  // MOVED RIGHT (X + 50)
   const [zones, setZones] = useState<Zone[]>([
-    { id: 'p_helm', name: 'Капитанский Мостик', x: 250, y: 100, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 } },
-    { id: 'p_masts', name: 'Грот-Мачта', x: 250, y: 200, team: 'player', crewTypes: { swordsmen: 5, gunners: 5, sappers: 2 } },
-    { id: 'p_cannons_l', name: 'Батарея Слева', x: 130, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
-    { id: 'p_cannons_r', name: 'Батарея Справа', x: 370, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
-    { id: 'p_deck', name: 'Центральная Палуба', x: 250, y: 450, team: 'player', crewTypes: { swordsmen: 15, gunners: 5, sappers: 5 } },
-    { id: 'p_hold', name: 'Трюм (Арсенал)', x: 250, y: 560, team: 'player', crewTypes: { swordsmen: 5, gunners: 2, sappers: 10 } },
+    // Player Ship (Left) - Center X shifted from 250 to 300.
+    { id: 'p_helm', name: 'Капитанский Мостик', x: 300, y: 100, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 } },
+    { id: 'p_masts', name: 'Грот-Мачта', x: 300, y: 200, team: 'player', crewTypes: { swordsmen: 5, gunners: 5, sappers: 2 } },
+    { id: 'p_cannons_l', name: 'Батарея Слева', x: 180, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
+    { id: 'p_cannons_r', name: 'Батарея Справа', x: 420, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
+    { id: 'p_deck', name: 'Центральная Палуба', x: 300, y: 450, team: 'player', crewTypes: { swordsmen: 15, gunners: 5, sappers: 5 } },
+    { id: 'p_hold', name: 'Трюм (Арсенал)', x: 300, y: 560, team: 'player', crewTypes: { swordsmen: 5, gunners: 2, sappers: 10 } },
     
-    { id: 'e_cabin', name: 'Адмиральская Каюта', x: 700, y: 90, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 } },
-    { id: 'e_battery', name: 'Тяжелая Батарея', x: 700, y: 190, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 } },
-    { id: 'e_deck_f', name: 'Носовая Палуба', x: 580, y: 320, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
-    { id: 'e_deck_b', name: 'Кормовая Палуба', x: 820, y: 320, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
-    { id: 'e_barracks', name: 'Казармы', x: 700, y: 450, team: 'enemy', crewTypes: { swordsmen: 20, gunners: 0, sappers: 0 } },
-    { id: 'e_hold', name: 'Пороховой Погреб', x: 700, y: 580, team: 'enemy', crewTypes: { swordsmen: 2, gunners: 2, sappers: 10 } },
+    // Enemy Ship (Right) - Center X shifted from 700 to 750.
+    { id: 'e_cabin', name: 'Адмиральская Каюта', x: 750, y: 90, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 } },
+    { id: 'e_battery', name: 'Тяжелая Батарея', x: 750, y: 190, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 } },
+    { id: 'e_deck_f', name: 'Носовая Палуба', x: 630, y: 320, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
+    { id: 'e_deck_b', name: 'Кормовая Палуба', x: 870, y: 320, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
+    { id: 'e_barracks', name: 'Казармы', x: 750, y: 450, team: 'enemy', crewTypes: { swordsmen: 20, gunners: 0, sappers: 0 } },
+    { id: 'e_hold', name: 'Пороховой Погреб', x: 750, y: 580, team: 'enemy', crewTypes: { swordsmen: 2, gunners: 2, sappers: 10 } },
   ]);
 
   const [battleStarted, setBattleStarted] = useState(false);
@@ -121,10 +124,10 @@ export default function LairPage() {
     setSailors(initialSailors);
   }, []);
 
-  // Bridge Pathfinding
+  // Bridge Pathfinding (Adjusted for moved ships)
   const getBridgePath = (startX: number, endX: number, targetX: number, targetY: number) => {
-    const leftBridgeX = 425; 
-    const rightBridgeX = 510; 
+    const leftBridgeX = 475; // Right edge of player ship
+    const rightBridgeX = 560; // Left edge of enemy ship
     const bridgeY = 320; 
 
     if (startX < leftBridgeX && endX > rightBridgeX) {
@@ -318,7 +321,7 @@ export default function LairPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#0d0702] text-amber-100 font-sans overflow-x-hidden p-4 md:p-8">
+    <div className="relative min-h-screen bg-[#070402] text-amber-100 font-sans overflow-x-hidden p-4 md:p-8">
       
       <div className="relative z-10 max-w-[1600px] mx-auto space-y-4">
          
@@ -370,26 +373,32 @@ export default function LairPage() {
          {/* Main Grid */}
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             
-            {/* Arena - PREMIUM TACTICAL LOOK (No cheap grids) */}
-            <div className="lg:col-span-9 flex justify-start">
+            {/* Arena - VIBRANT CARIBBEAN SEA & RICH DECKS */}
+            <div className="lg:col-span-9 flex justify-center">
                <div 
-                  className="bg-[#141414] rounded-3xl border border-amber-500/10 relative h-[700px] w-[1100px] overflow-hidden shadow-inner"
+                  className="bg-gradient-to-b from-[#01241e] via-[#022c22] to-[#0a192f] rounded-3xl border border-amber-500/10 relative h-[700px] w-[1100px] overflow-hidden shadow-inner"
                >
-                  {/* Subtle depth glow */}
-                  <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-sky-500/5 rounded-full blur-[100px] pointer-events-none" />
-                  <div className="absolute top-2/4 left-2/4 w-[300px] h-[300px] bg-red-500/5 rounded-full blur-[100px] pointer-events-none" />
+                  {/* Glowing Sea Orbs */}
+                  <div className="absolute top-1/3 left-1/3 w-[200px] h-[200px] bg-cyan-500/10 rounded-full blur-[80px] pointer-events-none" />
+                  <div className="absolute bottom-1/3 right-1/3 w-[250px] h-[250px] bg-teal-500/10 rounded-full blur-[100px] pointer-events-none" />
 
                   {/* Bridge */}
-                  <div className="absolute top-[300px] left-[425px] w-[85px] h-[40px] bg-[#1a0f05] border-t border-b border-amber-500/20 flex items-center justify-center">
-                     <span className="text-[10px] font-bold uppercase text-amber-500/40 tracking-widest">Мост</span>
+                  <div className="absolute top-[300px] left-[475px] w-[85px] h-[40px] bg-[#2d1a0a] border-t-2 border-b-2 border-amber-500/40 flex items-center justify-center shadow-lg">
+                     <span className="text-[10px] font-bold uppercase text-amber-400 tracking-widest">Мост</span>
                   </div>
 
-                  {/* Ships - PREMIUM GLASSMORPHISM (No fake wood lines) */}
+                  {/* Ships - MOVED RIGHT & RICH WOOD LOOK */}
                   {/* Player Ship */}
-                  <div className="absolute top-[20px] left-[75px] w-[350px] h-[650px] border border-amber-500/20 rounded-2xl bg-[#1c1917]/60 backdrop-blur-sm pointer-events-none shadow-lg" />
+                  <div className="absolute top-[20px] left-[125px] w-[350px] h-[650px] border-2 border-amber-600/40 rounded-2xl bg-gradient-to-b from-[#2d1a0a] to-[#1c0f05] pointer-events-none shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+                     {/* Inner rim */}
+                     <div className="absolute inset-2 border border-amber-500/10 rounded-xl" />
+                  </div>
                   
                   {/* Enemy Ship */}
-                  <div className="absolute top-[10px] left-[510px] w-[380px] h-[680px] border border-red-500/20 rounded-2xl bg-[#1c1917]/60 backdrop-blur-sm pointer-events-none shadow-lg" />
+                  <div className="absolute top-[10px] left-[560px] w-[380px] h-[680px] border-2 border-red-700/40 rounded-2xl bg-gradient-to-b from-[#2d0a0a] to-[#1a0505] pointer-events-none shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+                     {/* Inner rim */}
+                     <div className="absolute inset-2 border border-red-500/10 rounded-xl" />
+                  </div>
 
                   {/* Zones */}
                   {zones.map(zone => {
@@ -400,8 +409,8 @@ export default function LairPage() {
                            key={zone.id}
                            onClick={() => setActiveModalZone(zone.id)}
                            className={cn(
-                             "absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg border transition-all cursor-pointer w-[120px] text-center bg-[#0d0702]/90 shadow-md",
-                             zone.team === 'player' ? "border-amber-500/20 hover:border-amber-500" : "border-red-500/20 hover:border-red-500"
+                             "absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg border transition-all cursor-pointer w-[120px] text-center bg-[#0d0702]/95 shadow-md",
+                             zone.team === 'player' ? "border-amber-500/30 hover:border-amber-500" : "border-red-500/30 hover:border-red-500"
                            )}
                            style={{ left: zone.x, top: zone.y }} 
                         >
