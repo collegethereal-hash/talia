@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Anchor, Map, Sword, Scroll, Coins, Users, Compass } from 'lucide-react';
+import { Anchor, Map, Sword, Scroll, Coins, Users, Compass, Bomb } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/', icon: Anchor, label: 'Бухта' },
   { href: '/gallery', icon: Map, label: 'Карты' },
-  { href: '/journal', icon: Sword, label: 'Логово' },
+  { href: '/lair', icon: Bomb, label: 'Логово' },
   { href: '/bucket-list', icon: Scroll, label: 'Кодекс' },
   { href: '/stats', icon: Coins, label: 'Казна' },
   { href: '/profile', icon: Users, label: 'Команда' },
