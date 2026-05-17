@@ -24,9 +24,44 @@ export default function PirateProfile() {
   const [shipHealth, setShipHealth] = useState(45); // e.g. 45% damaged
 
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
-  const [isEditingManifest, setIsEditingManifest] = useState(false);
+  const [isCreatingPoster, setIsCreatingPoster] = useState(false);
   const [bounty, setBounty] = useState(1000000);
   const [hasBlackSpot, setHasBlackSpot] = useState(false);
+  const [posterAlias, setPosterAlias] = useState('');
+  const [posterCrime, setPosterCrime] = useState('');
+  const [posterStamp, setPosterStamp] = useState<string | null>(null);
+  
+  const [compassRotation, setCompassRotation] = useState(0);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [compassResult, setCompassResult] = useState<string | null>(null);
+
+  const compassOptions = [
+     "Пить ром и смотреть кино!",
+     "Спонтанный набег на кухню!",
+     "Вечер пиратских историй",
+     "Отправиться в торговый порт (Шопинг)",
+     "Делить награбленное (Массаж)",
+     "Свистать всех наверх! (Уборка)"
+  ];
+
+  const handleCompassSpin = () => {
+     if (isSpinning) return;
+     setIsSpinning(true);
+     setCompassResult(null);
+     
+     const extraSpins = 360 * 5; 
+     const randomDegree = Math.floor(Math.random() * 360);
+     const newRotation = compassRotation + extraSpins + randomDegree;
+     
+     setCompassRotation(newRotation);
+     
+     setTimeout(() => {
+        setIsSpinning(false);
+        const normalizedDeg = newRotation % 360;
+        const index = Math.floor((normalizedDeg / 360) * compassOptions.length);
+        setCompassResult(compassOptions[index]);
+     }, 3000);
+  };
   const [equippedParts, setEquippedParts] = useState({
     hull: 'h1',
     sails: 's1',
@@ -586,43 +621,53 @@ export default function PirateProfile() {
               className="relative w-full max-w-2xl bg-[#0a0a0a] p-12 rounded-[3rem] border-8 border-amber-900/40 shadow-[0_0_100px_rgba(245,158,11,0.2)] overflow-hidden"
               style={{ perspective: 1000 }}
             >
-               <button onClick={() => {setSelectedProfileId(null); setIsEditingManifest(false);}} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-100 transition-colors z-20"><X size={32} /></button>
+               <button onClick={() => {setSelectedProfileId(null); setIsCreatingPoster(false);}} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-100 transition-colors z-20"><X size={32} /></button>
 
-               {isEditingManifest ? (
-                 <motion.div initial={{ rotateY: -90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-6 relative z-10">
-                    <div className="flex items-center justify-between border-b border-amber-900/30 pb-4">
-                       <div className="flex items-center gap-3">
-                         <Crown size={28} className="text-red-500" />
-                         <h3 className="text-3xl font-black text-amber-500 uppercase">Теневой Кабинет</h3>
-                       </div>
+               {isCreatingPoster ? (
+                 <motion.div initial={{ rotateY: -90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-6 relative z-10 bg-[#e3d5b8] p-8 -m-4 rounded-[2.5rem] text-slate-900 shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]">
+                    <div className="flex justify-between items-center border-b-2 border-slate-900/20 pb-4">
+                       <h3 className="text-3xl font-black uppercase tracking-tighter text-slate-900">Редактор Листовки</h3>
                     </div>
                     
-                    <div className="space-y-6">
-                       <div className="bg-black/40 p-6 rounded-2xl border border-red-900/50 shadow-inner">
-                          <label className="text-[10px] font-black uppercase text-red-500 tracking-widest block mb-4 flex items-center gap-2"><Target size={14}/> Назначить Награду за Голову</label>
-                          <input type="range" min="1000" max="9999999" step="1000" value={bounty} onChange={e => setBounty(Number(e.target.value))} className="w-full accent-red-500" />
-                          <p className="text-3xl font-black text-red-400 mt-2 text-center drop-shadow-md">{Number(bounty).toLocaleString()} Золотых</p>
+                    {/* The Poster Preview */}
+                    <div className="border-8 border-double border-slate-900 p-8 flex flex-col items-center text-center bg-[#f0e6d2] shadow-2xl relative overflow-hidden rotate-1">
+                       <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')]" />
+                       
+                       <h1 className="text-7xl font-black uppercase tracking-tighter mb-2 text-slate-900 drop-shadow-sm font-serif">WANTED</h1>
+                       <h2 className="text-xl font-bold uppercase tracking-[0.4em] mb-6 text-slate-800">DEAD OR ALIVE</h2>
+                       
+                       <div className="w-56 h-56 border-8 border-slate-900 bg-white mb-6 relative shadow-lg transform -rotate-2">
+                          <img src={selectedProfile.id === 'Grinch' ? "https://api.dicebear.com/7.x/avataaars/svg?seed=Grinch&beard=0.5" : "https://api.dicebear.com/7.x/avataaars/svg?seed=Cindy&hair=long"} className="w-full h-full object-cover grayscale contrast-150 sepia-[.8]" />
+                          {posterStamp && (
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 border-4 border-red-700 text-red-700 px-6 py-2 font-black text-4xl tracking-widest uppercase bg-white/80 mix-blend-multiply whitespace-nowrap shadow-sm pointer-events-none">
+                              {posterStamp}
+                            </div>
+                          )}
                        </div>
                        
-                       <div className="grid grid-cols-2 gap-4">
-                          <button onClick={() => setHasBlackSpot(!hasBlackSpot)} className={cn("py-6 rounded-2xl font-black uppercase tracking-widest transition-all shadow-lg flex flex-col items-center gap-2", hasBlackSpot ? "bg-[#0a1a10] text-emerald-500 border-2 border-emerald-500" : "bg-slate-900 text-slate-500 border border-slate-700 hover:border-amber-500 hover:text-amber-500")}>
-                             <Skull size={24} />
-                             {hasBlackSpot ? 'Метка Снята' : 'Выдать Черную Метку'}
-                          </button>
-                          
-                          <div className="bg-black/40 p-4 rounded-2xl border border-amber-900/50 flex flex-col justify-center">
-                             <label className="text-[9px] font-black uppercase text-amber-500 tracking-widest block mb-2 opacity-60">Сменить Должность</label>
-                             <select className="w-full bg-transparent text-amber-100 font-bold outline-none cursor-pointer">
-                                <option>Капитан</option>
-                                <option>Квартирмейстер</option>
-                                <option>Канонир</option>
-                                <option>Юнга (Штраф)</option>
-                             </select>
-                          </div>
+                       <input type="text" value={posterAlias} onChange={e=>setPosterAlias(e.target.value)} className="bg-transparent text-center text-3xl font-black uppercase border-b-2 border-slate-900/50 border-dashed outline-none w-full mb-6 font-serif relative z-10" placeholder="ВВЕДИТЕ ПРОЗВИЩЕ" />
+                       
+                       <p className="font-bold text-sm uppercase tracking-widest mb-2 border-b border-slate-900/20 w-full pb-1">Разыскивается за:</p>
+                       <textarea value={posterCrime} onChange={e=>setPosterCrime(e.target.value)} className="bg-transparent text-center text-xl italic border-none outline-none w-full resize-none h-20 font-serif leading-relaxed relative z-10" placeholder="Кража рома, разбитые сердца..." />
+                       
+                       <div className="text-5xl font-black mt-2 border-y-8 border-double border-slate-900 py-4 w-full font-serif flex items-center justify-center gap-2">
+                          <Coins size={36} className="text-slate-800" /> {Number(bounty).toLocaleString()}
+                       </div>
+                    </div>
+
+                    {/* Controls */}
+                    <div className="space-y-4">
+                       <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest block text-center">Награда за голову</label>
+                       <input type="range" min="1000" max="9999999" step="1000" value={bounty} onChange={e => setBounty(Number(e.target.value))} className="w-full accent-slate-900" />
+                       
+                       <div className="grid grid-cols-2 gap-3">
+                          <button onClick={() => setPosterStamp('CAPTURED')} className="py-3 border-2 border-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-900 hover:text-[#f0e6d2] transition-colors">CAPTURED</button>
+                          <button onClick={() => setPosterStamp('DANGEROUS')} className="py-3 border-2 border-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-slate-900 hover:text-[#f0e6d2] transition-colors">DANGEROUS</button>
+                          <button onClick={() => setPosterStamp(null)} className="py-3 border-2 border-slate-900/50 rounded-xl font-black uppercase tracking-widest text-[10px] text-slate-500 hover:border-slate-900 hover:text-slate-900 col-span-2 transition-colors">Очистить Печать</button>
                        </div>
                     </div>
                     
-                    <button onClick={() => setIsEditingManifest(false)} className="w-full py-5 mt-4 bg-amber-600 text-slate-950 font-black uppercase tracking-widest rounded-2xl hover:bg-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.2)]">Утвердить Указ</button>
+                    <button onClick={() => setIsCreatingPoster(false)} className="w-full py-5 bg-slate-900 text-[#e3d5b8] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-800 shadow-xl mt-4">Готово</button>
                  </motion.div>
                ) : (
                  <motion.div initial={{ rotateY: 90, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} transition={{ duration: 0.4 }} className="space-y-8 relative z-10">
@@ -662,8 +707,8 @@ export default function PirateProfile() {
                        </div>
                     </div>
 
-                    <button onClick={() => setIsEditingManifest(true)} className="w-full py-5 bg-amber-500 text-slate-950 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                       <Edit3 size={18} /> Теневой Кабинет
+                    <button onClick={() => setIsCreatingPoster(true)} className="w-full py-5 bg-amber-500 text-slate-950 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-[0_0_30px_rgba(245,158,11,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                       <Edit3 size={18} /> Создать Листовку Розыска
                     </button>
                  </motion.div>
                )}
