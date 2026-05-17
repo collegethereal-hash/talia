@@ -10,11 +10,17 @@ import {
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useData } from '@/components/DataProvider';
+import CharacterScene from './CharacterScene';
 
 export default function PirateProfile() {
   const { currentUser, profiles, capsules } = useData();
   const [localProfiles, setLocalProfiles] = useState(profiles);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('Внешность');
+  const [customizations, setCustomizations] = useState<Record<string, any>>({
+    Grinch: { skinColor: '#e0ac69', hat: 'captain', clothes: 'jacket', weapon: 'saber', accessory: 'eyepatch' },
+    default: { skinColor: '#ffdbac', hat: 'bandana', clothes: 'vest', weapon: 'none', accessory: 'none' }
+  });
   const [showShipDetails, setShowShipDetails] = useState(false);
   
   // Local Stats from Store/Gameplay
@@ -685,117 +691,233 @@ export default function PirateProfile() {
             >
                <button onClick={() => setSelectedProfileId(null)} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-100 transition-colors z-20"><X size={32} /></button>
 
-               <div className="flex flex-col md:flex-row gap-8 relative z-10">
+               <div className="flex flex-col md:flex-row gap-8 relative z-10 h-[600px]">
                   {/* Left Side: 3D Avatar */}
-                  <div className="w-full md:w-2/5 bg-[#020a17] rounded-3xl overflow-hidden border-4 border-amber-900/50 relative group shadow-2xl h-[500px]">
-                     <img 
-                       src={selectedProfile.id === 'Grinch' 
-                         ? "/pirate_man.png" 
-                         : "/pirate_girl.png"} 
-                       alt="Avatar" 
-                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                     />
-                     <div className="absolute inset-0 bg-gradient-to-t from-[#020a17] via-transparent to-transparent opacity-80" />
-                     <div className="absolute bottom-6 left-6 right-6 text-center">
+                  <div className="w-full md:w-2/5 bg-[#020a17] rounded-3xl overflow-hidden border-4 border-amber-900/50 relative group shadow-2xl h-full">
+                     <CharacterScene customization={customizations[selectedProfile.id] || customizations.default} />
+                     <div className="absolute inset-0 bg-gradient-to-t from-[#020a17] via-transparent to-transparent opacity-80 pointer-events-none" />
+                     <div className="absolute bottom-6 left-6 right-6 text-center pointer-events-none">
                         <h3 className="text-4xl font-black text-amber-100 uppercase drop-shadow-lg">{selectedProfile.name}</h3>
                         <p className="text-amber-500 text-xs font-black uppercase tracking-widest mt-1">{selectedProfile.id === 'Grinch' ? 'Грозный Капитан' : 'Прекрасная Сирена'}</p>
                      </div>
                   </div>
 
                   {/* Right Side: RPG Controls */}
-                  <div className="flex-1 space-y-6">
-                     <div className="flex justify-between items-center border-b border-amber-900/30 pb-4">
+                  <div className="flex-1 space-y-6 flex flex-col h-full">
+                     <div className="flex justify-between items-center border-b border-amber-900/30 pb-4 shrink-0">
                         <h2 className="text-3xl font-black text-amber-100 uppercase tracking-tighter">Каюта Командира</h2>
                      </div>
 
-                     {/* Stats Section */}
-                     <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
-                        <div className="flex justify-between items-center mb-4">
-                           <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Характеристики</h4>
-                           <span className="text-[10px] font-black uppercase text-slate-500">Очки опыта: 5</span>
-                        </div>
-                        <div className="space-y-4">
-                           {/* Сила */}
-                           <div className="flex items-center justify-between gap-4">
-                              <span className="text-xs font-bold text-slate-300 w-24">Сила</span>
-                              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                 <div className="h-full bg-red-500" style={{ width: `75%` }} />
-                              </div>
-                              <span className="text-sm font-bold text-amber-400 w-8 text-right">75</span>
-                              <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
-                           </div>
-                           {/* Ловкость */}
-                           <div className="flex items-center justify-between gap-4">
-                              <span className="text-xs font-bold text-slate-300 w-24">Ловкость</span>
-                              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                 <div className="h-full bg-emerald-500" style={{ width: `90%` }} />
-                              </div>
-                              <span className="text-sm font-bold text-amber-400 w-8 text-right">90</span>
-                              <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
-                           </div>
-                           {/* Удача */}
-                           <div className="flex items-center justify-between gap-4">
-                              <span className="text-xs font-bold text-slate-300 w-24">Удача</span>
-                              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                 <div className="h-full bg-blue-500" style={{ width: `60%` }} />
-                              </div>
-                              <span className="text-sm font-bold text-amber-400 w-8 text-right">60</span>
-                              <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
-                           </div>
-                           {/* Харизма */}
-                           <div className="flex items-center justify-between gap-4">
-                              <span className="text-xs font-bold text-slate-300 w-24">Харизма</span>
-                              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                 <div className="h-full bg-amber-500" style={{ width: `100%` }} />
-                              </div>
-                              <span className="text-sm font-bold text-amber-400 w-8 text-right">100</span>
-                              <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
-                           </div>
-                        </div>
+                     {/* Tabs */}
+                     <div className="flex gap-2 border-b border-amber-900/20 pb-2 overflow-x-auto shrink-0">
+                        {['Внешность', 'Характеристики', 'Способности', 'Заслуги'].map(tab => (
+                           <button
+                              key={tab}
+                              onClick={() => setActiveTab(tab)}
+                              className={cn(
+                                 "px-4 py-2 text-xs font-black uppercase tracking-widest transition-colors whitespace-nowrap",
+                                 activeTab === tab ? "text-amber-400 border-b-2 border-amber-500" : "text-slate-500 hover:text-slate-300"
+                              )}
+                           >
+                              {tab}
+                           </button>
+                        ))}
                      </div>
 
-                     {/* Equipment Section */}
-                     <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-4">Снаряжение</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                           <div className="p-4 bg-[#0a0a0a] border border-amber-900/30 rounded-xl flex flex-col gap-1 cursor-pointer hover:border-amber-500 transition-colors group">
-                              <div className="flex justify-between items-center">
-                                 <span className="text-[9px] font-black uppercase text-amber-500/50">Оружие</span>
-                                 <Sword size={12} className="text-amber-500/30 group-hover:text-amber-500" />
+                     {/* Tab Content */}
+                     <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
+                        {activeTab === 'Внешность' && (
+                           <div className="space-y-4">
+                              {/* Hats */}
+                              <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
+                                 <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Головной убор</label>
+                                 <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                       { id: 'none', name: 'Нет' },
+                                       { id: 'captain', name: 'Треуголка' },
+                                       { id: 'bandana', name: 'Бандана' }
+                                    ].map(h => (
+                                       <button
+                                          key={h.id}
+                                          onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), hat: h.id}}))}
+                                          className={cn("p-2 text-xs font-bold rounded-lg border transition-colors", (customizations[selectedProfile.id]?.hat || 'none') === h.id ? "bg-amber-500/20 border-amber-500 text-amber-100" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50")}
+                                       >
+                                          {h.name}
+                                       </button>
+                                    ))}
+                                 </div>
                               </div>
-                              <span className="text-sm font-bold text-slate-100">Золотая Сабля</span>
-                           </div>
-                           <div className="p-4 bg-[#0a0a0a] border border-amber-900/30 rounded-xl flex flex-col gap-1 cursor-pointer hover:border-amber-500 transition-colors group">
-                              <div className="flex justify-between items-center">
-                                 <span className="text-[9px] font-black uppercase text-amber-500/50">Головной убор</span>
-                                 <Crown size={12} className="text-amber-500/30 group-hover:text-amber-500" />
+
+                              {/* Clothes */}
+                              <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
+                                 <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Одежда</label>
+                                 <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                       { id: 'none', name: 'Нет' },
+                                       { id: 'jacket', name: 'Камзол' },
+                                       { id: 'vest', name: 'Жилет' }
+                                    ].map(c => (
+                                       <button
+                                          key={c.id}
+                                          onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), clothes: c.id}}))}
+                                          className={cn("p-2 text-xs font-bold rounded-lg border transition-colors", (customizations[selectedProfile.id]?.clothes || 'none') === c.id ? "bg-amber-500/20 border-amber-500 text-amber-100" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50")}
+                                       >
+                                          {c.name}
+                                       </button>
+                                    ))}
+                                 </div>
                               </div>
-                              <span className="text-sm font-bold text-slate-100">Капитанская Треуголка</span>
-                           </div>
-                           <div className="p-4 bg-[#0a0a0a] border border-amber-900/30 rounded-xl flex flex-col gap-1 cursor-pointer hover:border-amber-500 transition-colors group">
-                              <div className="flex justify-between items-center">
-                                 <span className="text-[9px] font-black uppercase text-amber-500/50">Костюм</span>
-                                 <User size={12} className="text-amber-500/30 group-hover:text-amber-500" />
+
+                              {/* Weapons */}
+                              <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
+                                 <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Оружие</label>
+                                 <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                       { id: 'none', name: 'Нет' },
+                                       { id: 'saber', name: 'Сабля' },
+                                       { id: 'hook', name: 'Крюк' }
+                                    ].map(w => (
+                                       <button
+                                          key={w.id}
+                                          onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), weapon: w.id}}))}
+                                          className={cn("p-2 text-xs font-bold rounded-lg border transition-colors", (customizations[selectedProfile.id]?.weapon || 'none') === w.id ? "bg-amber-500/20 border-amber-500 text-amber-100" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50")}
+                                       >
+                                          {w.name}
+                                       </button>
+                                    ))}
+                                 </div>
                               </div>
-                              <span className="text-sm font-bold text-slate-100">Камзол</span>
-                           </div>
-                           <div className="p-4 bg-[#0a0a0a] border border-amber-900/30 rounded-xl flex flex-col gap-1 cursor-pointer hover:border-amber-500 transition-colors group">
-                              <div className="flex justify-between items-center">
-                                 <span className="text-[9px] font-black uppercase text-amber-500/50">Артефакт</span>
-                                 <Eye size={12} className="text-amber-500/30 group-hover:text-amber-500" />
+
+                              {/* Accessories */}
+                              <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
+                                 <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Аксессуары</label>
+                                 <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                       { id: 'none', name: 'Нет' },
+                                       { id: 'eyepatch', name: 'Повязка' }
+                                    ].map(a => (
+                                       <button
+                                          key={a.id}
+                                          onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), accessory: a.id}}))}
+                                          className={cn("p-2 text-xs font-bold rounded-lg border transition-colors", (customizations[selectedProfile.id]?.accessory || 'none') === a.id ? "bg-amber-500/20 border-amber-500 text-amber-100" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50")}
+                                       >
+                                          {a.name}
+                                       </button>
+                                    ))}
+                                 </div>
                               </div>
-                              <span className="text-sm font-bold text-slate-100">Стеклянный Глаз</span>
                            </div>
-                        </div>
+                        )}
+
+                        {activeTab === 'Характеристики' && (
+                           <div className="space-y-4">
+                              <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
+                                 <div className="flex justify-between items-center mb-4">
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Характеристики</h4>
+                                    <span className="text-[10px] font-black uppercase text-slate-500">Очки опыта: 5</span>
+                                 </div>
+                                 <div className="space-y-4">
+                                    {/* Сила */}
+                                    <div className="flex items-center justify-between gap-4">
+                                       <span className="text-xs font-bold text-slate-300 w-24">Сила</span>
+                                       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                          <div className="h-full bg-red-500" style={{ width: `75%` }} />
+                                       </div>
+                                       <span className="text-sm font-bold text-amber-400 w-8 text-right">75</span>
+                                       <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
+                                    </div>
+                                    {/* Ловкость */}
+                                    <div className="flex items-center justify-between gap-4">
+                                       <span className="text-xs font-bold text-slate-300 w-24">Ловкость</span>
+                                       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                          <div className="h-full bg-emerald-500" style={{ width: `90%` }} />
+                                       </div>
+                                       <span className="text-sm font-bold text-amber-400 w-8 text-right">90</span>
+                                       <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
+                                    </div>
+                                    {/* Удача */}
+                                    <div className="flex items-center justify-between gap-4">
+                                       <span className="text-xs font-bold text-slate-300 w-24">Удача</span>
+                                       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                          <div className="h-full bg-blue-500" style={{ width: `60%` }} />
+                                       </div>
+                                       <span className="text-sm font-bold text-amber-400 w-8 text-right">60</span>
+                                       <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
+                                    </div>
+                                    {/* Харизма */}
+                                    <div className="flex items-center justify-between gap-4">
+                                       <span className="text-xs font-bold text-slate-300 w-24">Харизма</span>
+                                       <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                                          <div className="h-full bg-amber-500" style={{ width: `100%` }} />
+                                       </div>
+                                       <span className="text-sm font-bold text-amber-400 w-8 text-right">100</span>
+                                       <button className="w-6 h-6 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-colors font-bold">+</button>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        )}
+
+                        {activeTab === 'Способности' && (
+                           <div className="space-y-4">
+                              <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
+                                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-4">Боевые Умения</h4>
+                                 <div className="space-y-4">
+                                    <div className="flex items-center gap-4 p-3 bg-black/60 rounded-xl border border-amber-900/20">
+                                       <Flame size={20} className="text-red-500" />
+                                       <div className="flex-1">
+                                          <h5 className="text-sm font-bold text-amber-100">Огненный Залп</h5>
+                                          <p className="text-xs text-slate-400">Повышает урон от пушек на 20%</p>
+                                       </div>
+                                       <span className="text-xs font-black text-amber-500">Ур. 3</span>
+                                    </div>
+                                    <div className="flex items-center gap-4 p-3 bg-black/60 rounded-xl border border-amber-900/20">
+                                       <Shield size={20} className="text-sky-500" />
+                                       <div className="flex-1">
+                                          <h5 className="text-sm font-bold text-amber-100">Крепкий Корпус</h5>
+                                          <p className="text-xs text-slate-400">Снижает входящий урон на 15%</p>
+                                       </div>
+                                       <span className="text-xs font-black text-amber-500">Ур. 1</span>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        )}
+
+                        {activeTab === 'Заслуги' && (
+                           <div className="space-y-4">
+                              <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
+                                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-4">Пиратские Достижения</h4>
+                                 <div className="space-y-4">
+                                    <div className="flex items-center gap-4 p-3 bg-black/60 rounded-xl border border-emerald-500/20">
+                                       <Trophy size={20} className="text-emerald-500" />
+                                       <div className="flex-1">
+                                          <h5 className="text-sm font-bold text-amber-100">Гроза Морей</h5>
+                                          <p className="text-xs text-slate-400">Потоплено 50 кораблей</p>
+                                       </div>
+                                       <CheckCircle size={16} className="text-emerald-500" />
+                                    </div>
+                                    <div className="flex items-center gap-4 p-3 bg-black/60 rounded-xl border border-amber-900/20 opacity-50">
+                                       <Trophy size={20} className="text-slate-500" />
+                                       <div className="flex-1">
+                                          <h5 className="text-sm font-bold text-amber-100">Золотой Кракен</h5>
+                                          <p className="text-xs text-slate-400">Собрать 10,000,000 золота</p>
+                                       </div>
+                                       <Lock size={16} className="text-slate-500" />
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        )}
                      </div>
 
-                     {/* Motto Section */}
-                     <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20 relative group">
-                        <div className="flex justify-between items-center mb-2">
+                     {/* Motto Section (Fixed at bottom) */}
+                     <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20 relative group shrink-0">
+                        <div className="flex justify-between items-center mb-1">
                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Девиз</h4>
-                           <Edit3 size={14} className="text-amber-500/50 group-hover:text-amber-500 cursor-pointer" />
+                           <Edit3 size={12} className="text-amber-500/50 group-hover:text-amber-500 cursor-pointer" />
                         </div>
-                        <p className="text-amber-100/80 italic font-serif">"{selectedProfile.pref || 'Молчание — золото.'}"</p>
+                        <p className="text-amber-100/80 italic font-serif text-sm">"{selectedProfile.pref || 'Молчание — золото.'}"</p>
                      </div>
                   </div>
                </div>
