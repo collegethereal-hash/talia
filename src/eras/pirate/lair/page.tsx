@@ -67,30 +67,30 @@ export default function LairPage() {
   const [sailors, setSailors] = useState<Sailor[]>([]);
   const [cannonballs, setCannonballs] = useState<Cannonball[]>([]);
   
-  // EVEN SHORTER SHIPS (Reduced height by another ~100px)
+  // MOVED LEFT & WIDER SHIPS
   const [zones, setZones] = useState<Zone[]>([
-    // Player Ship (Left) - Height ~650
-    { id: 'p_helm', name: 'Капитанский Мостик', x: 325, y: 100, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 } },
-    { id: 'p_masts', name: 'Грот-Мачта', x: 325, y: 200, team: 'player', crewTypes: { swordsmen: 5, gunners: 5, sappers: 2 } },
-    { id: 'p_cannons_l', name: 'Батарея Слева', x: 225, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
-    { id: 'p_cannons_r', name: 'Батарея Справа', x: 425, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
-    { id: 'p_deck', name: 'Центральная Палуба', x: 325, y: 450, team: 'player', crewTypes: { swordsmen: 15, gunners: 5, sappers: 5 } },
-    { id: 'p_hold', name: 'Трюм (Арсенал)', x: 325, y: 560, team: 'player', crewTypes: { swordsmen: 5, gunners: 2, sappers: 10 } },
+    // Player Ship (Left) - Center X shifted from 325 to 250. Width = 350.
+    { id: 'p_helm', name: 'Капитанский Мостик', x: 250, y: 100, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 } },
+    { id: 'p_masts', name: 'Грот-Мачта', x: 250, y: 200, team: 'player', crewTypes: { swordsmen: 5, gunners: 5, sappers: 2 } },
+    { id: 'p_cannons_l', name: 'Батарея Слева', x: 130, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
+    { id: 'p_cannons_r', name: 'Батарея Справа', x: 370, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
+    { id: 'p_deck', name: 'Центральная Палуба', x: 250, y: 450, team: 'player', crewTypes: { swordsmen: 15, gunners: 5, sappers: 5 } },
+    { id: 'p_hold', name: 'Трюм (Арсенал)', x: 250, y: 560, team: 'player', crewTypes: { swordsmen: 5, gunners: 2, sappers: 10 } },
     
-    // Enemy Ship (Right) - Height ~700
-    { id: 'e_cabin', name: 'Адмиральская Каюта', x: 850, y: 90, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 } },
-    { id: 'e_battery', name: 'Тяжелая Батарея', x: 850, y: 190, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 } },
-    { id: 'e_deck_f', name: 'Носовая Палуба', x: 750, y: 320, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
-    { id: 'e_deck_b', name: 'Кормовая Палуба', x: 950, y: 320, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
-    { id: 'e_barracks', name: 'Казармы', x: 850, y: 450, team: 'enemy', crewTypes: { swordsmen: 20, gunners: 0, sappers: 0 } },
-    { id: 'e_hold', name: 'Пороховой Погреб', x: 850, y: 580, team: 'enemy', crewTypes: { swordsmen: 2, gunners: 2, sappers: 10 } },
+    // Enemy Ship (Right) - Center X shifted from 850 to 700. Width = 400.
+    { id: 'e_cabin', name: 'Адмиральская Каюта', x: 700, y: 90, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 } },
+    { id: 'e_battery', name: 'Тяжелая Батарея', x: 700, y: 190, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 } },
+    { id: 'e_deck_f', name: 'Носовая Палуба', x: 580, y: 320, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
+    { id: 'e_deck_b', name: 'Кормовая Палуба', x: 820, y: 320, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
+    { id: 'e_barracks', name: 'Казармы', x: 700, y: 450, team: 'enemy', crewTypes: { swordsmen: 20, gunners: 0, sappers: 0 } },
+    { id: 'e_hold', name: 'Пороховой Погреб', x: 700, y: 580, team: 'enemy', crewTypes: { swordsmen: 2, gunners: 2, sappers: 10 } },
   ]);
 
   const [battleStarted, setBattleStarted] = useState(false);
   const [activeModalZone, setActiveModalZone] = useState<string | null>(null);
   const [stats, setStats] = useState({ playerCasualties: 0, enemyCasualties: 0, playerShipHp: 100, enemyShipHp: 100 });
+  const [battleResult, setBattleResult] = useState<string | null>(null);
   
-  // Chat State
   const [chatMessages, setChatMessages] = useState([
     { sender: 'Полина', text: 'Капитан, они нападают! Прикажи своим волкам держаться!' },
     { sender: 'Ты', text: 'Не волнуйся, мы их раздавим.' }
@@ -124,10 +124,10 @@ export default function LairPage() {
     setSailors(initialSailors);
   }, []);
 
-  // Bridge Pathfinding
+  // Bridge Pathfinding (Adjusted for moved ships)
   const getBridgePath = (startX: number, endX: number, targetX: number, targetY: number) => {
-    const leftBridgeX = 500;
-    const rightBridgeX = 650;
+    const leftBridgeX = 425; // Right edge of player ship
+    const rightBridgeX = 510; // Left edge of enemy ship
     const bridgeY = 320; 
 
     if (startX < leftBridgeX && endX > rightBridgeX) {
@@ -210,7 +210,25 @@ export default function LairPage() {
           }
         }
 
-        return updatedSailors.filter(s => s.hp > 0);
+        const aliveSailors = updatedSailors.filter(s => s.hp > 0);
+        
+        // FIX: Capitulation/End Game logic
+        const pCount = aliveSailors.filter(s => s.team === 'player').length;
+        const eCount = aliveSailors.filter(s => s.team === 'enemy').length;
+        
+        if (battleStarted && !battleResult) {
+          if (eCount < 3 && pCount > 5) {
+            setBattleResult("Враг капитулировал! Победа!");
+            setBattleStarted(false);
+            setChatMessages(prev => [...prev, { sender: 'Полина', text: 'Ура! Они сдаются! Мы победили!' }]);
+          } else if (pCount < 3 && eCount > 5) {
+            setBattleResult("Мы вынуждены отступить... Поражение.");
+            setBattleStarted(false);
+            setChatMessages(prev => [...prev, { sender: 'Полина', text: 'Капитан, нужно уходить! Мы проиграли этот бой...' }]);
+          }
+        }
+
+        return aliveSailors;
       });
 
       // Move Cannonballs
@@ -227,7 +245,7 @@ export default function LairPage() {
     }, 50); 
 
     return () => clearInterval(interval);
-  }, []);
+  }, [battleStarted, battleResult]);
 
   // Auto AI & Polina Comments
   useEffect(() => {
@@ -239,7 +257,8 @@ export default function LairPage() {
           if (sailor.state !== 'idle') return sailor;
           const coin = Math.random();
           
-          if (coin < 0.15) { 
+          // FIX: Prevent camping in corners. Higher chance to attack if idle!
+          if (coin < 0.3) { 
             const targetTeam = sailor.team === 'player' ? 'enemy' : 'player';
             const targetZones = zones.filter(z => z.team === targetTeam);
             const randomZone = targetZones[Math.floor(Math.random() * targetZones.length)];
@@ -248,10 +267,10 @@ export default function LairPage() {
             return { ...sailor, state: 'moving', targetX: randomZone.x, targetY: randomZone.y, path: path };
           }
           
-          if (coin < 0.5) {
+          if (coin < 0.7) {
             const ownZones = zones.filter(z => z.team === sailor.team);
             const randomZone = ownZones[Math.floor(Math.random() * ownZones.length)];
-            return { ...sailor, state: 'moving', targetX: randomZone.x + (Math.random() * 40 - 20), targetY: randomZone.y + (Math.random() * 40 - 20), path: [] };
+            return { ...sailor, state: 'moving', targetX: randomZone.x + (Math.random() * 80 - 40), targetY: randomZone.y + (Math.random() * 80 - 40), path: [] };
           }
           return sailor;
         })
@@ -298,7 +317,6 @@ export default function LairPage() {
     setChatMessages(prev => [...prev, { sender: 'Ты', text: inputMessage }]);
     setInputMessage('');
     
-    // Polina replies after a short delay
     setTimeout(() => {
       setChatMessages(prev => [...prev, { sender: 'Полина', text: 'Я с тобой до конца, капитан!' }]);
     }, 1000);
@@ -324,15 +342,22 @@ export default function LairPage() {
 
             <div className="flex flex-col items-center">
                <h1 className="text-xl font-serif font-black uppercase tracking-wider text-amber-100">Каюта Стратега</h1>
-               <button 
-                  onClick={() => setBattleStarted(!battleStarted)}
-                  className={cn(
-                    "mt-1 px-4 py-1.5 rounded-lg font-black uppercase text-xs tracking-wider transition-all hover:scale-105 shadow-lg",
-                    battleStarted ? "bg-red-700 text-white" : "bg-gradient-to-r from-amber-500 to-amber-600 text-black"
+               <div className="flex gap-2 items-center">
+                  <button 
+                     onClick={() => setBattleStarted(!battleStarted)}
+                     className={cn(
+                       "mt-1 px-4 py-1.5 rounded-lg font-black uppercase text-xs tracking-wider transition-all hover:scale-105 shadow-lg",
+                       battleStarted ? "bg-red-700 text-white" : "bg-gradient-to-r from-amber-500 to-amber-600 text-black"
+                     )}
+                  >
+                     {battleStarted ? "Пауза" : "В Бой!"}
+                  </button>
+                  {battleResult && (
+                     <span className="text-xs font-bold text-amber-400 border border-amber-500/20 px-2 py-1 rounded-lg bg-black/50">
+                        {battleResult}
+                     </span>
                   )}
-               >
-                  {battleStarted ? "Пауза" : "В Бой!"}
-               </button>
+               </div>
             </div>
 
             <div className="flex flex-col gap-1 w-[200px]">
@@ -347,22 +372,32 @@ export default function LairPage() {
             </div>
          </div>
 
-         {/* Main Grid: Arena + Chat */}
+         {/* Main Grid */}
          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             
-            {/* Arena (lg:col-span-9) - Shorter height */}
-            <div className="lg:col-span-9 flex justify-center">
+            {/* Arena - MOVED LEFT, WIDER SHIPS, TEXTURES */}
+            <div className="lg:col-span-9 flex justify-start">
                <div 
-                  className="bg-[#0a0501] rounded-3xl border border-amber-500/10 relative h-[700px] w-[1000px] overflow-hidden shadow-inner"
+                  className="bg-[#0a192f] bg-[linear-gradient(rgba(255,255,255,0.02)_1px,_transparent_1px),_linear-gradient(90deg,_rgba(255,255,255,0.02)_1px,_transparent_1px)] bg-[size:20px_20px] rounded-3xl border border-amber-500/10 relative h-[700px] w-[1100px] overflow-hidden shadow-inner"
                >
+                  {/* Water Texture Overlay (Simulated with gradients) */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0f172a]/20 to-[#0a192f]/50 pointer-events-none" />
+
                   {/* Bridge */}
-                  <div className="absolute top-[300px] left-[420px] w-[150px] h-[40px] bg-[#1a0f05] border-t border-b border-amber-500/20 flex items-center justify-center">
-                     <span className="text-[10px] font-bold uppercase text-amber-500/40 tracking-widest">Мостик</span>
+                  <div className="absolute top-[300px] left-[425px] w-[85px] h-[40px] bg-[#1a0f05] border-t border-b border-amber-500/20 flex items-center justify-center">
+                     <span className="text-[10px] font-bold uppercase text-amber-500/40 tracking-widest">Мост</span>
                   </div>
 
-                  {/* Ships - EVEN SHORTER & BIGGER DOTS */}
-                  <div className="absolute top-[20px] left-[100px] w-[320px] h-[650px] border border-amber-500/20 rounded-2xl bg-[#1a0f05]/30 pointer-events-none" />
-                  <div className="absolute top-[10px] left-[570px] w-[350px] h-[680px] border border-red-500/20 rounded-2xl bg-[#1a0f05]/30 pointer-events-none" />
+                  {/* Ships - WIDER & WOOD TEXTURE */}
+                  {/* Player Ship */}
+                  <div className="absolute top-[20px] left-[75px] w-[350px] h-[650px] border border-amber-500/20 rounded-2xl bg-[#1a0f05]/80 pointer-events-none bg-[linear-gradient(90deg,_rgba(255,255,255,0.01)_1px,_transparent_1px)] bg-[size:10px_100%]">
+                     <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]" />
+                  </div>
+                  
+                  {/* Enemy Ship */}
+                  <div className="absolute top-[10px] left-[510px] w-[380px] h-[680px] border border-red-500/20 rounded-2xl bg-[#1a0f05]/80 pointer-events-none bg-[linear-gradient(90deg,_rgba(255,255,255,0.01)_1px,_transparent_1px)] bg-[size:10px_100%]">
+                     <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')]" />
+                  </div>
 
                   {/* Zones */}
                   {zones.map(zone => {
@@ -376,7 +411,7 @@ export default function LairPage() {
                              "absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg border transition-all cursor-pointer w-[120px] text-center bg-[#0d0702]/90",
                              zone.team === 'player' ? "border-amber-500/20 hover:border-amber-500" : "border-red-500/20 hover:border-red-500"
                            )}
-                           style={{ left: zone.x - 50, top: zone.y }} // Adjusted X slightly for smaller arena width
+                           style={{ left: zone.x, top: zone.y }} 
                         >
                            <p className="text-xs font-serif font-bold text-amber-100">{zone.name}</p>
                            <p className="text-[10px] text-amber-500/60 font-mono">{count} чел.</p>
@@ -384,17 +419,17 @@ export default function LairPage() {
                      );
                   })}
 
-                  {/* Sailors - BIGGER DOTS (w-3.5 h-3.5) */}
+                  {/* Sailors - SMALLER (w-2.5 h-2.5) */}
                   {sailors.map(sailor => (
                      <div
                         key={sailor.id}
                         className={cn(
-                          "w-3.5 h-3.5 rounded-full absolute transition-all duration-300 ease-linear border border-black/30 shadow-md", 
+                          "w-2.5 h-2.5 rounded-full absolute transition-all duration-300 ease-linear border border-black/30 shadow-md", 
                           sailor.color,
                           sailor.state === 'shooting' && "ring-2 ring-yellow-400"
                         )}
                         style={{ 
-                           left: `${sailor.x - 50}px`, 
+                           left: `${sailor.x}px`, 
                            top: `${sailor.y}px`,
                            transform: 'translate(-50%, -50%)'
                         }}
@@ -405,18 +440,17 @@ export default function LairPage() {
                   {cannonballs.map(ball => (
                      <div 
                         key={ball.id}
-                        className="w-4 h-4 bg-yellow-500 rounded-full absolute shadow-lg"
-                        style={{ left: `${ball.x - 50}px`, top: `${ball.y}px`, transform: 'translate(-50%, -50%)' }}
+                        className="w-3 h-3 bg-yellow-500 rounded-full absolute shadow-lg"
+                        style={{ left: `${ball.x}px`, top: `${ball.y}px`, transform: 'translate(-50%, -50%)' }}
                      />
                   ))}
 
                </div>
             </div>
 
-            {/* Right Side: Chat with Polina (lg:col-span-3) */}
+            {/* Right Side: Chat with Polina */}
             <div className="lg:col-span-3 h-[700px] flex flex-col bg-gradient-to-br from-[#1a0f05] to-[#0a0501] border-2 border-amber-500/20 rounded-3xl shadow-2xl overflow-hidden">
                
-               {/* Chat Header */}
                <div className="p-4 border-b border-amber-500/10 flex items-center gap-3 bg-black/40">
                   <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center border border-amber-500/30">
                      <span className="text-amber-500 font-serif font-black">П</span>
@@ -427,7 +461,6 @@ export default function LairPage() {
                   </div>
                </div>
 
-               {/* Messages */}
                <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {chatMessages.map((msg, i) => (
                      <div key={i} className={cn("flex flex-col", msg.sender === 'Ты' ? "items-end" : "items-start")}>
@@ -444,7 +477,6 @@ export default function LairPage() {
                   ))}
                </div>
 
-               {/* Input */}
                <div className="p-4 border-t border-amber-500/10 bg-black/20">
                   <div className="flex gap-2">
                      <input 
@@ -467,7 +499,7 @@ export default function LairPage() {
             </div>
          </div>
 
-         {/* Modal remains the same but clean */}
+         {/* Modal */}
          <AnimatePresence>
             {activeModalZone && (
                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
