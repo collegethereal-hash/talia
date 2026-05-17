@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Skull, Anchor, Sword, Crosshair, Bomb, 
@@ -10,217 +10,283 @@ import {
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
+interface Sailor {
+  id: number;
+  x: number;
+  y: number;
+  targetX: number;
+  targetY: number;
+  color: string;
+  team: 'player' | 'enemy';
+}
+
 interface Zone {
   id: string;
   name: string;
-  desc: string;
-  maxCrew: number;
-  x: string;
-  y: string;
+  x: number; // Pixel positions relative to arena
+  y: number;
+  team: 'player' | 'enemy';
 }
 
 export default function LairPage() {
   const [battleLog, setBattleLog] = useState<string[]>([
-    "Капитан! Вражеский галеон подошел на расстояние выстрела!",
-    "Прикажите начать абордаж или открыть огонь!"
+    "Капитан! Корабли сошлись бортами. Перекидывайте мостики!",
+    "Кликайте на зоны кораблей, чтобы отправлять туда людей."
   ]);
   
-  // Crew distribution for Player
-  const [playerCrew, setPlayerCrew] = useState<Record<string, number>>({
-    helm: 5,
-    cannons: 15,
-    deck: 30
-  });
-
-  // Crew distribution for Enemy
-  const [enemyCrew, setEnemyCrew] = useState<Record<string, number>>({
-    helm: 5,
-    cannons: 15,
-    deck: 40
-  });
-
+  const arenaRef = useRef<HTMLDivElement>(null);
+  const [sailors, setSailors] = useState<Sailor[]>([]);
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
-  const [isAttacking, setIsAttacking] = useState(false);
-  const [boardingDots, setBoardingDots] = useState<{id: number, x: number, y: number}[]>([]);
 
-  const playerZones: Zone[] = [
-    { id: 'helm', name: 'Штурвал', desc: 'Маневр', maxCrew: 5, x: '50%', y: '15%' },
-    { id: 'cannons', name: 'Пушки', desc: 'Огонь', maxCrew: 20, x: '50%', y: '45%' },
-    { id: 'deck', name: 'Палуба', desc: 'Резерв', maxCrew: 50, x: '50%', y: '75%' },
+  // Define zones with absolute pixel coordinates within the 900x600 arena
+  const zones: Zone[] = [
+    // Player Ship (Left) - Center X around 250
+    { id: 'p_helm', name: 'Штурвал', x: 250, y: 100, team: 'player' },
+    { id: 'p_masts', name: 'Мачты', x: 250, y: 250, team: 'player' },
+    { id: 'p_cannons_f', name: 'Носовые Пушки', x: 150, y: 350, team: 'player' },
+    { id: 'p_cannons_b', name: 'Кормовые Пушки', x: 350, y: 350, team: 'player' },
+    { id: 'p_deck', name: 'Палуба', x: 250, y: 500, team: 'player' },
+    
+    // Enemy Ship (Right) - Center X around 650
+    { id: 'e_helm', name: 'Мостик', x: 650, y: 100, team: 'enemy' },
+    { id: 'e_masts', name: 'Мачты', x: 650, y: 250, team: 'enemy' },
+    { id: 'e_cannons_f', name: 'Носовые Пушки', x: 550, y: 350, team: 'enemy' },
+    { id: 'e_cannons_b', name: 'Кормовые Пушки', x: 750, y: 350, team: 'enemy' },
+    { id: 'e_deck', name: 'Каюты', x: 650, y: 500, team: 'enemy' },
   ];
 
-  const enemyZones: Zone[] = [
-    { id: 'helm', name: 'Мостик', desc: 'Управление', maxCrew: 5, x: '50%', y: '15%' },
-    { id: 'cannons', name: 'Батарея', desc: 'Огонь', maxCrew: 20, x: '50%', y: '45%' },
-    { id: 'deck', name: 'Каюты', desc: 'Защита', maxCrew: 50, x: '50%', y: '75%' },
-  ];
+  // Initialize sailors
+  useEffect(() => {
+    const initialSailors: Sailor[] = [];
+    let id = 0;
+
+    // Player sailors
+    zones.filter(z => z.team === 'player').forEach(zone => {
+      for (let i = 0; i < 5; i++) {
+        initialSailors.push({
+          id: id++,
+          x: zone.x + (Math.random() * 40 - 20),
+          y: zone.y + (Math.random() * 40 - 20),
+          targetX: zone.x,
+          targetY: zone.y,
+          color: 'bg-cyan-400 shadow-cyan-500/50',
+          team: 'player'
+        });
+      }
+    });
+
+    // Enemy sailors
+    zones.filter(z => z.team === 'enemy').forEach(zone => {
+      for (let i = 0; i < 5; i++) {
+        initialSailors.push({
+          id: id++,
+          x: zone.x + (Math.random() * 40 - 20),
+          y: zone.y + (Math.random() * 40 - 20),
+          targetX: zone.x,
+          targetY: zone.y,
+          color: 'bg-red-500 shadow-red-500/50',
+          team: 'enemy'
+        });
+      }
+    });
+
+    setSailors(initialSailors);
+  }, []);
+
+  // Real-time movement loop
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSailors(prevSailors => 
+        prevSailors.map(sailor => {
+          const dx = sailor.targetX - sailor.x;
+          const dy = sailor.targetY - sailor.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          if (dist < 5) {
+            return { ...sailor, x: sailor.targetX, y: sailor.targetY };
+          }
+          
+          // Move towards target
+          const speed = 3;
+          return {
+            ...sailor,
+            x: sailor.x + (dx / dist) * speed,
+            y: sailor.y + (dy / dist) * speed
+          };
+        })
+      );
+    }, 50); // 20 FPS
+
+    return () => clearInterval(interval);
+  }, []);
 
   const addLog = (msg: string) => {
     setBattleLog(prev => [...prev, msg]);
   };
 
-  const startBoarding = () => {
-    if (playerCrew.deck < 5) {
-      addLog("❌ Слишком мало людей на палубе для абордажа!");
-      return;
+  const handleZoneClick = (zoneId: string) => {
+    const zone = zones.find(z => z.id === zoneId);
+    if (!zone) return;
+
+    if (!selectedZone) {
+      setSelectedZone(zoneId);
+      addLog(`Выбрана зона: ${zone.name}. Кликните куда отправить людей.`);
+    } else {
+      // Move sailors from selectedZone to clicked zone
+      const sourceZone = zones.find(z => z.id === selectedZone);
+      if (!sourceZone) return;
+
+      addLog(`Приказ: Переместить людей из ${sourceZone.name} в ${zone.name}!`);
+
+      setSailors(prevSailors => 
+        prevSailors.map(sailor => {
+          // If sailor is close to the source zone, give them the new target
+          const dx = sailor.x - sourceZone.x;
+          const dy = sailor.y - sourceZone.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          
+          if (dist < 50 && sailor.team === 'player') { // Only move player sailors
+            // If moving to enemy ship, check if we need to go through the bridge
+            // Bridge is around Y=300, between X=350 and X=550
+            return { 
+              ...sailor, 
+              targetX: zone.x + (Math.random() * 40 - 20), 
+              targetY: zone.y + (Math.random() * 40 - 20) 
+            };
+          }
+          return sailor;
+        })
+      );
+
+      setSelectedZone(null);
     }
-
-    setIsAttacking(true);
-    addLog("⚔️ АБОРДАЖ! Твои люди прыгают на вражеский корабль!");
-
-    // Create dots moving from Player Deck to Enemy Deck
-    const newDots = Array.from({ length: 10 }).map((_, i) => ({
-      id: Date.now() + i,
-      x: 300, // Starting X (Player Deck area)
-      y: 400  // Starting Y
-    }));
-    setBoardingDots(newDots);
-
-    // Animate dots moving to the right (Enemy ship)
-    setTimeout(() => {
-      setBoardingDots(prev => prev.map(dot => ({ ...dot, x: dot.x + 300 })));
-      
-      // Simulate fight and deaths
-      setTimeout(() => {
-        setEnemyCrew(prev => ({ ...prev, deck: Math.max(0, prev.deck - 15) }));
-        setPlayerCrew(prev => ({ ...prev, deck: Math.max(0, prev.deck - 5) }));
-        setBoardingDots([]);
-        setIsAttacking(false);
-        addLog("💥 Бой на палубе! Враг потерял 15 человек, мы потеряли 5.");
-      }, 1000);
-    }, 100);
   };
 
-  const renderCrewDots = (count: number, color: string) => {
-    const dots = [];
-    for (let i = 0; i < count; i++) {
-      const r = Math.random() * 25;
-      const theta = Math.random() * 2 * Math.PI;
-      const dx = r * Math.cos(theta);
-      const dy = r * Math.sin(theta);
-      
-      dots.push(
-        <div
-          key={i}
-          className={cn("w-2 h-2 rounded-full absolute shadow-lg", color)}
-          style={{ transform: `translate(${dx}px, ${dy}px)` }}
-        />
+  const handleArenaClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!selectedZone && arenaRef.current) {
+      const rect = arenaRef.current.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      addLog(`Приказ: Всем свободным стягиваться в точку (${Math.floor(clickX)}, ${Math.floor(clickY)})!`);
+
+      setSailors(prevSailors => 
+        prevSailors.map(sailor => {
+          if (sailor.team === 'player') {
+            return { 
+              ...sailor, 
+              targetX: clickX + (Math.random() * 30 - 15), 
+              targetY: clickY + (Math.random() * 30 - 15) 
+            };
+          }
+          return sailor;
+        })
       );
     }
-    return dots;
   };
 
   return (
     <div className="relative min-h-screen bg-[#030303] text-amber-100 font-serif overflow-x-hidden p-6 md:p-12">
       
-      {/* Huge Glowing Orbs for brightness */}
-      <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-cyan-600/20 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-100px] right-[-100px] w-[600px] h-[600px] bg-red-600/20 rounded-full blur-[100px] pointer-events-none" />
+      {/* Huge Glowing Orbs */}
+      <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-100px] right-[-100px] w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[100px] pointer-events-none" />
       
-      <div className="relative z-10 max-w-7xl mx-auto space-y-8">
+      <div className="relative z-10 max-w-7xl mx-auto space-y-6">
          
          {/* Header */}
          <div className="flex justify-between items-center border-b-2 border-amber-500/30 pb-4">
             <div>
-               <p className="text-[12px] font-black uppercase tracking-[0.5em] text-amber-500">Симуляция Сражения</p>
-               <h1 className="text-6xl font-black uppercase text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-400 to-red-600 drop-shadow-[0_2px_10px_rgba(245,158,11,0.3)]">Абордаж</h1>
+               <p className="text-[12px] font-black uppercase tracking-[0.5em] text-amber-500">Симуляция Абордажа</p>
+               <h1 className="text-5xl font-black uppercase text-transparent bg-clip-text bg-gradient-to-b from-amber-100 to-amber-500">Битва в Реальном Времени</h1>
             </div>
-            <button 
-               onClick={startBoarding}
-               disabled={isAttacking}
-               className={cn(
-                 "px-8 py-4 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl font-black uppercase text-sm tracking-wider transition-all hover:scale-105 shadow-[0_0_20px_rgba(239,68,68,0.3)] flex items-center gap-2",
-                 isAttacking ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-               )}
-            >
-               <Sword size={18} />
-               Начать Абордаж
-            </button>
+            <div className="text-xs text-amber-500/60">
+               Кликните на зону для выбора, затем на другую для отправки. <br />
+               Клик по пустой палубе стянет всех туда.
+            </div>
          </div>
 
-         {/* Two Ships Container */}
-         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+         {/* Arena and Journal */}
+         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
-            {/* Ships Arena */}
-            <div className="lg:col-span-9 bg-gradient-to-b from-[#110a03] to-black p-8 rounded-[3rem] border-2 border-amber-500/20 relative h-[650px] overflow-hidden flex justify-around items-center">
-               
+            {/* Arena (900x600 fixed size for coordinate mapping) */}
+            <div 
+               ref={arenaRef}
+               onClick={handleArenaClick}
+               className="lg:col-span-9 bg-gradient-to-b from-[#110a03] to-black rounded-[3rem] border-2 border-amber-500/20 relative h-[600px] overflow-hidden cursor-crosshair"
+            >
                {/* Grid background */}
                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')]" />
                
-               {/* PLAYER SHIP (Left) */}
-               <div className="relative w-[250px] h-[450px] border-4 border-cyan-500/30 rounded-[80px] bg-cyan-900/10 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
-                  <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-cyan-500 text-black px-4 py-1 text-xs font-black uppercase rounded-full">Твой Корабль</div>
-                  
-                  {/* Bow */}
-                  <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[125px] border-r-[125px] border-t-[60px] border-l-transparent border-r-transparent border-t-cyan-500/20" />
-                  
-                  {/* Zones */}
-                  {playerZones.map(zone => (
-                     <div key={zone.id} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: zone.x, top: zone.y }}>
-                        <div className="w-16 h-16 bg-black/80 border-2 border-cyan-500/50 rounded-full flex items-center justify-center relative">
-                           {renderCrewDots(playerCrew[zone.id], "bg-cyan-400 shadow-cyan-500/50")}
-                        </div>
-                        {/* LARGER TEXT */}
-                        <p className="text-lg font-black text-white mt-2 drop-shadow-lg">{zone.name}</p>
-                        <p className="text-xs font-bold text-cyan-400">{playerCrew[zone.id]}👥</p>
-                     </div>
-                  ))}
+               {/* Bridge (Мостик) */}
+               <div className="absolute top-[280px] left-[350px] w-[200px] h-[40px] bg-amber-900/40 border-t-2 border-b-2 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.3)] flex items-center justify-center">
+                  <span className="text-[10px] font-black uppercase text-amber-500/60">Абордажный Мостик</span>
                </div>
 
-               {/* VS Gap with moving dots */}
-               <div className="absolute inset-0 pointer-events-none">
-                  {boardingDots.map(dot => (
-                     <motion.div
-                        key={dot.id}
-                        initial={{ x: dot.x, y: dot.y }}
-                        animate={{ x: dot.x + 300, y: dot.y }}
-                        transition={{ duration: 1 }}
-                        className="w-3 h-3 bg-amber-400 rounded-full absolute shadow-[0_0_10px_rgba(245,158,11,1)]"
-                     />
-                  ))}
+               {/* PLAYER SHIP HULL */}
+               <div className="absolute top-[50px] left-[100px] w-[300px] h-[500px] border-4 border-cyan-500/20 rounded-[80px] bg-cyan-900/5 pointer-events-none">
+                  <div className="absolute top-[-15px] left-1/2 -translate-x-1/2 text-cyan-400 font-black uppercase text-xs">Твой Флагман</div>
                </div>
 
-               {/* ENEMY SHIP (Right) */}
-               <div className="relative w-[250px] h-[450px] border-4 border-red-500/30 rounded-[80px] bg-red-900/10 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
-                  <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-1 text-xs font-black uppercase rounded-full">Галеон Врага</div>
-                  
-                  {/* Bow */}
-                  <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[125px] border-r-[125px] border-t-[60px] border-l-transparent border-r-transparent border-t-red-500/20" />
-                  
-                  {/* Zones */}
-                  {enemyZones.map(zone => (
-                     <div key={zone.id} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: zone.x, top: zone.y }}>
-                        <div className="w-16 h-16 bg-black/80 border-2 border-red-500/50 rounded-full flex items-center justify-center relative">
-                           {renderCrewDots(enemyCrew[zone.id], "bg-red-500 shadow-red-500/50")}
-                        </div>
-                        {/* LARGER TEXT */}
-                        <p className="text-lg font-black text-white mt-2 drop-shadow-lg">{zone.name}</p>
-                        <p className="text-xs font-bold text-red-400">{enemyCrew[zone.id]}👥</p>
-                     </div>
-                  ))}
+               {/* ENEMY SHIP HULL */}
+               <div className="absolute top-[50px] left-[500px] w-[300px] h-[500px] border-4 border-red-500/20 rounded-[80px] bg-red-900/5 pointer-events-none">
+                  <div className="absolute top-[-15px] left-1/2 -translate-x-1/2 text-red-400 font-black uppercase text-xs">Вражеский Галеон</div>
                </div>
+
+               {/* Zones (Clickable Areas) */}
+               {zones.map(zone => {
+                  const isSelected = selectedZone === zone.id;
+                  return (
+                     <div 
+                        key={zone.id}
+                        onClick={(e) => {
+                           e.stopPropagation(); // Prevent arena click
+                           handleZoneClick(zone.id);
+                        }}
+                        className={cn(
+                          "absolute -translate-x-1/2 -translate-y-1/2 p-4 rounded-2xl border-2 transition-all cursor-pointer",
+                          isSelected ? "border-amber-400 bg-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.5)]" : "border-white/10 bg-black/60 hover:border-white/30",
+                          zone.team === 'player' ? "hover:border-cyan-500/50" : "hover:border-red-500/50"
+                        )}
+                        style={{ left: zone.x, top: zone.y }}
+                     >
+                        {/* LARGER TEXT */}
+                        <p className="text-xl font-black text-white uppercase tracking-tighter">{zone.name}</p>
+                        <p className="text-[10px] text-slate-500 uppercase font-black">{zone.team === 'player' ? 'Наш отсек' : 'Враг'}</p>
+                     </div>
+                  );
+               })}
+
+               {/* Sailors (Dots moving in real time) */}
+               {sailors.map(sailor => (
+                  <div
+                     key={sailor.id}
+                     className={cn("w-3 h-3 rounded-full absolute transition-all duration-500 ease-linear shadow-lg", sailor.color)}
+                     style={{ 
+                        left: `${sailor.x}px`, 
+                        top: `${sailor.y}px`,
+                        transform: 'translate(-50%, -50%)' // Center the dot
+                     }}
+                  />
+               ))}
 
             </div>
 
-            {/* Right: NEW JOURNAL (Beautiful and not "стремно") */}
-            <div className="lg:col-span-3 h-[650px] flex flex-col">
+            {/* Right: Journal */}
+            <div className="lg:col-span-3 h-[600px] flex flex-col">
                <div className="bg-gradient-to-br from-[#1a0f00] to-[#0a0501] p-6 rounded-[2rem] border-2 border-amber-500/30 flex-1 flex flex-col shadow-[0_0_30px_rgba(245,158,11,0.1)]">
                   <div className="flex items-center gap-2 border-b border-amber-500/20 pb-4 mb-4">
                      <Scroll size={20} className="text-amber-500" />
                      <h4 className="text-[12px] font-black uppercase tracking-[0.3em] text-amber-500">Судовой Журнал</h4>
                   </div>
                   
-                  <div className="flex-1 overflow-y-auto space-y-4 text-sm text-amber-100/90 font-sans leading-relaxed">
+                  <div className="flex-1 overflow-y-auto space-y-4 text-xs text-amber-100/90 font-sans leading-relaxed">
                      {battleLog.map((log, i) => (
                         <div key={i} className="border-b border-amber-900/10 pb-2 flex gap-2">
                            <span className="text-amber-500 font-black">&gt;</span>
                            <p>{log}</p>
                         </div>
                      ))}
-                  </div>
-                  
-                  <div className="mt-4 pt-4 border-t border-amber-500/20 text-[10px] font-black uppercase text-amber-500/40 text-center">
-                     Записи ведутся в реальном времени
                   </div>
                </div>
             </div>
