@@ -174,6 +174,12 @@ export default function PirateDashboard() {
                   icon={<Map size={24} />} 
                   href="/bucket-list" 
                 />
+                <NavCard 
+                  title="Логово" 
+                  desc="Военная комната и бои" 
+                  icon={<Bomb size={24} />} 
+                  href="/lair" 
+                />
              </div>
 
              {/* Special Interactive Card */}
