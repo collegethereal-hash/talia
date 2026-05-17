@@ -7,7 +7,7 @@ import {
   Shield, Users, Flame, Target, Trophy, 
   Settings, Scroll, ChevronRight, X, Info, Sparkles,
   Zap, Wind, LifeBuoy, RefreshCw, Compass, Eye, ShieldAlert,
-  Heart, FastForward, Pause, Play, Crown, Beer
+  Heart, FastForward, Pause, Play, Crown, Beer, MessageSquare, Send
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
@@ -67,28 +67,35 @@ export default function LairPage() {
   const [sailors, setSailors] = useState<Sailor[]>([]);
   const [cannonballs, setCannonballs] = useState<Cannonball[]>([]);
   
-  // REDUCED Y COORDINATES FOR SHORTER SHIPS
+  // EVEN SHORTER SHIPS (Reduced height by another ~100px)
   const [zones, setZones] = useState<Zone[]>([
-    // Player Ship (Left) - Height reduced to 750 (was 850)
-    { id: 'p_helm', name: 'Капитанский Мостик', x: 325, y: 130, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 } },
-    { id: 'p_masts', name: 'Грот-Мачта', x: 325, y: 260, team: 'player', crewTypes: { swordsmen: 5, gunners: 5, sappers: 2 } },
-    { id: 'p_cannons_l', name: 'Батарея Слева', x: 225, y: 390, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
-    { id: 'p_cannons_r', name: 'Батарея Справа', x: 425, y: 390, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
-    { id: 'p_deck', name: 'Центральная Палуба', x: 325, y: 520, team: 'player', crewTypes: { swordsmen: 15, gunners: 5, sappers: 5 } },
-    { id: 'p_hold', name: 'Трюм (Арсенал)', x: 325, y: 650, team: 'player', crewTypes: { swordsmen: 5, gunners: 2, sappers: 10 } },
+    // Player Ship (Left) - Height ~650
+    { id: 'p_helm', name: 'Капитанский Мостик', x: 325, y: 100, team: 'player', crewTypes: { swordsmen: 2, gunners: 3, sappers: 0 } },
+    { id: 'p_masts', name: 'Грот-Мачта', x: 325, y: 200, team: 'player', crewTypes: { swordsmen: 5, gunners: 5, sappers: 2 } },
+    { id: 'p_cannons_l', name: 'Батарея Слева', x: 225, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
+    { id: 'p_cannons_r', name: 'Батарея Справа', x: 425, y: 320, team: 'player', crewTypes: { swordsmen: 0, gunners: 10, sappers: 0 } },
+    { id: 'p_deck', name: 'Центральная Палуба', x: 325, y: 450, team: 'player', crewTypes: { swordsmen: 15, gunners: 5, sappers: 5 } },
+    { id: 'p_hold', name: 'Трюм (Арсенал)', x: 325, y: 560, team: 'player', crewTypes: { swordsmen: 5, gunners: 2, sappers: 10 } },
     
-    // Enemy Ship (Right) - Height reduced to 800 (was 900)
-    { id: 'e_cabin', name: 'Адмиральская Каюта', x: 850, y: 110, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 } },
-    { id: 'e_battery', name: 'Тяжелая Батарея', x: 850, y: 240, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 } },
-    { id: 'e_deck_f', name: 'Носовая Палуба', x: 750, y: 390, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
-    { id: 'e_deck_b', name: 'Кормовая Палуба', x: 950, y: 390, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
-    { id: 'e_barracks', name: 'Казармы', x: 850, y: 540, team: 'enemy', crewTypes: { swordsmen: 20, gunners: 0, sappers: 0 } },
-    { id: 'e_hold', name: 'Пороховой Погреб', x: 850, y: 680, team: 'enemy', crewTypes: { swordsmen: 2, gunners: 2, sappers: 10 } },
+    // Enemy Ship (Right) - Height ~700
+    { id: 'e_cabin', name: 'Адмиральская Каюта', x: 850, y: 90, team: 'enemy', crewTypes: { swordsmen: 5, gunners: 5, sappers: 0 } },
+    { id: 'e_battery', name: 'Тяжелая Батарея', x: 850, y: 190, team: 'enemy', crewTypes: { swordsmen: 0, gunners: 15, sappers: 0 } },
+    { id: 'e_deck_f', name: 'Носовая Палуба', x: 750, y: 320, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
+    { id: 'e_deck_b', name: 'Кормовая Палуба', x: 950, y: 320, team: 'enemy', crewTypes: { swordsmen: 10, gunners: 5, sappers: 2 } },
+    { id: 'e_barracks', name: 'Казармы', x: 850, y: 450, team: 'enemy', crewTypes: { swordsmen: 20, gunners: 0, sappers: 0 } },
+    { id: 'e_hold', name: 'Пороховой Погреб', x: 850, y: 580, team: 'enemy', crewTypes: { swordsmen: 2, gunners: 2, sappers: 10 } },
   ]);
 
   const [battleStarted, setBattleStarted] = useState(false);
   const [activeModalZone, setActiveModalZone] = useState<string | null>(null);
   const [stats, setStats] = useState({ playerCasualties: 0, enemyCasualties: 0, playerShipHp: 100, enemyShipHp: 100 });
+  
+  // Chat State
+  const [chatMessages, setChatMessages] = useState([
+    { sender: 'Полина', text: 'Капитан, они нападают! Прикажи своим волкам держаться!' },
+    { sender: 'Ты', text: 'Не волнуйся, мы их раздавим.' }
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
 
   // Initialize sailors
   useEffect(() => {
@@ -117,11 +124,11 @@ export default function LairPage() {
     setSailors(initialSailors);
   }, []);
 
-  // Bridge Pathfinding (Adjusted Y for shorter ships)
+  // Bridge Pathfinding
   const getBridgePath = (startX: number, endX: number, targetX: number, targetY: number) => {
     const leftBridgeX = 500;
     const rightBridgeX = 650;
-    const bridgeY = 390; // Moved up slightly to match deck
+    const bridgeY = 320; 
 
     if (startX < leftBridgeX && endX > rightBridgeX) {
       return [{ x: leftBridgeX, y: bridgeY }, { x: rightBridgeX, y: bridgeY }, { x: targetX, y: targetY }];
@@ -178,7 +185,7 @@ export default function LairPage() {
               const dy = s1.y - s2.y;
               const dist = Math.sqrt(dx * dx + dy * dy);
 
-              if (dist < 15 && s1.type === 'swordsman') {
+              if (dist < 20 && s1.type === 'swordsman') {
                 s1.state = 'fighting';
                 s2.state = 'fighting';
                 s1.hp -= 3;
@@ -222,7 +229,7 @@ export default function LairPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto AI
+  // Auto AI & Polina Comments
   useEffect(() => {
     if (!battleStarted) return;
 
@@ -268,24 +275,45 @@ export default function LairPage() {
         }
       }
 
+      // Polina dynamic comments
+      if (Math.random() < 0.2) {
+        const comments = [
+          "Наши пушки бьют точно в цель!",
+          "Ой, смотри, сколько их полегло на мостике!",
+          "Кажется, они начинают отступать!",
+          "Наш трюм под надежной защитой, я проверила.",
+          "Ты лучший тактик, которого я видела!"
+        ];
+        const randomComment = comments[Math.floor(Math.random() * comments.length)];
+        setChatMessages(prev => [...prev, { sender: 'Полина', text: randomComment }]);
+      }
+
     }, 3000);
 
     return () => clearInterval(aiInterval);
   }, [battleStarted]);
 
+  const sendMessage = () => {
+    if (!inputMessage.trim()) return;
+    setChatMessages(prev => [...prev, { sender: 'Ты', text: inputMessage }]);
+    setInputMessage('');
+    
+    // Polina replies after a short delay
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, { sender: 'Полина', text: 'Я с тобой до конца, капитан!' }]);
+    }, 1000);
+  };
+
   return (
-    <div className="relative min-h-screen bg-[#0d0702] text-amber-100 font-sans overflow-x-hidden p-6 md:p-12">
+    <div className="relative min-h-screen bg-[#0d0702] text-amber-100 font-sans overflow-x-hidden p-4 md:p-8">
       
-      {/* Warm Pirate Glow */}
-      <div className="absolute top-[-100px] left-[-100px] w-[600px] h-[600px] bg-amber-600/5 rounded-full blur-[150px] pointer-events-none" />
-      
-      <div className="relative z-10 max-w-[1400px] mx-auto space-y-6">
+      <div className="relative z-10 max-w-[1600px] mx-auto space-y-4">
          
-         {/* Scoreboard - PIRATE STYLE (Wood/Amber) */}
-         <div className="bg-gradient-to-br from-[#1a0f05] to-[#0a0501] border-2 border-amber-500/20 rounded-2xl p-6 flex justify-between items-center shadow-2xl">
-            <div className="flex flex-col gap-2 w-[250px]">
+         {/* Scoreboard */}
+         <div className="bg-gradient-to-br from-[#1a0f05] to-[#0a0501] border-2 border-amber-500/20 rounded-2xl p-4 flex justify-between items-center shadow-2xl">
+            <div className="flex flex-col gap-1 w-[200px]">
                <div className="flex justify-between text-xs font-bold text-amber-500/80">
-                  <span className="font-serif">НАШ ФЛАГМАН</span>
+                  <span className="font-serif">ФЛАГМАН</span>
                   <span>{stats.playerShipHp}%</span>
                </div>
                <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden border border-amber-500/10">
@@ -295,11 +323,11 @@ export default function LairPage() {
             </div>
 
             <div className="flex flex-col items-center">
-               <h1 className="text-2xl font-serif font-black uppercase tracking-wider text-amber-100">Каюта Стратега</h1>
+               <h1 className="text-xl font-serif font-black uppercase tracking-wider text-amber-100">Каюта Стратега</h1>
                <button 
                   onClick={() => setBattleStarted(!battleStarted)}
                   className={cn(
-                    "mt-2 px-6 py-2 rounded-lg font-black uppercase text-xs tracking-wider transition-all hover:scale-105 shadow-lg",
+                    "mt-1 px-4 py-1.5 rounded-lg font-black uppercase text-xs tracking-wider transition-all hover:scale-105 shadow-lg",
                     battleStarted ? "bg-red-700 text-white" : "bg-gradient-to-r from-amber-500 to-amber-600 text-black"
                   )}
                >
@@ -307,7 +335,7 @@ export default function LairPage() {
                </button>
             </div>
 
-            <div className="flex flex-col gap-2 w-[250px]">
+            <div className="flex flex-col gap-1 w-[200px]">
                <div className="flex justify-between text-xs font-bold text-amber-500/80">
                   <span className="font-serif">ВРАЖЕСКИЙ ЛИНКОР</span>
                   <span>{stats.enemyShipHp}%</span>
@@ -319,70 +347,127 @@ export default function LairPage() {
             </div>
          </div>
 
-         {/* Arena - Clean Dark Background with Ships */}
-         <div className="relative flex justify-center">
-            <div 
-               className="bg-[#0a0501] rounded-3xl border border-amber-500/10 relative h-[850px] w-[1200px] overflow-hidden shadow-inner"
-            >
-               {/* Bridge */}
-               <div className="absolute top-[370px] left-[500px] w-[150px] h-[40px] bg-[#1a0f05] border-t border-b border-amber-500/20 flex items-center justify-center">
-                  <span className="text-[10px] font-bold uppercase text-amber-500/40 tracking-widest">Мостик</span>
+         {/* Main Grid: Arena + Chat */}
+         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            {/* Arena (lg:col-span-9) - Shorter height */}
+            <div className="lg:col-span-9 flex justify-center">
+               <div 
+                  className="bg-[#0a0501] rounded-3xl border border-amber-500/10 relative h-[700px] w-[1000px] overflow-hidden shadow-inner"
+               >
+                  {/* Bridge */}
+                  <div className="absolute top-[300px] left-[420px] w-[150px] h-[40px] bg-[#1a0f05] border-t border-b border-amber-500/20 flex items-center justify-center">
+                     <span className="text-[10px] font-bold uppercase text-amber-500/40 tracking-widest">Мостик</span>
+                  </div>
+
+                  {/* Ships - EVEN SHORTER & BIGGER DOTS */}
+                  <div className="absolute top-[20px] left-[100px] w-[320px] h-[650px] border border-amber-500/20 rounded-2xl bg-[#1a0f05]/30 pointer-events-none" />
+                  <div className="absolute top-[10px] left-[570px] w-[350px] h-[680px] border border-red-500/20 rounded-2xl bg-[#1a0f05]/30 pointer-events-none" />
+
+                  {/* Zones */}
+                  {zones.map(zone => {
+                     const count = sailors.filter(s => s.team === zone.team && Math.sqrt(Math.pow(s.x - zone.x, 2) + Math.pow(s.y - zone.y, 2)) < 50).length;
+                     
+                     return (
+                        <div 
+                           key={zone.id}
+                           onClick={() => setActiveModalZone(zone.id)}
+                           className={cn(
+                             "absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg border transition-all cursor-pointer w-[120px] text-center bg-[#0d0702]/90",
+                             zone.team === 'player' ? "border-amber-500/20 hover:border-amber-500" : "border-red-500/20 hover:border-red-500"
+                           )}
+                           style={{ left: zone.x - 50, top: zone.y }} // Adjusted X slightly for smaller arena width
+                        >
+                           <p className="text-xs font-serif font-bold text-amber-100">{zone.name}</p>
+                           <p className="text-[10px] text-amber-500/60 font-mono">{count} чел.</p>
+                        </div>
+                     );
+                  })}
+
+                  {/* Sailors - BIGGER DOTS (w-3.5 h-3.5) */}
+                  {sailors.map(sailor => (
+                     <div
+                        key={sailor.id}
+                        className={cn(
+                          "w-3.5 h-3.5 rounded-full absolute transition-all duration-300 ease-linear border border-black/30 shadow-md", 
+                          sailor.color,
+                          sailor.state === 'shooting' && "ring-2 ring-yellow-400"
+                        )}
+                        style={{ 
+                           left: `${sailor.x - 50}px`, 
+                           top: `${sailor.y}px`,
+                           transform: 'translate(-50%, -50%)'
+                        }}
+                     />
+                  ))}
+
+                  {/* Cannonballs */}
+                  {cannonballs.map(ball => (
+                     <div 
+                        key={ball.id}
+                        className="w-4 h-4 bg-yellow-500 rounded-full absolute shadow-lg"
+                        style={{ left: `${ball.x - 50}px`, top: `${ball.y}px`, transform: 'translate(-50%, -50%)' }}
+                     />
+                  ))}
+
+               </div>
+            </div>
+
+            {/* Right Side: Chat with Polina (lg:col-span-3) */}
+            <div className="lg:col-span-3 h-[700px] flex flex-col bg-gradient-to-br from-[#1a0f05] to-[#0a0501] border-2 border-amber-500/20 rounded-3xl shadow-2xl overflow-hidden">
+               
+               {/* Chat Header */}
+               <div className="p-4 border-b border-amber-500/10 flex items-center gap-3 bg-black/40">
+                  <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center border border-amber-500/30">
+                     <span className="text-amber-500 font-serif font-black">П</span>
+                  </div>
+                  <div>
+                     <h4 className="text-sm font-serif font-black text-amber-100">Полина</h4>
+                     <p className="text-[10px] text-emerald-400 font-bold uppercase">На связи</p>
+                  </div>
                </div>
 
-               {/* Ships - SHORTER VERTICALLY */}
-               <div className="absolute top-[30px] left-[150px] w-[350px] h-[750px] border border-amber-500/20 rounded-2xl bg-[#1a0f05]/30 pointer-events-none" />
-               <div className="absolute top-[10px] left-[650px] w-[400px] h-[800px] border border-red-500/20 rounded-2xl bg-[#1a0f05]/30 pointer-events-none" />
-
-               {/* Zones */}
-               {zones.map(zone => {
-                  const count = sailors.filter(s => s.team === zone.team && Math.sqrt(Math.pow(s.x - zone.x, 2) + Math.pow(s.y - zone.y, 2)) < 50).length;
-                  
-                  return (
-                     <div 
-                        key={zone.id}
-                        onClick={() => setActiveModalZone(zone.id)}
-                        className={cn(
-                          "absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-lg border transition-all cursor-pointer w-[130px] text-center bg-[#0d0702]/90",
-                          zone.team === 'player' ? "border-amber-500/20 hover:border-amber-500" : "border-red-500/20 hover:border-red-500"
-                        )}
-                        style={{ left: zone.x, top: zone.y }}
-                     >
-                        <p className="text-xs font-serif font-bold text-amber-100">{zone.name}</p>
-                        <p className="text-[10px] text-amber-500/60 font-mono">{count} чел.</p>
+               {/* Messages */}
+               <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {chatMessages.map((msg, i) => (
+                     <div key={i} className={cn("flex flex-col", msg.sender === 'Ты' ? "items-end" : "items-start")}>
+                        <div className={cn(
+                          "max-w-[80%] p-3 rounded-2xl text-xs font-sans",
+                          msg.sender === 'Ты' 
+                            ? "bg-amber-600 text-black rounded-br-none" 
+                            : "bg-[#110a03] text-amber-100 border border-amber-500/20 rounded-bl-none"
+                        )}>
+                           {msg.text}
+                        </div>
+                        <span className="text-[9px] text-slate-600 mt-1 px-1">{msg.sender}</span>
                      </div>
-                  );
-               })}
+                  ))}
+               </div>
 
-               {/* Sailors - Clean dots */}
-               {sailors.map(sailor => (
-                  <div
-                     key={sailor.id}
-                     className={cn(
-                       "w-2 h-2 rounded-full absolute transition-all duration-300 ease-linear", 
-                       sailor.color,
-                       sailor.state === 'shooting' && "ring-2 ring-yellow-400"
-                     )}
-                     style={{ 
-                        left: `${sailor.x}px`, 
-                        top: `${sailor.y}px`,
-                        transform: 'translate(-50%, -50%)'
-                     }}
-                  />
-               ))}
-
-               {/* Cannonballs */}
-               {cannonballs.map(ball => (
-                  <div 
-                     key={ball.id}
-                     className="w-3 h-3 bg-yellow-500 rounded-full absolute shadow-lg"
-                     style={{ left: `${ball.x}px`, top: `${ball.y}px`, transform: 'translate(-50%, -50%)' }}
-                  />
-               ))}
+               {/* Input */}
+               <div className="p-4 border-t border-amber-500/10 bg-black/20">
+                  <div className="flex gap-2">
+                     <input 
+                        type="text"
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                        placeholder="Написать Полине..."
+                        className="flex-1 bg-[#0a0501] border border-amber-500/20 rounded-xl px-4 py-2 text-xs text-amber-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50"
+                     />
+                     <button 
+                        onClick={sendMessage}
+                        className="bg-amber-600 text-black p-2 rounded-xl hover:bg-amber-500 transition-colors"
+                     >
+                        <Send size={16} />
+                     </button>
+                  </div>
+               </div>
 
             </div>
          </div>
 
-         {/* PIRATE STYLE MODAL (Parchment/Wood) */}
+         {/* Modal remains the same but clean */}
          <AnimatePresence>
             {activeModalZone && (
                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -420,7 +505,6 @@ export default function LairPage() {
                               </div>
 
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                 {/* Left: Lore */}
                                  <div className="space-y-3">
                                     <h5 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Описание</h5>
                                     <p className="text-sm text-amber-100/80 font-sans leading-relaxed">
@@ -432,7 +516,6 @@ export default function LairPage() {
                                     </div>
                                  </div>
 
-                                 {/* Right: Garrison */}
                                  <div className="space-y-3">
                                     <h5 className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Гарнизон</h5>
                                     <div className="space-y-2">
