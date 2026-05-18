@@ -71,6 +71,9 @@ export default function PirateDashboard() {
   const [gold, setGold] = useState(1500);
   const [crewCount, setCrewCount] = useState(25);
 
+  // Selected Voyage on the interactive map
+  const [selectedRaidId, setSelectedRaidId] = useState<number>(1);
+
   // Officers State
   const [officers, setOfficers] = useState<Officer[]>([
     { id: 1, name: "Билл 'Бочонок'", role: 'Штурман', status: 'Пьян', statusColor: 'text-red-400', loyalty: 45, avatar: "🧭", description: "Напивается быстрее, чем прокладывает курс, но имеет золотое сердце.", wantedReward: "50 дублонов" },
@@ -314,7 +317,7 @@ export default function PirateDashboard() {
     showNotif('🗺️ Карты обновлены, новые рейды доступны капитан!');
   };
 
-  // NEW DYNAMIC MYSTERY CHESTS MERCHANT LOGIC CONFIGURATION
+  // DYNAMIC MYSTERY CHESTS MERCHANT LOGIC CONFIGURATION
   const chestMerchants: ChestMerchant[] = [
     {
       id: 't_compass',
@@ -403,16 +406,18 @@ export default function PirateDashboard() {
     setIsOpeningChest(false);
   };
 
+  // Get active selected raid data
+  const activeRaid = raids.find(r => r.id === selectedRaidId) || raids[0];
+
   return (
-    <div className="relative min-h-screen bg-[#030303] text-amber-100 font-serif overflow-x-hidden selection:bg-amber-500/30 pb-32">
+    <div className="relative min-h-screen bg-[#000000] text-amber-100 font-serif overflow-x-hidden selection:bg-amber-500/30 pb-32">
       
       {/* Ambient background glows */}
-      <div className="absolute top-[-150px] left-[-150px] w-[600px] h-[600px] bg-amber-600/10 rounded-full blur-[140px] pointer-events-none z-0" />
-      <div className="absolute bottom-[50px] right-[-150px] w-[700px] h-[700px] bg-red-600/10 rounded-full blur-[150px] pointer-events-none z-0" />
-      <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] bg-cyan-700/5 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute top-[-150px] left-[-150px] w-[600px] h-[600px] bg-amber-600/5 rounded-full blur-[140px] pointer-events-none z-0" />
+      <div className="absolute bottom-[50px] right-[-150px] w-[700px] h-[700px] bg-red-600/5 rounded-full blur-[150px] pointer-events-none z-0" />
       
       {/* Wood pattern Overlay */}
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-[0.08] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-[0.05] pointer-events-none z-0" />
       
       {/* Toast Notification */}
       <AnimatePresence>
@@ -431,7 +436,7 @@ export default function PirateDashboard() {
 
       <ParrotKoko open={cocoOpen} onClose={() => setCocoOpen(false)} showTrigger={false} />
 
-      {/* DETAILED PIRATE DEAL SCROLL MODAL (CHEST STORY & BUYING) */}
+      {/* DETAILED PIRATE DEAL SCROLL MODAL */}
       <AnimatePresence>
         {selectedMerchant && (
           <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
@@ -441,15 +446,15 @@ export default function PirateDashboard() {
                animate={{ opacity: 1 }} 
                exit={{ opacity: 0 }} 
                onClick={handleCloseModal} 
-               className="absolute inset-0 bg-black/85 backdrop-blur-md" 
+               className="absolute inset-0 bg-black/90 backdrop-blur-md" 
              />
              
-             {/* The Old Parchment Scroll container */}
+             {/* The Old Scroll container (Pure Black & Gold styling) */}
              <motion.div 
                initial={{ scale: 0.9, y: 50, opacity: 0 }} 
                animate={{ scale: 1, y: 0, opacity: 1 }} 
                exit={{ scale: 0.9, y: 50, opacity: 0 }} 
-               className="relative w-full max-w-lg bg-[#140b05] border-4 border-amber-500/30 rounded-[3rem] shadow-[0_0_60px_rgba(245,158,11,0.35)] p-8 overflow-hidden pirate-wood flex flex-col justify-between z-10"
+               className="relative w-full max-w-lg bg-[#0c0c0c] border-4 border-amber-500/30 rounded-[3rem] shadow-[0_0_60px_rgba(245,158,11,0.35)] p-8 overflow-hidden flex flex-col justify-between z-10"
              >
                 {/* Close Button */}
                 <button onClick={handleCloseModal} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-300 transition-colors z-20">
@@ -460,7 +465,7 @@ export default function PirateDashboard() {
                    
                    {/* Pirate Portrait Header */}
                    <div className="flex items-center gap-4 border-b border-amber-500/20 pb-4">
-                      <div className="w-16 h-16 rounded-[1.5rem] bg-[#1d0e05] border-2 border-amber-500/20 flex items-center justify-center text-4xl shadow-md">
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-[#111] border-2 border-amber-500/20 flex items-center justify-center text-4xl shadow-md">
                          {selectedMerchant.pirateAvatar}
                       </div>
                       <div className="text-left">
@@ -488,14 +493,14 @@ export default function PirateDashboard() {
                            initial={{ scale: 0.8, rotate: -10 }}
                            animate={{ scale: [1, 1.1, 1], rotate: [0, 5, 0] }}
                            className={cn(
-                             "w-28 h-28 rounded-full border-4 flex items-center justify-center bg-black/60 shadow-inner",
+                             "w-28 h-28 rounded-full border-4 flex items-center justify-center bg-black/80 shadow-inner",
                              selectedMerchant.glowColor
                            )}
                          >
                             {selectedMerchant.treasureIcon}
                          </motion.div>
                       ) : (
-                         <div className="text-8xl select-none filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]">
+                         <div className="text-8xl select-none filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.85)]">
                             {selectedMerchant.chestIcon}
                          </div>
                       )}
@@ -508,7 +513,7 @@ export default function PirateDashboard() {
                    </div>
 
                    {/* Scroll of Pirate's Adventure Story */}
-                   <div className="relative p-5 bg-gradient-to-br from-[#1a0f07] to-[#0a0603] rounded-2xl border border-amber-500/10 text-left overflow-hidden">
+                   <div className="relative p-5 bg-gradient-to-br from-[#111111] to-[#000] rounded-2xl border border-amber-500/10 text-left overflow-hidden">
                       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-[0.03] pointer-events-none" />
                       <h4 className="text-[9px] font-black uppercase text-amber-400 tracking-wider mb-2">История находки от пирата:</h4>
                       <p className="text-xs text-amber-200/80 leading-relaxed italic font-medium">
@@ -516,7 +521,7 @@ export default function PirateDashboard() {
                       </p>
                    </div>
 
-                   {/* Romantic message revealed ONLY if unlocked */}
+                   {/* Romantic message revealed */}
                    {(chestOpenedEffect || unlockedTreasures[selectedMerchant.id]) && (
                       <motion.div 
                         initial={{ opacity: 0, y: 15 }}
@@ -548,7 +553,7 @@ export default function PirateDashboard() {
                           "w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 border-2 shadow-xl cursor-pointer active:scale-95",
                           gold >= selectedMerchant.cost 
                             ? "bg-gradient-to-r from-amber-500 to-amber-600 border-amber-400 text-slate-950 hover:scale-[1.02] shadow-[0_0_20px_rgba(245,158,11,0.3)]" 
-                            : "bg-[#140c06] text-slate-500 border-slate-900 cursor-not-allowed"
+                            : "bg-[#111111] text-slate-500 border-slate-900 cursor-not-allowed"
                         )}
                       >
                          <Coins size={14} /> Выкупить и Сбить Замки ({selectedMerchant.cost} дублонов)
@@ -580,10 +585,10 @@ export default function PirateDashboard() {
              whileHover={{ scale: 1.03, y: -2 }}
              whileTap={{ scale: 0.98 }}
              onClick={() => setCocoOpen(true)}
-             className="flex items-center gap-4 bg-gradient-to-br from-[#24170c] to-[#0c0804] border-2 border-amber-500/30 hover:border-amber-500/60 rounded-[2rem] pl-5 pr-12 py-3.5 shadow-2xl backdrop-blur-md transition-all relative group cursor-pointer"
+             className="flex items-center gap-4 bg-gradient-to-br from-[#111111] to-[#000000] border-2 border-amber-500/20 hover:border-amber-500/60 rounded-[2rem] pl-5 pr-12 py-3.5 shadow-2xl backdrop-blur-md transition-all relative group cursor-pointer"
            >
               <div className="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2rem]" />
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-[#140b05] border border-amber-500/20 text-3xl shadow-lg relative group-hover:rotate-12 transition-transform duration-300">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-[#050505] border border-amber-500/20 text-3xl shadow-lg relative group-hover:rotate-12 transition-transform duration-300">
                  🦜
               </div>
               <div className="text-left">
@@ -596,23 +601,23 @@ export default function PirateDashboard() {
            </motion.button>
         </header>
 
-        {/* 3D INTERACTIVE SAFE PIRATE BAY SCENARIO (Top featured block) */}
+        {/* 3D INTERACTIVE SAFE PIRATE BAY SCENARIO (Fully Black theme frame) */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
            
-           {/* Left Column: Huge 3D Interactive Haven Diorama */}
-           <div className="lg:col-span-8 h-[380px] md:h-[450px] pirate-wood rounded-[3rem] border-4 border-amber-500/30 overflow-hidden relative shadow-[0_0_60px_rgba(245,158,11,0.2)]">
+           {/* Left Column: Huge 3D Interactive Haven Diorama (Black Container) */}
+           <div className="lg:col-span-8 h-[380px] md:h-[450px] rounded-[3rem] border-4 border-amber-500/30 overflow-hidden relative shadow-[0_0_60px_rgba(245,158,11,0.35)] bg-black">
               {isMounted ? (
                 <BayScene />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-black/60 gap-4">
+                <div className="w-full h-full flex flex-col items-center justify-center bg-black gap-4">
                   <Anchor size={36} className="animate-spin text-amber-500" />
                   <span className="text-xs uppercase font-black text-amber-500/60 tracking-widest animate-pulse">Заряжаем пушки, строим бухту...</span>
                 </div>
               )}
            </div>
 
-           {/* Right Column: Immersive safe harbor parchment status sheet */}
-           <div className="lg:col-span-4 rounded-[3rem] p-8 bg-gradient-to-br from-[#1a0f07] to-[#080503] border-2 border-amber-500/20 relative shadow-2xl overflow-hidden flex flex-col justify-between">
+           {/* Right Column: Immersive safe harbor black status sheet */}
+           <div className="lg:col-span-4 rounded-[3rem] p-8 bg-gradient-to-br from-[#0c0c0c] to-[#000000] border-2 border-amber-500/20 relative shadow-2xl overflow-hidden flex flex-col justify-between">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-5 pointer-events-none" />
               <div className="absolute top-0 left-0 w-full h-[150px] bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none" />
 
@@ -626,7 +631,7 @@ export default function PirateDashboard() {
                     Капитан! Пришвартовывайся к тихой пристани. Это самое **безопасное и теплое место** во всем архипелаге. Здесь шторма бессильны, пушки молчат, а команда может спокойно отдохнуть в таверне, пока ты изучаешь сокровища и планируешь новые приключения с Полиной.
                  </p>
 
-                 <div className="p-4 bg-black/45 rounded-2xl border border-white/5 space-y-3.5">
+                 <div className="p-4 bg-black border border-white/5 rounded-2xl space-y-3.5 shadow-inner">
                     <h4 className="text-[9px] font-black uppercase text-amber-400 tracking-wider">Сводка по форпосту:</h4>
                     <div className="grid grid-cols-2 gap-4 text-xs font-sans">
                        <div className="flex items-center gap-2">
@@ -651,12 +656,12 @@ export default function PirateDashboard() {
         </section>
 
         {/* TABS SELECTOR */}
-        <div className="flex items-center justify-center bg-[#0a0603]/80 p-2 rounded-[2.5rem] border border-amber-500/10 backdrop-blur-sm shadow-2xl relative z-20 max-w-3xl mx-auto">
+        <div className="flex items-center justify-center bg-black/95 p-2 rounded-[2.5rem] border border-amber-500/20 backdrop-blur-sm shadow-2xl relative z-20 max-w-3xl mx-auto">
            <div className="flex items-center justify-between w-full gap-2">
              {[
                { id: 'ship', label: 'Борт фрегата', icon: <Anchor size={14} /> },
                { id: 'crew', label: 'Офицеры WANTED', icon: <Users size={14} /> },
-               { id: 'raids', label: 'Походы', icon: <Compass size={14} /> },
+               { id: 'raids', label: 'Карта походов', icon: <Compass size={14} /> },
                { id: 'chests', label: 'Сундуки сделок', icon: <Trophy size={14} /> },
              ].map(tab => (
                <button
@@ -679,7 +684,7 @@ export default function PirateDashboard() {
         <div className="relative min-h-[480px] z-10">
           <AnimatePresence mode="wait">
              
-             {/* TAB 1: SHIP (БОРТ) — Unified, highly visual tactical layout */}
+             {/* TAB 1: SHIP (БОРТ) — Unified, highly visual Captain's Console */}
              {activeTab === 'ship' && (
                 <motion.div
                   key="ship"
@@ -689,119 +694,115 @@ export default function PirateDashboard() {
                   transition={{ duration: 0.3 }}
                   className="space-y-8"
                 >
-                   {/* 3 Heavy stat & action widgets grid */}
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   {/* Captain's Steering Console Panel (Sleek black & glowing amber console) */}
+                   <div className="bg-[#050505] rounded-[3.5rem] border-2 border-amber-500/20 p-8 shadow-2xl relative overflow-hidden flex flex-col lg:flex-row gap-8 items-center justify-between min-h-[380px]">
                       
-                      {/* Card 1: Hull */}
-                      <div className="pirate-wood p-6 rounded-[2.5rem] border-amber-900/40 relative overflow-hidden flex flex-col justify-between group shadow-xl">
-                         <div className="absolute inset-0 bg-black/55 group-hover:bg-black/45 transition-colors" />
-                         <div className="relative z-10 space-y-6">
-                            <div className="flex justify-between items-center">
-                               <p className="text-[10px] font-black uppercase tracking-widest text-orange-400 flex items-center gap-1.5">
-                                  <Shield size={14} /> Прочность корпуса
-                               </p>
-                               <span className="text-[9px] font-black text-orange-400 bg-orange-950/30 px-2 py-0.5 rounded-full border border-orange-500/20">{hull}%</span>
+                      {/* Rotating ship wheel background vector */}
+                      <div className="absolute -left-16 -bottom-16 opacity-[0.04] text-amber-500 pointer-events-none animate-spin-slow">
+                         <svg width="350" height="350" viewBox="0 0 100 100" fill="currentColor">
+                           <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" fill="none"/>
+                           <circle cx="50" cy="50" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+                           {[0, 45, 90, 135, 180, 225, 270, 315].map(deg => (
+                             <line key={deg} x1="50" y1="50" x2={50 + 48 * Math.cos(deg * Math.PI / 180)} y2={50 + 48 * Math.sin(deg * Math.PI / 180)} stroke="currentColor" strokeWidth="2"/>
+                           ))}
+                         </svg>
+                      </div>
+
+                      {/* Left: Decorative console description & status indicator */}
+                      <div className="text-left space-y-4 max-w-sm z-10">
+                         <span className="text-[8px] font-black uppercase tracking-[0.3em] text-amber-500">Система Навигации</span>
+                         <h3 className="text-3xl font-black text-amber-100 uppercase tracking-tight leading-none">Приборная Панель</h3>
+                         <p className="text-xs text-amber-100/50 leading-relaxed font-sans font-medium">
+                            Эти приборы показывают текущее физическое и душевное состояние вашего корабля. Держите прочность высокой, а трюмы полными, чтобы экипаж оставался лояльным и готовым к плаваниям!
+                         </p>
+                         <div className="flex gap-2">
+                           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse mt-0.5" />
+                           <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Системы функционируют нормально</span>
+                         </div>
+                      </div>
+
+                      {/* Right: 3 Ornate Vintage Compass Gauges */}
+                      <div className="flex flex-col sm:flex-row gap-8 items-center justify-center w-full lg:w-auto z-10">
+                         
+                         {/* Dial 1: Hull */}
+                         <div className="flex flex-col items-center gap-4">
+                            <div className="w-36 h-36 rounded-full border-4 border-amber-500/20 bg-black flex flex-col items-center justify-center relative shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] group hover:border-orange-500/40 transition-colors duration-500">
+                               <div className="absolute inset-0 rounded-full bg-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                               
+                               <Shield size={24} className="text-orange-400 group-hover:scale-110 transition-transform duration-300" />
+                               <span className="text-2xl font-black text-amber-100 mt-1">{hull}%</span>
+                               <span className="text-[8px] font-black uppercase tracking-widest text-orange-400/60 mt-0.5">Корпус</span>
+                               
+                               {/* Glowing circle progress overlay */}
+                               <svg className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none p-1.5">
+                                 <circle cx="66" cy="66" r="60" className="stroke-orange-500/25 fill-none" strokeWidth="4" />
+                                 <circle cx="66" cy="66" r="60" className="stroke-orange-500 fill-none transition-all duration-700" strokeWidth="4" strokeDasharray="376" strokeDashoffset={376 - (376 * hull) / 100} strokeLinecap="round" />
+                               </svg>
                             </div>
                             
-                            {/* Circular vintage dial indicator */}
-                            <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
-                               <svg className="w-full h-full transform -rotate-90">
-                                  <circle cx="64" cy="64" r="50" className="stroke-black/50 fill-none" strokeWidth="8" />
-                                  <circle cx="64" cy="64" r="50" className="stroke-orange-500 fill-none transition-all duration-700" strokeWidth="8" strokeDasharray="314" strokeDashoffset={314 - (314 * hull) / 100} strokeLinecap="round" />
-                                </svg>
-                                <div className="absolute flex flex-col items-center">
-                                   <span className="text-3xl font-black text-amber-100">{hull}%</span>
-                                   <span className="text-[8px] font-black uppercase tracking-widest text-amber-100/40">Ок</span>
-                                </div>
-                            </div>
-
-                            <p className="text-[10px] text-center text-amber-100/40 italic">«Корпус сдерживает натиск волн и снарядов противника»</p>
-                         </div>
-                         <div className="relative z-10 mt-6 pt-4 border-t border-amber-500/10">
                             <button 
                               onClick={handleRepair}
-                              className="w-full py-4 bg-gradient-to-r from-[#2c170a] to-[#140b05] hover:from-orange-500 hover:to-orange-600 hover:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-orange-400 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-md"
+                              className="px-5 py-2.5 bg-gradient-to-r from-[#111] to-[#000] hover:from-orange-500 hover:to-orange-600 hover:text-slate-950 rounded-xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-orange-400 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-lg"
                             >
-                               <Hammer size={12} /> Заделать пробоины
+                               <Hammer size={12} /> Чинить (+10%)
                             </button>
                          </div>
-                      </div>
 
-                      {/* Card 2: Supplies */}
-                      <div className="pirate-wood p-6 rounded-[2.5rem] border-amber-900/40 relative overflow-hidden flex flex-col justify-between group shadow-xl">
-                         <div className="absolute inset-0 bg-black/55 group-hover:bg-black/45 transition-colors" />
-                         <div className="relative z-10 space-y-6">
-                            <div className="flex justify-between items-center">
-                               <p className="text-[10px] font-black uppercase tracking-widest text-sky-400 flex items-center gap-1.5">
-                                  <Package size={14} /> Припасы в трюме
-                               </p>
-                               <span className="text-[9px] font-black text-sky-400 bg-sky-950/30 px-2 py-0.5 rounded-full border border-sky-500/20">{hold}%</span>
+                         {/* Dial 2: Hold Supplies */}
+                         <div className="flex flex-col items-center gap-4">
+                            <div className="w-36 h-36 rounded-full border-4 border-amber-500/20 bg-black flex flex-col items-center justify-center relative shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] group hover:border-sky-500/40 transition-colors duration-500">
+                               <div className="absolute inset-0 rounded-full bg-sky-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                               
+                               <Package size={24} className="text-sky-400 group-hover:scale-110 transition-transform duration-300" />
+                               <span className="text-2xl font-black text-amber-100 mt-1">{hold}%</span>
+                               <span className="text-[8px] font-black uppercase tracking-widest text-sky-400/60 mt-0.5">Трюмы</span>
+                               
+                               {/* Glowing circle progress overlay */}
+                               <svg className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none p-1.5">
+                                 <circle cx="66" cy="66" r="60" className="stroke-sky-500/25 fill-none" strokeWidth="4" />
+                                 <circle cx="66" cy="66" r="60" className="stroke-sky-400 fill-none transition-all duration-700" strokeWidth="4" strokeDasharray="376" strokeDashoffset={376 - (376 * hold) / 100} strokeLinecap="round" />
+                               </svg>
                             </div>
                             
-                            {/* Circular dial indicator */}
-                            <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
-                               <svg className="w-full h-full transform -rotate-90">
-                                  <circle cx="64" cy="64" r="50" className="stroke-black/50 fill-none" strokeWidth="8" />
-                                  <circle cx="64" cy="64" r="50" className="stroke-sky-400 fill-none transition-all duration-700" strokeWidth="8" strokeDasharray="314" strokeDashoffset={314 - (314 * hold) / 100} strokeLinecap="round" />
-                                </svg>
-                                <div className="absolute flex flex-col items-center">
-                                   <span className="text-3xl font-black text-amber-100">{hold}%</span>
-                                   <span className="text-[8px] font-black uppercase tracking-widest text-amber-100/40">Полн</span>
-                                </div>
-                            </div>
-
-                            <p className="text-[10px] text-center text-amber-100/40 italic">«Еда и боеприпасы необходимы для долгих плаваний»</p>
-                         </div>
-                         <div className="relative z-10 mt-6 pt-4 border-t border-amber-500/10">
                             <button 
                               onClick={handleLoad}
-                              className="w-full py-4 bg-gradient-to-r from-[#2c170a] to-[#140b05] hover:from-sky-500 hover:to-sky-600 hover:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-sky-400 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-md"
+                              className="px-5 py-2.5 bg-gradient-to-r from-[#111] to-[#000] hover:from-sky-500 hover:to-sky-600 hover:text-slate-950 rounded-xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-sky-400 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-lg"
                             >
-                               <Package size={12} /> Пополнить припасы
+                               <Package size={12} /> Грузить (+10%)
                             </button>
                          </div>
-                      </div>
 
-                      {/* Card 3: Morale */}
-                      <div className="pirate-wood p-6 rounded-[2.5rem] border-amber-900/40 relative overflow-hidden flex flex-col justify-between group shadow-xl">
-                         <div className="absolute inset-0 bg-black/55 group-hover:bg-black/45 transition-colors" />
-                         <div className="relative z-10 space-y-6">
-                            <div className="flex justify-between items-center">
-                               <p className="text-[10px] font-black uppercase tracking-widest text-red-400 flex items-center gap-1.5">
-                                  <Heart size={14} /> Боевой дух команды
-                               </p>
-                               <span className="text-[9px] font-black text-red-400 bg-red-950/30 px-2 py-0.5 rounded-full border border-red-500/20">{morale}%</span>
+                         {/* Dial 3: Morale */}
+                         <div className="flex flex-col items-center gap-4">
+                            <div className="w-36 h-36 rounded-full border-4 border-amber-500/20 bg-black flex flex-col items-center justify-center relative shadow-[inset_0_0_20px_rgba(0,0,0,0.9)] group hover:border-red-500/40 transition-colors duration-500">
+                               <div className="absolute inset-0 rounded-full bg-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                               
+                               <Beer size={24} className="text-red-400 group-hover:scale-110 transition-transform duration-300" />
+                               <span className="text-2xl font-black text-amber-100 mt-1">{morale}%</span>
+                               <span className="text-[8px] font-black uppercase tracking-widest text-red-400/60 mt-0.5">Дух</span>
+                               
+                               {/* Glowing circle progress overlay */}
+                               <svg className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none p-1.5">
+                                 <circle cx="66" cy="66" r="60" className="stroke-red-500/25 fill-none" strokeWidth="4" />
+                                 <circle cx="66" cy="66" r="60" className="stroke-red-500 fill-none transition-all duration-700" strokeWidth="4" strokeDasharray="376" strokeDashoffset={376 - (376 * morale) / 100} strokeLinecap="round" />
+                               </svg>
                             </div>
                             
-                            {/* Circular dial indicator */}
-                            <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
-                               <svg className="w-full h-full transform -rotate-90">
-                                  <circle cx="64" cy="64" r="50" className="stroke-black/50 fill-none" strokeWidth="8" />
-                                  <circle cx="64" cy="64" r="50" className="stroke-red-500 fill-none transition-all duration-700" strokeWidth="8" strokeDasharray="314" strokeDashoffset={314 - (314 * morale) / 100} strokeLinecap="round" />
-                                </svg>
-                                <div className="absolute flex flex-col items-center">
-                                   <span className="text-3xl font-black text-amber-100">{morale}%</span>
-                                   <span className="text-[8px] font-black uppercase tracking-widest text-amber-100/40">Лоял</span>
-                                </div>
-                            </div>
-
-                            <p className="text-[10px] text-center text-amber-100/40 italic">«Высокий дух матросов предотвращает мятеж на борту»</p>
-                         </div>
-                         <div className="relative z-10 mt-6 pt-4 border-t border-amber-500/10">
                             <button 
                               onClick={handleRum}
-                              className="w-full py-4 bg-gradient-to-r from-[#2c170a] to-[#140b05] hover:from-red-500 hover:to-red-600 hover:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-red-400 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-md"
+                              className="px-5 py-2.5 bg-gradient-to-r from-[#111] to-[#000] hover:from-red-500 hover:to-red-600 hover:text-slate-950 rounded-xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-red-400 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-lg"
                             >
-                               <Beer size={12} /> Вскрыть бочку рома
+                               <Beer size={12} /> Налить Рома (+15%)
                             </button>
                          </div>
+
                       </div>
 
                    </div>
 
-                   {/* Gossip & Weather (Parchment styled cards) */}
+                   {/* Gossip & Weather (Pure Black Glass cards) */}
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="relative p-6 rounded-[2.5rem] bg-gradient-to-br from-[#1c0b05] to-[#0a0402] border-2 border-red-500/20 text-left shadow-lg overflow-hidden">
+                      <div className="relative p-6 rounded-[2.5rem] bg-black border-2 border-red-500/20 text-left shadow-lg overflow-hidden">
                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-5 pointer-events-none" />
                          <div className="flex justify-between items-center border-b border-red-500/10 pb-3 mb-4">
                             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400 flex items-center gap-1.5">
@@ -815,12 +816,12 @@ export default function PirateDashboard() {
                             </div>
                             <div className="space-y-1">
                                <h4 className="text-sm font-bold text-amber-100">Буря в Карибском море</h4>
-                               <p className="text-[10px] text-amber-100/50 italic leading-relaxed">Волны высотой до 8 метров. Кораблям не рекомендуется покидать бухту Тортуга до полного отлива во избежание крушения.</p>
+                               <p className="text-[10px] text-amber-100/50 italic leading-relaxed font-medium">Волны высотой до 8 метров. Кораблям не рекомендуется покидать бухту Тортуга до полного отлива во избежание крушения.</p>
                             </div>
                          </div>
                       </div>
 
-                      <div className="relative p-6 rounded-[2.5rem] bg-gradient-to-br from-[#1c1305] to-[#0a0702] border-2 border-amber-500/15 text-left shadow-lg overflow-hidden">
+                      <div className="relative p-6 rounded-[2.5rem] bg-black border-2 border-amber-500/15 text-left shadow-lg overflow-hidden">
                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-5 pointer-events-none" />
                          <div className="flex justify-between items-center border-b border-amber-500/10 pb-3 mb-4">
                             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500/50 flex items-center gap-1.5">
@@ -834,7 +835,7 @@ export default function PirateDashboard() {
                             </div>
                             <div className="space-y-1">
                                <h4 className="text-sm font-bold text-amber-100">Испанский Золотой Галеон</h4>
-                               <p className="text-[10px] text-amber-100/50 italic leading-relaxed">Матросы шепчутся, что груженый до краев галеон бросил якорь неподалеку. Это отличный шанс наполнить казну золотом!</p>
+                               <p className="text-[10px] text-amber-100/50 italic leading-relaxed font-medium">Матросы шепчутся, что груженый до краев галеон бросил якорь неподалеку. Это отличный шанс наполнить казну золотом!</p>
                             </div>
                          </div>
                       </div>
@@ -843,7 +844,7 @@ export default function PirateDashboard() {
                 </motion.div>
              )}
 
-             {/* TAB 2: OFFICERS (ЭКИПАЖ) — WANTED posters layout */}
+             {/* TAB 2: OFFICERS (ЭКИПАЖ) — WANTED posters layout (Sleek Dark plaques) */}
              {activeTab === 'crew' && (
                 <motion.div
                   key="crew"
@@ -857,7 +858,7 @@ export default function PirateDashboard() {
                       {officers.map(officer => (
                          <div 
                            key={officer.id}
-                           className="relative rounded-[2.5rem] p-6 border-4 border-[#5a3e2b] flex flex-col justify-between overflow-hidden shadow-2xl group bg-gradient-to-b from-[#24150c] to-[#0f0905]"
+                           className="relative rounded-[2.5rem] p-6 border-4 border-amber-500/20 flex flex-col justify-between overflow-hidden shadow-2xl group bg-gradient-to-b from-[#111111] to-[#050505]"
                          >
                             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors z-0" />
                             
@@ -872,7 +873,7 @@ export default function PirateDashboard() {
                                </div>
 
                                {/* Portrait frame */}
-                               <div className="w-24 h-24 rounded-[2rem] bg-[#140b05] border-4 border-[#5a3e2b] flex items-center justify-center text-5xl shadow-[0_0_20px_rgba(0,0,0,0.8)] relative group-hover:rotate-3 transition-transform duration-300">
+                               <div className="w-24 h-24 rounded-[2rem] bg-black border-4 border-amber-500/20 flex items-center justify-center text-5xl shadow-[0_0_20px_rgba(0,0,0,0.8)] relative group-hover:rotate-3 transition-transform duration-300">
                                   {officer.avatar}
                                </div>
 
@@ -884,7 +885,7 @@ export default function PirateDashboard() {
                                <p className="text-[10px] text-amber-100/50 italic leading-relaxed px-2 font-medium">"{officer.description}"</p>
 
                                {/* Custom loyalty bar with anchors */}
-                               <div className="w-full space-y-2 px-2 bg-black/35 p-4 rounded-2xl border border-white/5">
+                               <div className="w-full space-y-2 px-2 bg-black/55 p-4 rounded-2xl border border-white/5">
                                   <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-amber-500/40">
                                      <span className="flex items-center gap-1"><HeartHandshake size={10} /> Преданность</span>
                                      <span className={cn(officer.loyalty > 70 ? "text-emerald-400" : "text-yellow-400")}>{officer.loyalty}%</span>
@@ -896,14 +897,14 @@ export default function PirateDashboard() {
                                      <span>Статус: <strong className={officer.statusColor}>{officer.status}</strong></span>
                                      <span>Награда: {officer.wantedReward}</span>
                                   </div>
-                               </div>
+                                </div>
                             </div>
 
                             {/* Award premium button */}
                             <div className="relative z-10 mt-6 pt-4 border-t border-amber-500/10">
                                <button 
                                  onClick={() => rewardOfficer(officer.id)}
-                                 className="w-full py-4 bg-gradient-to-r from-[#201309] to-[#0c0804] hover:from-amber-500 hover:to-amber-600 hover:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-amber-400 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-md"
+                                 className="w-full py-4 bg-gradient-to-r from-[#111111] to-[#050505] hover:from-amber-500 hover:to-amber-600 hover:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-amber-400 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-md"
                                >
                                   <Coins size={12} /> Жалованье (25 золотых)
                                </button>
@@ -914,7 +915,7 @@ export default function PirateDashboard() {
                 </motion.div>
              )}
 
-             {/* TAB 3: EXPEDITIONS (РЕЙДЫ) — Styled like epic old parchment scrolls */}
+             {/* TAB 3: EXPEDITIONS (РЕЙДЫ) — Epic Interactive Captain's Voyages Map */}
              {activeTab === 'raids' && (
                 <motion.div
                   key="raids"
@@ -922,146 +923,237 @@ export default function PirateDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-8"
+                  className="space-y-6"
                 >
-                   {Object.values(raidStates).includes('completed') && (
-                     <div className="flex justify-center">
-                       <button 
-                         onClick={resetAllRaids}
-                         className="px-6 py-3 bg-gradient-to-r from-[#24150c] to-[#0f0905] border-2 border-amber-500/30 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:border-amber-500 hover:bg-slate-800 transition-all cursor-pointer flex items-center gap-1.5 shadow-lg active:scale-95"
-                       >
-                         <Compass size={12} className="animate-spin-slow text-amber-400" /> Обновить Карты Экспедиций
-                       </button>
-                     </div>
-                   )}
+                   {/* Interactive Map Layout Container */}
+                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                      
+                      {/* Left: Sea Archipelago Navigation Map (60% width) */}
+                      <div className="lg:col-span-8 bg-[#04090e] border-2 border-cyan-500/20 rounded-[3rem] p-6 relative overflow-hidden min-h-[400px] shadow-[inset_0_0_40px_rgba(0,255,200,0.08)] flex flex-col justify-between group">
+                         
+                         {/* Nautical grid lines and decorations */}
+                         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,204,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,204,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
+                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-dashed border-cyan-500/5 rounded-full pointer-events-none" />
+                         
+                         {/* Compass Rose vector element */}
+                         <div className="absolute bottom-6 left-6 text-cyan-500/10 pointer-events-none">
+                            <Compass size={120} className="animate-spin-slow" />
+                         </div>
 
-                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {raids.map(raid => {
-                         const state = raidStates[raid.id] || 'ready';
-                         const timer = raidTimers[raid.id] || 0;
-                         const progress = timer > 0 ? ((raid.duration - timer) / raid.duration) * 100 : 0;
-                         const canAffordCrew = crewCount >= raid.crewRequired;
+                         {/* Title overlay */}
+                         <div className="relative z-10 flex justify-between items-start">
+                            <div>
+                               <span className="text-[8px] font-black uppercase tracking-[0.25em] text-cyan-400">Навигационная Карта</span>
+                               <h3 className="text-xl font-bold uppercase tracking-tight text-amber-100">Карта Плаваний</h3>
+                            </div>
+                            <span className="text-[8px] font-black text-cyan-400 bg-cyan-950/40 px-2.5 py-1 rounded-lg border border-cyan-500/20">Архипелаг Грез</span>
+                         </div>
 
-                         return (
-                            <div 
-                              key={raid.id}
-                              className={cn(
-                                "relative rounded-[2.5rem] p-6 border-4 flex flex-col justify-between overflow-hidden group transition-all bg-gradient-to-b from-[#1a0f07] to-[#090502]",
-                                state === 'completed' ? "border-emerald-500/20 opacity-70" : "border-[#5a3e2b] hover:border-amber-500/40"
-                              )}
-                            >
-                               <div className="absolute inset-0 bg-black/45 z-0" />
+                         {/* Interactive Island Nodes (Dotted lines leading to Tortuga at bottom center) */}
+                         <div className="absolute inset-0 pointer-events-auto">
+                            
+                            {/* Tortuga Base Point (Bottom Center) */}
+                            <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 flex flex-col items-center">
+                               <div className="w-10 h-10 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-sm shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+                                  ⚓
+                                </div>
+                                <span className="text-[8px] font-black uppercase text-amber-400 tracking-wider mt-1 bg-black/80 px-2 py-0.5 rounded border border-amber-500/25">Тортуга</span>
+                            </div>
+
+                            {/* Node 1: Остров Сладких Грез (Top Left) */}
+                            <div className="absolute top-[18%] left-[18%]">
+                               <svg className="absolute top-10 left-10 w-[200px] h-[150px] pointer-events-none opacity-20 overflow-visible">
+                                  <path d="M 0,0 C 50,50 100,100 150,150" fill="none" stroke="#22d3ee" strokeWidth="2" strokeDasharray="6 6" />
+                               </svg>
                                
-                               <div className="relative z-10 space-y-6 text-left">
-                                  {/* Header area with custom states badge */}
-                                  <div className="flex justify-between items-start">
-                                     <div className="w-14 h-14 rounded-2xl bg-[#140b05] border-2 border-[#5a3e2b] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-                                        {raid.icon}
+                               <button 
+                                 onClick={() => setSelectedRaidId(1)}
+                                 className={cn(
+                                   "p-3 rounded-2xl border-2 flex flex-col items-center gap-1 hover:scale-105 transition-all shadow-xl cursor-pointer relative",
+                                   selectedRaidId === 1 
+                                     ? "bg-cyan-950/80 border-cyan-400 text-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.3)]" 
+                                     : "bg-black/90 border-cyan-500/20 text-cyan-500/60 hover:border-cyan-400"
+                                 )}
+                               >
+                                  {raidStates[1] === 'sailing' && (
+                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-bounce">⛵</span>
+                                  )}
+                                  {raidStates[1] === 'claim' && (
+                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-ping">🪙</span>
+                                  )}
+                                  <span className="text-xl">🌴</span>
+                                  <span className="text-[9px] font-black uppercase tracking-wider">Грезы</span>
+                               </button>
+                            </div>
+
+                            {/* Node 2: Мыс Страстных Объятий (Middle Right) */}
+                            <div className="absolute top-[35%] right-[22%]">
+                               <button 
+                                 onClick={() => setSelectedRaidId(2)}
+                                 className={cn(
+                                   "p-3 rounded-2xl border-2 flex flex-col items-center gap-1 hover:scale-105 transition-all shadow-xl cursor-pointer relative",
+                                   selectedRaidId === 2 
+                                     ? "bg-cyan-950/80 border-cyan-400 text-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.3)]" 
+                                     : "bg-black/90 border-cyan-500/20 text-cyan-500/60 hover:border-cyan-400"
+                                 )}
+                               >
+                                  {raidStates[2] === 'sailing' && (
+                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-bounce">⛵</span>
+                                  )}
+                                  {raidStates[2] === 'claim' && (
+                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-ping">🪙</span>
+                                  )}
+                                  <span className="text-xl">🌋</span>
+                                  <span className="text-[9px] font-black uppercase tracking-wider">Объятия</span>
+                               </button>
+                            </div>
+
+                            {/* Node 3: Бухта Нежных Записок (Top Right) */}
+                            <div className="absolute top-[12%] right-[12%]">
+                               <button 
+                                 onClick={() => setSelectedRaidId(3)}
+                                 className={cn(
+                                   "p-3 rounded-2xl border-2 flex flex-col items-center gap-1 hover:scale-105 transition-all shadow-xl cursor-pointer relative",
+                                   selectedRaidId === 3 
+                                     ? "bg-cyan-950/80 border-cyan-400 text-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.3)]" 
+                                     : "bg-black/90 border-cyan-500/20 text-cyan-500/60 hover:border-cyan-400"
+                                 )}
+                               >
+                                  {raidStates[3] === 'sailing' && (
+                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-bounce">⛵</span>
+                                  )}
+                                  {raidStates[3] === 'claim' && (
+                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-ping">🪙</span>
+                                  )}
+                                  <span className="text-xl">📜</span>
+                                  <span className="text-[9px] font-black uppercase tracking-wider">Записки</span>
+                               </button>
+                            </div>
+
+                         </div>
+
+                         {/* Bottom status helper */}
+                         <div className="relative z-10 mt-auto flex justify-between text-[9px] font-black uppercase tracking-widest text-cyan-400/60 pointer-events-none">
+                            <span>🗺️ Выбери порт на карте для отправки</span>
+                            <span>Тортуга Форпост</span>
+                         </div>
+                      </div>
+
+                      {/* Right: Logbook & Captain's orders (40% width) */}
+                      <div className="lg:col-span-4 bg-black border-2 border-amber-500/20 rounded-[3rem] p-6 flex flex-col justify-between min-h-[400px] shadow-2xl relative">
+                         <div className="space-y-6 text-left">
+                            
+                            {/* Mission Header */}
+                            <div className="border-b border-amber-500/25 pb-3">
+                               <div className="flex justify-between items-center">
+                                  <span className="text-[8px] font-black uppercase text-amber-500 tracking-[0.25em]">Судовой Журнал</span>
+                                  <span className="text-[8px] font-bold text-amber-500 bg-amber-950/20 px-2 py-0.5 rounded border border-amber-500/20">Порт #{activeRaid.id}</span>
+                               </div>
+                               <h3 className="text-2xl font-bold uppercase tracking-tight text-amber-100 mt-1">{activeRaid.name}</h3>
+                            </div>
+
+                            {/* Details list */}
+                            <div className="space-y-4">
+                               <div className="flex gap-3">
+                                  <div className="w-12 h-12 rounded-xl bg-black border border-amber-500/20 flex items-center justify-center shrink-0">
+                                     {activeRaid.icon}
+                                  </div>
+                                  <div>
+                                     <p className="text-[10px] text-amber-100/50 font-bold uppercase tracking-wider">Описание:</p>
+                                     <p className="text-xs text-amber-100/80 italic">"{activeRaid.desc}"</p>
+                                  </div>
+                               </div>
+
+                               <div className="p-4 bg-[#0a0a0a] rounded-2xl border border-white/5 space-y-2 text-xs">
+                                  <div className="flex justify-between">
+                                     <span className="text-amber-100/40">Награда:</span>
+                                     <strong className="text-amber-400 font-bold flex items-center gap-1"><Coins size={12} />+{activeRaid.reward} дублонов</strong>
+                                  </div>
+                                  <div className="flex justify-between">
+                                     <span className="text-amber-100/40">Время пути:</span>
+                                     <strong className="text-amber-100 font-black">{activeRaid.duration} сек</strong>
+                                  </div>
+                                  <div className="flex justify-between">
+                                     <span className="text-amber-100/40">Матросы:</span>
+                                     <strong className="text-amber-100 font-black">{activeRaid.crewRequired} чел</strong>
+                                  </div>
+                               </div>
+
+                               <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-2xl text-[10px] text-amber-100/80 leading-relaxed font-sans relative overflow-hidden">
+                                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-[0.03] pointer-events-none" />
+                                  <span className="font-black uppercase text-amber-400 tracking-wider text-[8px] block mb-0.5">Суть экспедиции:</span>
+                                  {activeRaid.mission}
+                               </div>
+
+                               {/* Sailing progress bar WITH SLIDING SHIP MINI-ANIMATION */}
+                               {raidStates[activeRaid.id] === 'sailing' && (
+                                  <div className="space-y-2 pt-2 relative">
+                                     <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-amber-400">
+                                        <span className="flex items-center gap-1"><Clock size={10} /> До причала: {raidTimers[activeRaid.id] || 0} сек</span>
+                                        <span>{Math.round(((activeRaid.duration - (raidTimers[activeRaid.id] || 0)) / activeRaid.duration) * 100)}%</span>
                                      </div>
                                      
-                                     <div className="text-right">
-                                        <span className={cn(
-                                          "text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border",
-                                          state === 'ready' && "text-cyan-400 bg-cyan-950/30 border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.15)]",
-                                          state === 'sailing' && "text-amber-400 bg-amber-950/30 border-amber-500/20 animate-pulse",
-                                          state === 'claim' && "text-orange-400 bg-orange-950/30 border-orange-500/20 animate-bounce shadow-[0_0_15px_rgba(249,115,22,0.2)]",
-                                          state === 'completed' && "text-emerald-400 bg-emerald-950/30 border-emerald-500/20"
-                                        )}>
-                                           {state === 'ready' && 'К отплытию'}
-                                           {state === 'sailing' && 'В походе'}
-                                           {state === 'claim' && 'Добыча ждет!'}
-                                           {state === 'completed' && 'Завершено'}
-                                        </span>
-                                        <p className="text-[8px] text-amber-500/35 font-black uppercase tracking-widest mt-2">Карта #{raid.id}</p>
+                                     <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden border border-amber-950/20 p-0.5 relative">
+                                        <motion.div 
+                                          className="absolute top-1/2 -translate-y-1/2 text-xs z-20"
+                                          style={{ left: `${Math.min(92, Math.max(2, ((activeRaid.duration - (raidTimers[activeRaid.id] || 0)) / activeRaid.duration) * 100))}%` }}
+                                        >
+                                          ⛵
+                                        </motion.div>
+                                        <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)]" style={{ width: `${((activeRaid.duration - (raidTimers[activeRaid.id] || 0)) / activeRaid.duration) * 100}%` }} />
                                      </div>
                                   </div>
-
-                                  {/* Content */}
-                                  <div className="space-y-1">
-                                     <h4 className="text-xl font-bold text-amber-100 leading-tight uppercase tracking-tight">{raid.name}</h4>
-                                     <p className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
-                                        <Coins size={12} /> Награда: +{raid.reward} дублонов
-                                     </p>
-                                     <p className="text-[10px] text-amber-100/40 italic leading-relaxed pt-1 font-medium">"{raid.desc}"</p>
-                                  </div>
-
-                                  {/* Goal parchment styled container */}
-                                  <div className="p-3.5 bg-black/45 rounded-2xl border border-white/5 text-[10px] text-amber-100/80 font-sans leading-relaxed relative overflow-hidden">
-                                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-[0.03] pointer-events-none" />
-                                     <div className="relative z-10 flex items-start gap-2">
-                                        <CheckCircle2 size={12} className="text-amber-400 shrink-0 mt-0.5 animate-pulse" />
-                                        <div>
-                                           <span className="font-black uppercase text-amber-400 tracking-wider text-[8px] block mb-0.5">Суть экспедиции:</span>
-                                           {raid.mission}
-                                        </div>
-                                     </div>
-                                  </div>
-
-                                  {/* Sailing progress bar WITH SLIDING SHIP MINI-ANIMATION */}
-                                  {state === 'sailing' && (
-                                     <div className="space-y-2 pt-2 relative">
-                                        <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-amber-400">
-                                           <span className="flex items-center gap-1"><Clock size={10} /> До причала: {timer} сек</span>
-                                           <span>{Math.round(progress)}%</span>
-                                        </div>
-                                        
-                                        <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden border border-amber-950/20 p-0.5 relative">
-                                           {/* Sliding ship indicator */}
-                                           <motion.div 
-                                             className="absolute top-1/2 -translate-y-1/2 text-xs z-20"
-                                             style={{ left: `${Math.min(92, Math.max(2, progress))}%` }}
-                                           >
-                                             ⛵
-                                           </motion.div>
-                                           <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)]" style={{ width: `${progress}%` }} />
-                                        </div>
-                                     </div>
-                                  )}
-                               </div>
-
-                               {/* Action Button */}
-                               <div className="relative z-10 mt-6 pt-4 border-t border-amber-500/10">
-                                  {state === 'ready' && (
-                                     <button 
-                                       onClick={() => startRaid(raid.id, raid.crewRequired, raid.duration)}
-                                       disabled={!canAffordCrew}
-                                       className={cn(
-                                         "w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 border-2 shadow-lg",
-                                         canAffordCrew 
-                                           ? "bg-gradient-to-r from-amber-500 to-amber-600 border-amber-400 text-slate-950 hover:scale-[1.02] shadow-[0_0_20px_rgba(245,158,11,0.25)]" 
-                                           : "bg-[#140c06] text-slate-500 border-slate-900 cursor-not-allowed"
-                                       )}
-                                     >
-                                        <Play size={10} /> {canAffordCrew ? `Отправить судно (${raid.crewRequired} матросов)` : `Не хватает команды (нужно ${raid.crewRequired})`}
-                                     </button>
-                                  )}
-                                  {state === 'sailing' && (
-                                     <div className="w-full py-3.5 bg-[#110c05] border border-amber-500/10 rounded-2xl text-[9px] font-black text-amber-400/60 uppercase tracking-widest text-center flex items-center justify-center gap-1.5">
-                                        <Anchor size={12} className="animate-spin-slow text-amber-500/60" /> Корабль режет волны...
-                                     </div>
-                                  )}
-                                  {state === 'claim' && (
-                                     <button 
-                                       onClick={() => claimRaidReward(raid.id, raid.reward)}
-                                       className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[9px] border-2 border-orange-400 shadow-[0_0_25px_rgba(245,158,11,0.4)] animate-bounce cursor-pointer flex items-center justify-center gap-1.5"
-                                     >
-                                        <Coins size={12} /> Разгрузить добычу!
-                                     </button>
-                                  )}
-                                  {state === 'completed' && (
-                                     <div className="w-full py-3.5 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl text-[9px] font-black text-emerald-400 uppercase tracking-widest text-center flex items-center justify-center gap-1.5">
-                                        <UserCheck size={12} /> Поход Успешно Завершен
-                                     </div>
-                                  )}
-                               </div>
+                               )}
                             </div>
-                         );
-                      })}
+
+                         </div>
+
+                         {/* Action Buttons */}
+                         <div className="pt-6 border-t border-amber-500/10">
+                            {raidStates[activeRaid.id] === 'ready' || !raidStates[activeRaid.id] ? (
+                               <button 
+                                 onClick={() => startRaid(activeRaid.id, activeRaid.crewRequired, activeRaid.duration)}
+                                 disabled={crewCount < activeRaid.crewRequired}
+                                 className={cn(
+                                   "w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 border-2 shadow-lg",
+                                   crewCount >= activeRaid.crewRequired 
+                                     ? "bg-gradient-to-r from-amber-500 to-amber-600 border-amber-400 text-slate-950 hover:scale-[1.02] shadow-[0_0_20px_rgba(245,158,11,0.25)]" 
+                                     : "bg-[#111] text-slate-500 border-slate-900 cursor-not-allowed"
+                                 )}
+                               >
+                                  <Play size={10} /> {crewCount >= activeRaid.crewRequired ? `Поднять Паруса!` : `Не хватает команды (нужно ${activeRaid.crewRequired})`}
+                               </button>
+                            ) : null}
+
+                            {raidStates[activeRaid.id] === 'sailing' && (
+                               <div className="w-full py-3.5 bg-black border border-amber-500/10 rounded-2xl text-[9px] font-black text-amber-400/60 uppercase tracking-widest text-center flex items-center justify-center gap-1.5">
+                                  <Anchor size={12} className="animate-spin-slow text-amber-500/60" /> Фрегат режет волны...
+                               </div>
+                            )}
+
+                            {raidStates[activeRaid.id] === 'claim' && (
+                               <button 
+                                 onClick={() => claimRaidReward(activeRaid.id, activeRaid.reward)}
+                                 className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[9px] border-2 border-orange-400 shadow-[0_0_25px_rgba(245,158,11,0.4)] animate-bounce cursor-pointer flex items-center justify-center gap-1.5"
+                               >
+                                  <Coins size={12} /> Разгрузить добычу!
+                               </button>
+                            )}
+
+                            {raidStates[activeRaid.id] === 'completed' && (
+                               <div className="w-full py-3.5 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl text-[9px] font-black text-emerald-400 uppercase tracking-widest text-center flex items-center justify-center gap-1.5">
+                                  <UserCheck size={12} /> Поход Успешно Завершен
+                               </div>
+                            )}
+                         </div>
+
+                      </div>
+
                    </div>
                 </motion.div>
              )}
 
-             {/* TAB 4: MYSTERY CHESTS (СУНДУКИ СДЕЛКИ) — The brand-new pirate merchant chest gameplay */}
+             {/* TAB 4: MYSTERY CHESTS (СУНДУКИ СДЕЛКИ) */}
              {activeTab === 'chests' && (
                 <motion.div
                   key="chests"
@@ -1155,8 +1247,8 @@ export default function PirateDashboard() {
                                        className={cn(
                                          "w-full py-3 rounded-xl font-black uppercase tracking-widest text-[8px] flex items-center justify-center gap-1.5 border transition-all",
                                          canAfford 
-                                           ? "bg-[#1d0e05] border-amber-500/20 text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 group-hover:border-amber-400" 
-                                           : "bg-[#140c06] text-slate-500 border-slate-900"
+                                           ? "bg-[#111111] border-amber-500/20 text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 group-hover:border-amber-400" 
+                                           : "bg-[#050505] text-slate-500 border-slate-900"
                                        )}
                                      >
                                         <Coins size={10} /> {merchant.cost} дублонов
