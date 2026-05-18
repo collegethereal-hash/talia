@@ -4,41 +4,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, Skull, Anchor, Sword, Scroll, 
-  Map as MapIcon, Compass, Coins, Heart,
-  Lock, Calendar, Sparkles, Trash2, Mail,
-  Ship, Wind, User, Edit3, Save, X, Flame, Target, Trophy, Crown, Eye, Crosshair, Shield, CheckCircle, Info, Beer, Wrench, History, Navigation
+  Compass, Coins, Heart, 
+  Ship, Wind, X, Flame, Target, Trophy, Crown, Eye, Crosshair, Shield, CheckCircle, Info, Beer, Wrench, History, Navigation
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useData } from '@/components/DataProvider';
-import CharacterScene from './CharacterScene';
 
 export default function PirateProfile() {
-  const { currentUser, profiles, capsules } = useData();
-  const [localProfiles, setLocalProfiles] = useState(profiles);
-  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('Внешность');
-  const [customizations, setCustomizations] = useState<Record<string, any>>({
-    Grinch: { skinColor: '#e0ac69', hat: 'captain', clothes: 'jacket', weapon: 'saber', accessory: 'eyepatch' },
-    default: { skinColor: '#ffdbac', hat: 'bandana', clothes: 'vest', weapon: 'none', accessory: 'none' }
-  });
-  
-  const [profileStats, setProfileStats] = useState<Record<string, any>>({
-    Grinch: { strength: 75, agility: 90, luck: 60, charisma: 100, exp: 5 },
-    default: { strength: 50, agility: 50, luck: 50, charisma: 50, exp: 5 }
-  });
-
-  const [profileAbilities, setProfileAbilities] = useState<Record<string, any>>({
-    Grinch: [
-      { id: 'fire_shot', name: 'Огненный Залп', desc: 'Повышает урон от пушек на 20%', level: 3, unlocked: true, icon: Flame },
-      { id: 'strong_hull', name: 'Крепкий Корпус', desc: 'Снижает входящий урон на 15%', level: 1, unlocked: true, icon: Shield },
-      { id: 'kraken_call', name: 'Зов Кракена', desc: 'Призывает щупальца на помощь', level: 0, unlocked: false, price: 500, icon: Anchor }
-    ],
-    default: [
-      { id: 'fire_shot', name: 'Огненный Залп', desc: 'Повышает урон от пушек на 20%', level: 1, unlocked: true, icon: Flame },
-      { id: 'strong_hull', name: 'Крепкий Корпус', desc: 'Снижает входящий урон на 15%', level: 0, unlocked: false, price: 300, icon: Shield }
-    ]
-  });
-
+  const { currentUser } = useData();
   const [showShipDetails, setShowShipDetails] = useState(false);
   
   // Local Stats from Store/Gameplay
@@ -49,12 +22,6 @@ export default function PirateProfile() {
   const [shipHealth, setShipHealth] = useState(45); // e.g. 45% damaged
 
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
-  const [isCreatingPoster, setIsCreatingPoster] = useState(false);
-  const [bounty, setBounty] = useState(1000000);
-  const [hasBlackSpot, setHasBlackSpot] = useState(false);
-  const [posterAlias, setPosterAlias] = useState('');
-  const [posterCrime, setPosterCrime] = useState('');
-  const [posterStamp, setPosterStamp] = useState<string | null>(null);
   
   const [compassRotation, setCompassRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
@@ -87,6 +54,7 @@ export default function PirateProfile() {
         setCompassResult(compassOptions[index]);
      }, 3000);
   };
+
   const [equippedParts, setEquippedParts] = useState({
     hull: 'h1',
     sails: 's1',
@@ -141,13 +109,6 @@ export default function PirateProfile() {
     if (savedSunk) setSunkShips(parseInt(savedSunk, 10));
     else setSunkShips(Math.floor(Math.random() * 20) + 5); 
   }, []);
-
-  const selectedProfile = selectedProfileId ? localProfiles[selectedProfileId] : null;
-
-  const handleSaveProfile = (id: string) => {
-    // Simulated save functionality
-    console.log("Saving changes to profile", id);
-  };
 
   // Determine Ship based on inventory
   const getFlagship = () => {
@@ -258,7 +219,7 @@ export default function PirateProfile() {
            </div>
         </section>
 
-        {/* SECTION 2: CREW STATS (From Store) */}
+        {/* SECTION 2: CREW STATS */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-6">
            <StatBlock icon={<Coins size={28} className="text-amber-400" />} label="Казна (Золото)" value={gold} color="amber" />
            <StatBlock icon={<Users size={28} className="text-blue-400" />} label="Размер Команды" value={crew} color="blue" />
@@ -266,86 +227,7 @@ export default function PirateProfile() {
            <StatBlock icon={<Trophy size={28} className="text-emerald-400" />} label="Артефактов" value={inventory.length} color="emerald" />
         </section>
 
-        {/* SECTION 3: THE TWO COMMANDERS */}
-        <section className="space-y-8 pt-8">
-           <div className="flex items-center justify-center gap-6">
-              <div className="h-1 flex-1 bg-gradient-to-r from-transparent to-amber-500/20" />
-              <h2 className="text-4xl font-black uppercase tracking-widest text-amber-500 text-center flex items-center gap-4">
-                 <Crown size={32} /> Командование <Crown size={32} />
-              </h2>
-              <div className="h-1 flex-1 bg-gradient-to-l from-transparent to-amber-500/20" />
-           </div>
-
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              {Object.values(localProfiles).map((profile: any, index: number) => {
-                 const isGrinch = profile.id === 'Grinch';
-                 const accentColor = isGrinch ? 'border-red-500/30 text-red-400' : 'border-purple-500/30 text-purple-400';
-                 const bgAccent = isGrinch ? 'bg-red-500/5' : 'bg-purple-500/5';
-                 
-                 return (
-                   <motion.div
-                     key={profile.id}
-                     whileHover={{ y: -10 }}
-                     onClick={() => setSelectedProfileId(profile.id)}
-                     className="group cursor-pointer"
-                   >
-                     <div className={cn("relative p-8 bg-black/40 rounded-[3rem] border-4 shadow-2xl backdrop-blur-md transition-all overflow-hidden", accentColor, bgAccent)}>
-                        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/nautical-map.png')]" />
-                        
-                        <div className="relative z-10 flex flex-col items-center text-center space-y-6">
-                           
-                           <div className="relative">
-                              <div className={cn("absolute -inset-4 border-2 rounded-full border-dashed animate-spin-slow opacity-20", accentColor)} />
-                              <div className={cn("w-40 h-40 rounded-full border-4 shadow-2xl overflow-hidden bg-slate-900", accentColor)}>
-                                 <img 
-                                   src={isGrinch ? "https://api.dicebear.com/7.x/avataaars/svg?seed=Grinch&beard=0.5" : "https://api.dicebear.com/7.x/avataaars/svg?seed=Cindy&hair=long"} 
-                                   alt={profile.name} 
-                                   className="w-full h-full object-cover" 
-                                 />
-                              </div>
-                              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-slate-900 border-2 rounded-full whitespace-nowrap shadow-xl">
-                                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-400">
-                                   {isGrinch ? 'Кровавый Капитан' : 'Квартирмейстер'}
-                                 </p>
-                              </div>
-                           </div>
-
-                           <div className="space-y-2 pt-4">
-                              <h3 className="text-4xl font-black uppercase tracking-tighter text-slate-100 drop-shadow-lg">{profile.name}</h3>
-                              <p className="text-slate-400 italic text-sm border-b border-white/10 pb-4">"{profile.pref || 'Молчание — золото.'}"</p>
-                           </div>
-
-                           <div className="grid grid-cols-2 gap-4 w-full">
-                              <div className="bg-black/40 p-3 rounded-2xl border border-white/5 text-left">
-                                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-2"><Sword size={12}/> Оружие</p>
-                                 <p className="font-bold text-slate-300 text-sm">{isGrinch ? 'Двойные Сабли' : 'Мушкет & Кинжал'}</p>
-                              </div>
-                              <div className="bg-black/40 p-3 rounded-2xl border border-white/5 text-left">
-                                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-2"><Target size={12}/> Роль в бою</p>
-                                 <p className="font-bold text-slate-300 text-sm">{isGrinch ? 'Авангард / Абордаж' : 'Снайпер / Тактик'}</p>
-                              </div>
-                              <div className="bg-black/40 p-3 rounded-2xl border border-white/5 text-left">
-                                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-2"><Heart size={12}/> Слабость</p>
-                                 <p className="font-bold text-slate-300 text-sm">{isGrinch ? 'Её глаза' : 'Его улыбка'}</p>
-                              </div>
-                              <div className="bg-black/40 p-3 rounded-2xl border border-white/5 text-left">
-                                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-2"><Eye size={12}/> Награда за голову</p>
-                                 <p className="font-bold text-amber-400 text-sm">Бесценно</p>
-                              </div>
-                           </div>
-
-                           <button className="w-full py-4 mt-4 bg-slate-800 text-amber-500 rounded-xl font-black uppercase tracking-widest text-[10px] group-hover:bg-amber-500 group-hover:text-slate-900 transition-colors shadow-lg">
-                              Изучить дело
-                           </button>
-                        </div>
-                     </div>
-                   </motion.div>
-                 );
-              })}
-           </div>
-        </section>
-
-        {/* SECTION 4: PIRATE CODE & FUN FACTS (NEW) */}
+        {/* SECTION 4: PIRATE CODE & FUN FACTS */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-8">
            {/* Pirate Code */}
            <div className="p-8 md:p-10 rounded-[3rem] bg-[#2a1a10] border-4 border-amber-900/50 shadow-2xl relative overflow-hidden pirate-wood">
@@ -355,7 +237,7 @@ export default function PirateProfile() {
                     <Scroll size={32} className="text-amber-500" />
                     <h2 className="text-3xl font-black uppercase tracking-tighter text-amber-400">Пиратский Кодекс</h2>
                  </div>
-                 <ul className="space-y-4">
+                 <ul className="space-y-4 text-left">
                     <li className="flex gap-4 items-start text-amber-100/80 leading-relaxed">
                        <span className="font-black text-amber-500 text-xl">I.</span>
                        <p>Капитан Гринч всегда прав. Если Капитан не прав, смотри Статью II.</p>
@@ -374,11 +256,11 @@ export default function PirateProfile() {
                     </li>
                  </ul>
                  <div className="pt-6 mt-6 border-t border-amber-900/50 flex justify-between items-end opacity-50">
-                    <p className="font-serif italic text-sm">Подписано кровью,<br/> Богдан и Полина</p>
+                    <p className="font-serif italic text-sm text-left">Подписано кровью,<br/> Богдан и Полина</p>
                     <div className="w-16 h-16 rounded-full border-2 border-red-900 flex items-center justify-center text-red-900 rotate-12">
                       Печать
                     </div>
-                 </div>
+                  </div>
               </div>
            </div>
 
@@ -415,97 +297,62 @@ export default function PirateProfile() {
            </div>
         </section>
 
-        {/* SECTION 5: TIME CAPSULES (Buried Treasures) */}
-        <section className="space-y-8 pt-16 border-t-4 border-amber-500/10">
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                 <div className="p-4 bg-amber-900/40 rounded-2xl text-amber-400 border border-amber-500/20 shadow-inner">
-                    <Lock size={28} />
+        {/* SECTION 6: PIRATE COMPASS */}
+        <section className="space-y-8 pt-16 border-t-4 border-emerald-500/10 pb-20">
+           <div className="flex items-center justify-center">
+             <h2 className="text-4xl font-black uppercase tracking-tighter text-emerald-500 flex items-center gap-4 drop-shadow-lg">
+               <Navigation size={36} /> Компас Желаний <Navigation size={36} />
+             </h2>
+           </div>
+           
+           <div className="max-w-2xl mx-auto p-12 bg-[#020a17] rounded-[4rem] border-4 border-emerald-900/50 shadow-[0_0_100px_rgba(16,185,129,0.1)] relative overflow-hidden flex flex-col items-center text-center">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.1)_0%,transparent_100%)] pointer-events-none" />
+              <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/nautical-map.png')]" />
+              
+              <p className="text-emerald-100/60 font-serif italic mb-10 relative z-10 max-w-sm">"Сломанный компас? Нет... Он указывает не на север, а на то, чего вы хотите больше всего прямо сейчас."</p>
+              
+              <div className="relative w-64 h-64 mb-10 group cursor-pointer" onClick={handleCompassSpin}>
+                 {/* Outer Ring */}
+                 <div className="absolute inset-0 rounded-full border-8 border-[#0a1a10] shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]" />
+                 <div className="absolute -inset-4 rounded-full border-2 border-emerald-900/30 border-dashed animate-[spin_10s_linear_infinite] pointer-events-none" />
+                 
+                 {/* Engraved Details */}
+                 <div className="absolute inset-4 rounded-full border border-emerald-500/10" />
+                 
+                 {/* The Compass Needle */}
+                 <div className="absolute inset-0 flex items-center justify-center transition-transform duration-[3000ms] ease-out" style={{ transform: `rotate(${compassRotation}deg)` }}>
+                    <div className="h-56 w-6 bg-gradient-to-b from-red-600 via-red-900 to-slate-900 rounded-full shadow-2xl relative">
+                       <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-b-[32px] border-l-transparent border-r-transparent border-b-red-500" />
+                       <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-t-[32px] border-l-transparent border-r-transparent border-t-slate-800" />
+                    </div>
                  </div>
-                 <div>
-                   <h2 className="text-4xl font-black uppercase tracking-tighter text-amber-100">Закопанные Клады</h2>
-                   <p className="text-[10px] font-black uppercase tracking-widest text-amber-500/50">Сундуки, ожидающие своего часа</p>
+                 
+                 {/* Center Pin */}
+                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-amber-500 rounded-full border-4 border-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.5)] z-20 flex items-center justify-center">
+                    <div className="w-3 h-3 bg-amber-200 rounded-full" />
                  </div>
               </div>
+              
+              <div className="h-24 flex items-center justify-center relative z-10 w-full">
+                 <AnimatePresence mode="wait">
+                    {compassResult && (
+                      <motion.div key={compassResult} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="p-4 bg-emerald-900/20 rounded-2xl border border-emerald-500/30 w-full backdrop-blur-sm">
+                         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/50 mb-1">Стрелка указала на:</p>
+                         <h3 className="text-xl font-black text-emerald-100">{compassResult}</h3>
+                      </motion.div>
+                    )}
+                 </AnimatePresence>
+              </div>
+              
+              <button 
+                onClick={handleCompassSpin}
+                disabled={isSpinning}
+                className="mt-4 px-8 py-4 w-full bg-emerald-600 text-slate-950 font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-500 transition-colors shadow-[0_0_30px_rgba(16,185,129,0.3)] disabled:opacity-50 disabled:cursor-not-allowed relative z-10"
+              >
+                {isSpinning ? 'Судьба решает...' : 'Раскрутить Компас'}
+              </button>
            </div>
-
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {capsules.map(capsule => (
-                <div key={capsule.id} className="p-8 bg-black/60 border-2 border-amber-900/50 rounded-3xl flex items-center gap-6 group hover:border-amber-500/50 transition-colors cursor-pointer relative overflow-hidden">
-                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                   
-                   <div className="w-20 h-20 bg-[#1a1a1a] border-4 border-amber-900/50 rounded-2xl flex items-center justify-center text-amber-500 shadow-xl group-hover:scale-110 transition-transform relative shrink-0">
-                      <div className="absolute top-1 right-1"><Lock size={12} className="text-amber-500/40" /></div>
-                      <MapIcon size={32} />
-                   </div>
-                   
-                   <div className="space-y-2 relative z-10">
-                      <h4 className="text-2xl font-bold text-amber-100 leading-tight">{capsule.title}</h4>
-                      <p className="text-xs font-black uppercase tracking-widest text-amber-500/60 flex items-center gap-2">
-                        <Calendar size={14} /> Откроется: {capsule.unlockDate}
-                      </p>
-                   </div>
-                </div>
-              ))}
-           </div>
-         </section>
-
-         {/* SECTION 6: PIRATE COMPASS (NEW) */}
-         <section className="space-y-8 pt-16 border-t-4 border-emerald-500/10 pb-20">
-            <div className="flex items-center justify-center">
-              <h2 className="text-4xl font-black uppercase tracking-tighter text-emerald-500 flex items-center gap-4 drop-shadow-lg">
-                <Navigation size={36} /> Компас Желаний <Navigation size={36} />
-              </h2>
-            </div>
-            
-            <div className="max-w-2xl mx-auto p-12 bg-[#020a17] rounded-[4rem] border-4 border-emerald-900/50 shadow-[0_0_100px_rgba(16,185,129,0.1)] relative overflow-hidden flex flex-col items-center text-center">
-               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.1)_0%,transparent_100%)] pointer-events-none" />
-               <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/nautical-map.png')]" />
-               
-               <p className="text-emerald-100/60 font-serif italic mb-10 relative z-10 max-w-sm">"Сломанный компас? Нет... Он указывает не на север, а на то, чего вы хотите больше всего прямо сейчас."</p>
-               
-               <div className="relative w-64 h-64 mb-10 group cursor-pointer" onClick={handleCompassSpin}>
-                  {/* Outer Ring */}
-                  <div className="absolute inset-0 rounded-full border-8 border-[#0a1a10] shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]" />
-                  <div className="absolute -inset-4 rounded-full border-2 border-emerald-900/30 border-dashed animate-[spin_10s_linear_infinite] pointer-events-none" />
-                  
-                  {/* Engraved Details */}
-                  <div className="absolute inset-4 rounded-full border border-emerald-500/10" />
-                  
-                  {/* The Compass Needle */}
-                  <div className="absolute inset-0 flex items-center justify-center transition-transform duration-[3000ms] ease-out" style={{ transform: `rotate(${compassRotation}deg)` }}>
-                     <div className="h-56 w-6 bg-gradient-to-b from-red-600 via-red-900 to-slate-900 rounded-full shadow-2xl relative">
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-b-[32px] border-l-transparent border-r-transparent border-b-red-500" />
-                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-t-[32px] border-l-transparent border-r-transparent border-t-slate-800" />
-                     </div>
-                  </div>
-                  
-                  {/* Center Pin */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-amber-500 rounded-full border-4 border-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.5)] z-20 flex items-center justify-center">
-                     <div className="w-3 h-3 bg-amber-200 rounded-full" />
-                  </div>
-               </div>
-               
-               <div className="h-24 flex items-center justify-center relative z-10 w-full">
-                  <AnimatePresence mode="wait">
-                     {compassResult && (
-                       <motion.div key={compassResult} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="p-4 bg-emerald-900/20 rounded-2xl border border-emerald-500/30 w-full backdrop-blur-sm">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/50 mb-1">Стрелка указала на:</p>
-                          <h3 className="text-xl font-black text-emerald-100">{compassResult}</h3>
-                       </motion.div>
-                     )}
-                  </AnimatePresence>
-               </div>
-               
-               <button 
-                 onClick={handleCompassSpin}
-                 disabled={isSpinning}
-                 className="mt-4 px-8 py-4 w-full bg-emerald-600 text-slate-950 font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-500 transition-colors shadow-[0_0_30px_rgba(16,185,129,0.3)] disabled:opacity-50 disabled:cursor-not-allowed relative z-10"
-               >
-                 {isSpinning ? 'Судьба решает...' : 'Раскрутить Компас'}
-               </button>
-            </div>
-         </section>
+        </section>
       </div>
 
       {/* MODALS */}
@@ -543,8 +390,6 @@ export default function PirateProfile() {
                    {/* Left Column: Ship 3D View & Health */}
                    <div className="w-full lg:w-1/3 border-r border-sky-500/20 p-8 flex flex-col items-center justify-center space-y-8 bg-sky-900/5">
                       <div className="relative w-full h-64 flex flex-col items-center justify-center opacity-90 scale-90">
-                         {/* Ship Top-Down Schematic View */}
-                         
                          {/* Nose / Figurehead */}
                          <div className={cn("absolute top-0 w-16 h-16 rounded-t-full border-4 flex items-center justify-center z-20 shadow-[0_0_30px_currentColor] transition-colors", shipHealth < 30 ? 'border-red-500 bg-red-950 text-red-500 animate-pulse' : 'border-sky-400 bg-sky-950 text-sky-400')}>
                             {currentFigurehead.icon}
@@ -574,9 +419,9 @@ export default function PirateProfile() {
                          </div>
                          <div className="h-4 bg-slate-900 rounded-full overflow-hidden border border-sky-500/10">
                             <motion.div 
-                              initial={{ width: 0 }} 
-                              animate={{ width: `${shipHealth}%` }} 
-                              className={cn("h-full transition-all duration-1000", shipHealth > 50 ? "bg-emerald-500" : "bg-red-500")}
+                               initial={{ width: 0 }} 
+                               animate={{ width: `${shipHealth}%` }} 
+                               className={cn("h-full transition-all duration-1000", shipHealth > 50 ? "bg-emerald-500" : "bg-red-500")}
                             />
                          </div>
 
@@ -621,55 +466,55 @@ export default function PirateProfile() {
                    <div className="w-full lg:w-1/3 bg-black/60 p-8 overflow-y-auto custom-scrollbar border-l border-sky-500/20">
                       <AnimatePresence mode="wait">
                         {activeSlot ? (
-                          <motion.div key="inventory" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                            <div className="flex items-center justify-between border-b border-sky-500/20 pb-4 mb-6">
-                               <div className="flex items-center gap-3">
-                                  <Wrench size={24} className="text-sky-400" />
-                                  <h3 className="text-xl font-black uppercase tracking-widest text-sky-100">Склад Деталей</h3>
-                               </div>
-                               <button onClick={() => setActiveSlot(null)} className="text-[10px] font-black uppercase tracking-widest text-sky-500/60 hover:text-sky-300">Назад</button>
-                            </div>
-                            
-                            <div className="space-y-4">
-                               {PARTS_DB[activeSlot].map(part => (
-                                 <div 
-                                   key={part.id} 
-                                   onClick={() => setEquippedParts(prev => ({...prev, [activeSlot]: part.id}))}
-                                   className={cn(
-                                     "p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-4 group",
-                                     equippedParts[activeSlot as keyof typeof equippedParts] === part.id 
-                                       ? "bg-sky-500/20 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]" 
-                                       : "bg-black/40 border-sky-500/10 hover:border-sky-500/40"
-                                   )}
-                                 >
-                                    <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors", equippedParts[activeSlot as keyof typeof equippedParts] === part.id ? "bg-sky-500 text-slate-900" : "bg-sky-500/10 text-sky-400 group-hover:bg-sky-500/20")}>
-                                       {part.icon}
-                                    </div>
-                                    <div className="flex-1">
-                                       <h4 className="text-sm font-bold text-sky-100">{part.name}</h4>
-                                       <p className="text-xs text-sky-200/60 italic mb-2">"{part.desc}"</p>
-                                       <div className="flex flex-wrap gap-2 mb-2">
-                                          <span className="text-[8px] uppercase font-black px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-md border border-emerald-500/20">+{part.pros}</span>
-                                          <span className="text-[8px] uppercase font-black px-2 py-0.5 bg-red-500/10 text-red-400 rounded-md border border-red-500/20">-{part.cons}</span>
-                                       </div>
-                                       <p className="text-[9px] font-black uppercase tracking-widest text-amber-400">{part.stat}</p>
-                                    </div>
-                                    {equippedParts[activeSlot as keyof typeof equippedParts] === part.id && (
-                                      <CheckCircle size={20} className="text-sky-400" />
+                          <motion.div key="inventory" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4 text-left">
+                             <div className="flex items-center justify-between border-b border-sky-500/20 pb-4 mb-6">
+                                <div className="flex items-center gap-3">
+                                   <Wrench size={24} className="text-sky-400" />
+                                   <h3 className="text-xl font-black uppercase tracking-widest text-sky-100">Склад Деталей</h3>
+                                </div>
+                                <button onClick={() => setActiveSlot(null)} className="text-[10px] font-black uppercase tracking-widest text-sky-500/60 hover:text-sky-300">Назад</button>
+                             </div>
+                             
+                             <div className="space-y-4">
+                                {PARTS_DB[activeSlot].map(part => (
+                                  <div 
+                                    key={part.id} 
+                                    onClick={() => setEquippedParts(prev => ({...prev, [activeSlot]: part.id}))}
+                                    className={cn(
+                                      "p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-4 group",
+                                      equippedParts[activeSlot as keyof typeof equippedParts] === part.id 
+                                        ? "bg-sky-500/20 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.2)]" 
+                                        : "bg-black/40 border-sky-500/10 hover:border-sky-500/40"
                                     )}
-                                 </div>
-                               ))}
-                            </div>
+                                  >
+                                     <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors", equippedParts[activeSlot as keyof typeof equippedParts] === part.id ? "bg-sky-500 text-slate-900" : "bg-sky-500/10 text-sky-400 group-hover:bg-sky-500/20")}>
+                                        {part.icon}
+                                     </div>
+                                     <div className="flex-1">
+                                        <h4 className="text-sm font-bold text-sky-100">{part.name}</h4>
+                                        <p className="text-xs text-sky-200/60 italic mb-2">"{part.desc}"</p>
+                                        <div className="flex flex-wrap gap-2 mb-2">
+                                           <span className="text-[8px] uppercase font-black px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-md border border-emerald-500/20">+{part.pros}</span>
+                                           <span className="text-[8px] uppercase font-black px-2 py-0.5 bg-red-500/10 text-red-400 rounded-md border border-red-500/20">-{part.cons}</span>
+                                        </div>
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-amber-400">{part.stat}</p>
+                                     </div>
+                                     {equippedParts[activeSlot as keyof typeof equippedParts] === part.id && (
+                                       <CheckCircle size={20} className="text-sky-400" />
+                                     )}
+                                  </div>
+                                ))}
+                             </div>
                           </motion.div>
                         ) : (
-                          <motion.div key="history" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                          <motion.div key="history" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-left">
                             <div className="flex items-center gap-3 border-b border-sky-500/20 pb-4 mb-6">
                                <History size={24} className="text-amber-400" />
                                <h3 className="text-2xl font-black uppercase tracking-widest text-amber-100">Журнал Боёв</h3>
                              </div>
                                <div className="space-y-4">
                                   {[
-                                    { date: 'Сегодня', title: 'Побег от Королевского Флота', desc: 'Ушли в шторм, порвали два паруса.', dmg: '-15% корпуса', type: 'escape' },
+                                    { date: 'Сегодня', title: 'Побез от Королевского Флота', desc: 'Ушли в шторм, порвали два паруса.', dmg: '-15% корпуса', type: 'escape' },
                                     { date: 'Вчера', title: 'Ограбление Галеона', desc: 'Захватили груз специй и рома.', dmg: '+2500 золота', type: 'victory' },
                                     { date: '3 дня назад', title: 'Нападение Кракена', desc: 'Щупальца пробили нижнюю палубу.', dmg: '-40% корпуса', type: 'danger' },
                                     { date: 'Неделю назад', title: 'Столкновение с Рифом', desc: 'Штурман был пьян.', dmg: '-10% корпуса', type: 'danger' },
@@ -694,308 +539,6 @@ export default function PirateProfile() {
 
                 </div>
              </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* 2. Commander Detail Modal (RPG Character Menu) */}
-      <AnimatePresence>
-        {selectedProfileId && selectedProfile && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProfileId(null)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
-            <motion.div initial={{ scale: 0.9, opacity: 0, y: 50 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 50 }}
-              className="relative w-full max-w-5xl bg-[#0a0a0a] p-8 rounded-[3rem] border-8 border-amber-900/40 shadow-[0_0_100px_rgba(245,158,11,0.2)] overflow-hidden"
-            >
-               <button onClick={() => setSelectedProfileId(null)} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-100 transition-colors z-20"><X size={32} /></button>
-               {/* Decorative Glowing Orbs */}
-               <div className="absolute top-1/4 left-1/4 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-               <div className="absolute bottom-1/4 right-1/4 w-60 h-60 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
-               <div className="absolute top-1/2 right-1/3 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
-               <div className="flex flex-col md:flex-row gap-8 relative z-10 h-[600px]">
-                  {/* Left Side: 3D Avatar */}
-                  <div className="w-full md:w-2/5 bg-gradient-to-b from-[#020a17] to-[#0a0a0a] rounded-3xl overflow-hidden border-4 border-amber-500/30 relative group shadow-[0_0_30px_rgba(245,158,11,0.15)] h-full transition-colors hover:border-amber-500/50">
-                     <CharacterScene customization={customizations[selectedProfile.id] || customizations.default} />
-                     
-                     {/* Level Badge */}
-                     <div className="absolute top-4 left-4 bg-gradient-to-r from-amber-500 to-red-600 text-slate-950 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-lg flex items-center gap-1">
-                        <Flame size={12} /> Уровень 99
-                     </div>
-
-                     <div className="absolute inset-0 bg-gradient-to-t from-[#020a17] via-transparent to-transparent opacity-80 pointer-events-none" />
-                     <div className="absolute bottom-6 left-6 right-6 text-center pointer-events-none">
-                        <h3 className="text-4xl font-black text-amber-100 uppercase drop-shadow-lg tracking-tighter">{selectedProfile.name}</h3>
-                        <p className="text-amber-500 text-xs font-black uppercase tracking-widest mt-1 flex items-center justify-center gap-2">
-                           <Skull size={12} />
-                           {selectedProfile.id === 'Grinch' ? 'Грозный Капитан' : 'Прекрасная Сирена'}
-                           <Skull size={12} />
-                        </p>
-                     </div>
-                  </div>
-
-                  {/* Right Side: RPG Controls */}
-                  <div className="flex-1 space-y-6 flex flex-col h-full">
-                     <div className="flex justify-between items-center border-b border-amber-900/30 pb-4 shrink-0">
-                        <h2 className="text-3xl font-black text-amber-100 uppercase tracking-tighter">Каюта Командира</h2>
-                     </div>
-
-                     {/* Tabs */}
-                     <div className="flex gap-2 border-b border-amber-900/20 pb-2 overflow-x-auto shrink-0">
-                        {['Внешность', 'Характеристики', 'Способности', 'Заслуги'].map(tab => (
-                           <button
-                              key={tab}
-                              onClick={() => setActiveTab(tab)}
-                              className={cn(
-                                 "px-4 py-2 text-xs font-black uppercase tracking-widest transition-colors whitespace-nowrap",
-                                 activeTab === tab ? "text-amber-400 border-b-2 border-amber-500" : "text-slate-500 hover:text-slate-300"
-                              )}
-                           >
-                              {tab}
-                           </button>
-                        ))}
-                     </div>
-
-                     {/* Tab Content */}
-                     <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
-                        {activeTab === 'Внешность' && (
-                           <div className="space-y-4">
-                              {/* Hats */}
-                              <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
-                                 <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Головной убор</label>
-                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    {[
-                                       { id: 'none', name: 'Нет', icon: X },
-                                       { id: 'captain', name: 'Треуголка', icon: Trophy },
-                                       { id: 'bandana', name: 'Бандана', icon: Wind },
-                                       { id: 'crown', name: 'Корона', icon: Crown }
-                                    ].map(h => (
-                                       <button
-                                          key={h.id}
-                                          onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), hat: h.id}}))}
-                                          className={cn("p-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center gap-2", (customizations[selectedProfile.id]?.hat || 'none') === h.id ? "bg-amber-500/20 border-amber-500 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50 hover:text-slate-200")}
-                                       >
-                                          <h.icon size={16} className={(customizations[selectedProfile.id]?.hat || 'none') === h.id ? "text-amber-400" : "text-slate-500"} />
-                                          <span>{h.name}</span>
-                                       </button>
-                                    ))}
-                                 </div>
-                              </div>
-
-                              {/* Clothes */}
-                              <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
-                                 <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Одежда</label>
-                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    {[
-                                       { id: 'none', name: 'Нет', icon: X },
-                                       { id: 'jacket', name: 'Камзол', icon: User },
-                                       { id: 'vest', name: 'Жилет', icon: User },
-                                       { id: 'armor', name: 'Доспех', icon: Shield }
-                                    ].map(c => (
-                                       <button
-                                          key={c.id}
-                                          onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), clothes: c.id}}))}
-                                          className={cn("p-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center gap-2", (customizations[selectedProfile.id]?.clothes || 'none') === c.id ? "bg-amber-500/20 border-amber-500 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50 hover:text-slate-200")}
-                                       >
-                                          <c.icon size={16} className={(customizations[selectedProfile.id]?.clothes || 'none') === c.id ? "text-amber-400" : "text-slate-500"} />
-                                          <span>{c.name}</span>
-                                       </button>
-                                    ))}
-                                 </div>
-                              </div>
-
-                              {/* Weapons */}
-                              <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
-                                 <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Оружие</label>
-                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    {[
-                                       { id: 'none', name: 'Нет', icon: X },
-                                       { id: 'saber', name: 'Сабля', icon: Sword },
-                                       { id: 'hook', name: 'Крюк', icon: Anchor },
-                                       { id: 'pistol', name: 'Пистоль', icon: Crosshair }
-                                    ].map(w => (
-                                       <button
-                                          key={w.id}
-                                          onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), weapon: w.id}}))}
-                                          className={cn("p-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center gap-2", (customizations[selectedProfile.id]?.weapon || 'none') === w.id ? "bg-amber-500/20 border-amber-500 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50 hover:text-slate-200")}
-                                       >
-                                          <w.icon size={16} className={(customizations[selectedProfile.id]?.weapon || 'none') === w.id ? "text-amber-400" : "text-slate-500"} />
-                                          <span>{w.name}</span>
-                                       </button>
-                                    ))}
-                                 </div>
-                              </div>
-
-                              {/* Accessories */}
-                              <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20">
-                                 <label className="text-[10px] font-black uppercase text-amber-500 mb-2 block">Аксессуары</label>
-                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    {[
-                                       { id: 'none', name: 'Нет', icon: X },
-                                       { id: 'eyepatch', name: 'Повязка', icon: Eye }
-                                    ].map(a => (
-                                       <button
-                                          key={a.id}
-                                          onClick={() => setCustomizations(prev => ({...prev, [selectedProfile.id]: {...(prev[selectedProfile.id] || prev.default), accessory: a.id}}))}
-                                          className={cn("p-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center gap-2", (customizations[selectedProfile.id]?.accessory || 'none') === a.id ? "bg-amber-500/20 border-amber-500 text-amber-100 shadow-[0_0_15px_rgba(245,158,11,0.2)]" : "bg-black/60 border-amber-900/30 text-slate-400 hover:border-amber-500/50 hover:text-slate-200")}
-                                       >
-                                          <a.icon size={16} className={(customizations[selectedProfile.id]?.accessory || 'none') === a.id ? "text-amber-400" : "text-slate-500"} />
-                                          <span>{a.name}</span>
-                                       </button>
-                                    ))}
-                                 </div>
-                              </div>
-                           </div>
-                        )}
-
-                        {activeTab === 'Характеристики' && (
-                           <div className="space-y-4">
-                              <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
-                                 <div className="flex justify-between items-center mb-4">
-                                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Характеристики</h4>
-                                    <span className="text-[10px] font-black uppercase text-slate-500">Очки опыта: {profileStats[selectedProfile.id]?.exp || 0}</span>
-                                 </div>
-                                 <div className="space-y-4">
-                                    {[
-                                       { id: 'strength', name: 'Сила', color: 'bg-red-500', icon: Sword },
-                                       { id: 'agility', name: 'Ловкость', color: 'bg-emerald-500', icon: Wind },
-                                       { id: 'luck', name: 'Удача', color: 'bg-blue-500', icon: Sparkles },
-                                       { id: 'charisma', name: 'Харизма', color: 'bg-amber-500', icon: Crown }
-                                    ].map(stat => {
-                                       const val = profileStats[selectedProfile.id]?.[stat.id] || 50;
-                                       const exp = profileStats[selectedProfile.id]?.exp || 0;
-                                       return (
-                                          <div key={stat.id} className="flex items-center justify-between gap-4">
-                                             <div className="flex items-center gap-2 w-24">
-                                                <stat.icon size={14} className="text-slate-500" />
-                                                <span className="text-xs font-bold text-slate-300">{stat.name}</span>
-                                             </div>
-                                             <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                                                <div className={cn("h-full", stat.color)} style={{ width: `${val}%` }} />
-                                             </div>
-                                             <span className="text-sm font-bold text-amber-400 w-8 text-right">{val}</span>
-                                             <button 
-                                                onClick={() => {
-                                                   if (exp > 0 && val < 100) {
-                                                      setProfileStats(prev => ({
-                                                         ...prev,
-                                                         [selectedProfile.id]: {
-                                                            ...prev[selectedProfile.id],
-                                                            [stat.id]: Math.min(100, val + 5),
-                                                            exp: exp - 1
-                                                         }
-                                                      }));
-                                                   }
-                                                }}
-                                                className={cn("w-6 h-6 rounded-full flex items-center justify-center transition-colors font-bold", exp > 0 && val < 100 ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-slate-900" : "bg-slate-800 text-slate-600 cursor-not-allowed")}
-                                             >
-                                                +
-                                             </button>
-                                          </div>
-                                       );
-                                    })}
-                                 </div>
-                              </div>
-                           </div>
-                        )}
-
-                        {activeTab === 'Способности' && (
-                           <div className="space-y-4">
-                              <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
-                                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-4">Боевые Умения</h4>
-                                 <div className="space-y-4">
-                                    {(profileAbilities[selectedProfile.id] || profileAbilities.default).map((ability: any) => (
-                                       <div key={ability.id} className={cn("flex items-center gap-4 p-3 bg-black/60 rounded-xl border transition-colors", ability.unlocked ? "border-amber-900/20" : "border-red-900/20 opacity-70")}>
-                                          <ability.icon size={20} className={ability.unlocked ? "text-amber-400" : "text-slate-600"} />
-                                          <div className="flex-1">
-                                             <h5 className="text-sm font-bold text-amber-100 flex items-center gap-2">
-                                                {ability.name}
-                                                {!ability.unlocked && <Lock size={12} className="text-red-500" />}
-                                             </h5>
-                                             <p className="text-xs text-slate-400">{ability.desc}</p>
-                                          </div>
-                                          {ability.unlocked ? (
-                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs font-black text-amber-500">Ур. {ability.level}</span>
-                                                <button 
-                                                   onClick={() => {
-                                                      const exp = profileStats[selectedProfile.id]?.exp || 0;
-                                                      if (exp >= 2) {
-                                                         setProfileAbilities(prev => ({
-                                                            ...prev,
-                                                            [selectedProfile.id]: prev[selectedProfile.id].map((a: any) => a.id === ability.id ? {...a, level: a.level + 1} : a)
-                                                         }));
-                                                         setProfileStats(prev => ({
-                                                            ...prev,
-                                                            [selectedProfile.id]: {...prev[selectedProfile.id], exp: exp - 2}
-                                                         }));
-                                                      }
-                                                   }}
-                                                   className={cn("w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs", (profileStats[selectedProfile.id]?.exp || 0) >= 2 ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-slate-900" : "bg-slate-800 text-slate-600 cursor-not-allowed")}
-                                                >
-                                                   +
-                                                </button>
-                                             </div>
-                                          ) : (
-                                             <button 
-                                                onClick={() => {
-                                                   if (gold >= ability.price) {
-                                                      setGold(prev => prev - ability.price);
-                                                      setProfileAbilities(prev => ({
-                                                         ...prev,
-                                                         [selectedProfile.id]: prev[selectedProfile.id].map((a: any) => a.id === ability.id ? {...a, unlocked: true, level: 1} : a)
-                                                      }));
-                                                   }
-                                                }}
-                                                className={cn("px-3 py-1 text-[10px] font-black uppercase rounded-lg border transition-colors", gold >= ability.price ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 hover:bg-emerald-500 hover:text-slate-900" : "bg-slate-800 border-slate-700 text-slate-600 cursor-not-allowed")}
-                                             >
-                                                {gold >= ability.price ? `Купить (${ability.price} 🪙)` : `Нужно ${ability.price} 🪙`}
-                                             </button>
-                                          )}
-                                       </div>
-                                    ))}
-                                 </div>
-                              </div>
-                           </div>
-                        )}
-
-                        {activeTab === 'Заслуги' && (
-                           <div className="space-y-4">
-                              <div className="bg-black/40 p-6 rounded-2xl border border-amber-900/20">
-                                 <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 mb-4">Пиратские Достижения</h4>
-                                 <div className="space-y-4">
-                                    <div className="flex items-center gap-4 p-3 bg-black/60 rounded-xl border border-emerald-500/20">
-                                       <Trophy size={20} className="text-emerald-500" />
-                                       <div className="flex-1">
-                                          <h5 className="text-sm font-bold text-amber-100">Гроза Морей</h5>
-                                          <p className="text-xs text-slate-400">Потоплено 50 кораблей</p>
-                                       </div>
-                                       <CheckCircle size={16} className="text-emerald-500" />
-                                    </div>
-                                    <div className="flex items-center gap-4 p-3 bg-black/60 rounded-xl border border-amber-900/20 opacity-50">
-                                       <Trophy size={20} className="text-slate-500" />
-                                       <div className="flex-1">
-                                          <h5 className="text-sm font-bold text-amber-100">Золотой Кракен</h5>
-                                          <p className="text-xs text-slate-400">Собрать 10,000,000 золота</p>
-                                       </div>
-                                       <Lock size={16} className="text-slate-500" />
-                                    </div>
-                                 </div>
-                              </div>
-                           </div>
-                        )}
-                     </div>
-
-                     {/* Motto Section (Fixed at bottom) */}
-                     <div className="bg-black/40 p-4 rounded-xl border border-amber-900/20 relative group shrink-0">
-                        <div className="flex justify-between items-center mb-1">
-                           <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Девиз</h4>
-                           <Edit3 size={12} className="text-amber-500/50 group-hover:text-amber-500 cursor-pointer" />
-                        </div>
-                        <p className="text-amber-100/80 italic font-serif text-sm">"{selectedProfile.pref || 'Молчание — золото.'}"</p>
-                     </div>
-                  </div>
-               </div>
-            </motion.div>
           </div>
         )}
       </AnimatePresence>
@@ -1028,7 +571,7 @@ function ModuleSlot({ title, icon, item, stat, onClick, isActive }: any) {
         "p-4 rounded-2xl border transition-all cursor-pointer flex items-center gap-4 group",
         isActive 
           ? "bg-sky-500/20 border-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.2)]" 
-          : "bg-sky-900/10 border-sky-500/20 hover:border-sky-500/50 hover:bg-sky-500/5"
+          : "bg-sky-900/10 border-sky-500/20 hover:border-sky-500/55 hover:bg-sky-500/5"
       )}
     >
        <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center transition-transform", isActive ? "bg-sky-500 text-slate-900 scale-110" : "bg-sky-500/10 text-sky-400 group-hover:scale-110")}>
