@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Anchor, Shield, Hammer, Package, Beer, 
   CloudLightning, Scroll, Wind, Coins, CheckCircle2,
   Sparkles, Send, MessageCircle, RefreshCw, Trash2,
-  User, Volume2, ShieldAlert
+  User, Volume2, ShieldAlert, Settings
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useData } from "@/components/DataProvider";
@@ -194,15 +195,30 @@ export default function PirateDashboard() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-10 space-y-12">
         
         {/* HEADER BLOCK */}
-        <header className="flex flex-col md:flex-row justify-between items-center gap-6 border-b-2 border-amber-500/20 pb-8">
-           <div className="text-center md:text-left space-y-2 w-full">
-              <div className="flex items-center justify-center md:justify-start gap-2.5 text-amber-500/70 uppercase text-[11px] font-black tracking-[0.4em]">
+        <header className="flex flex-row justify-between items-center gap-6 border-b-2 border-amber-500/20 pb-8">
+           <div className="text-left space-y-2">
+              <div className="flex items-center justify-start gap-2.5 text-amber-500/70 uppercase text-[11px] font-black tracking-[0.4em]">
                  <Anchor size={14} className="text-amber-500" />
-                 <span>Капитанский Мостик · Тортуга</span>
+                 <span>Капитанский Мостик · ТОРТУГА</span>
               </div>
-              <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-400 to-amber-700 drop-shadow-[0_2px_15px_rgba(245,158,11,0.35)]">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-400 to-amber-700 drop-shadow-[0_2px_15px_rgba(245,158,11,0.35)]">
                  Бухта Тортуга
               </h1>
+           </div>
+
+           {/* Beautiful Theme Changer / Admin Panel Switcher */}
+           <div className="shrink-0 z-20">
+             <Link href="/admin">
+               <motion.button
+                 whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(245, 158, 11, 0.45)" }}
+                 whileTap={{ scale: 0.95 }}
+                 className="flex items-center gap-2 px-4 py-2.5 sm:px-6 sm:py-3.5 bg-gradient-to-r from-amber-950/40 to-amber-900/20 hover:from-amber-500 hover:to-amber-600 border border-amber-500/30 hover:border-amber-300 hover:text-slate-950 rounded-2xl transition-all duration-300 shadow-lg cursor-pointer font-sans font-black"
+               >
+                 <Settings size={15} className="animate-spin-slow text-amber-500 hover:text-slate-950" />
+                 <span className="text-[10px] uppercase tracking-widest hidden sm:inline text-amber-500 hover:text-slate-950">Сменить тему (Talia)</span>
+                 <span className="text-[9px] uppercase tracking-widest sm:hidden text-amber-500 hover:text-slate-950">Talia</span>
+               </motion.button>
+             </Link>
            </div>
         </header>
 
@@ -222,8 +238,8 @@ export default function PirateDashboard() {
                  )}
               </div>
 
-              {/* TABS SELECTOR (Left-aligned, sitting beautifully in the gap under the 3D model) */}
-              <div className="flex items-center justify-start bg-black/95 p-2 rounded-[2rem] border border-amber-500/20 backdrop-blur-sm shadow-2xl relative z-20 w-full max-w-xl mr-auto">
+              {/* TABS SELECTOR (Centered perfectly under the 3D diorama model) */}
+              <div className="flex items-center justify-center bg-black/95 p-2 rounded-[2rem] border border-amber-500/20 backdrop-blur-sm shadow-2xl relative z-20 w-full max-w-xl mx-auto">
                  <div className="flex items-center justify-between w-full gap-2">
                    {[
                      { id: 'ship', label: 'Борт фрегата', icon: <Anchor size={16} /> },
