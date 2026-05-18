@@ -221,7 +221,7 @@ export default function PirateDashboard() {
           return o;
         }
         showNotif(`💰 Премия выдана! Преданность ${o.name} возросла!`);
-        return { ...o, loyalty: Math.min(100, o.loyalty + 15), status: 'Счастлив', statusColor: 'text-emerald-400' };
+        return { ...o, loyalty: Math.min(100, o.loyalty + 15), status: 'Счастлив', statusColor: 'text-emerald-400 font-bold' };
       }
       return o;
     });
@@ -308,13 +308,6 @@ export default function PirateDashboard() {
     const newStates = { ...raidStates, [id]: 'completed' as const };
     saveRaidStates(newStates);
     showNotif(`🪙 Добыча собрана! Казна пополнена на +${reward} дублонов!`);
-  };
-
-  const resetAllRaids = () => {
-    const newStates = { 1: 'ready' as const, 2: 'ready' as const, 3: 'ready' as const };
-    saveRaidStates(newStates);
-    setRaidTimers({});
-    showNotif('🗺️ Карты обновлены, новые рейды доступны капитан!');
   };
 
   // DYNAMIC MYSTERY CHESTS MERCHANT LOGIC CONFIGURATION
@@ -413,8 +406,8 @@ export default function PirateDashboard() {
     <div className="relative min-h-screen bg-[#000000] text-amber-100 font-serif overflow-x-hidden selection:bg-amber-500/30 pb-32">
       
       {/* Ambient background glows */}
-      <div className="absolute top-[-150px] left-[-150px] w-[600px] h-[600px] bg-amber-600/5 rounded-full blur-[140px] pointer-events-none z-0" />
-      <div className="absolute bottom-[50px] right-[-150px] w-[700px] h-[700px] bg-red-600/5 rounded-full blur-[150px] pointer-events-none z-0" />
+      <div className="absolute top-[-150px] left-[-150px] w-[600px] h-[600px] bg-amber-600/10 rounded-full blur-[140px] pointer-events-none z-0" />
+      <div className="absolute bottom-[50px] right-[-150px] w-[700px] h-[700px] bg-red-600/10 rounded-full blur-[150px] pointer-events-none z-0" />
       
       {/* Wood pattern Overlay */}
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-[0.05] pointer-events-none z-0" />
@@ -426,10 +419,10 @@ export default function PirateDashboard() {
             initial={{ opacity: 0, y: -30, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -30, scale: 0.9 }}
-            className="fixed top-6 left-1/2 -translate-x-1/2 z-[500] bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 px-8 py-4 rounded-full font-black text-sm shadow-[0_0_40px_rgba(245,158,11,0.5)] border border-amber-200/30 flex items-center gap-3 backdrop-blur-md"
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[500] bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 px-10 py-5 rounded-full font-black text-sm sm:text-base shadow-[0_0_50px_rgba(245,158,11,0.6)] border border-amber-200/30 flex items-center gap-3.5 backdrop-blur-md"
           >
-            <CheckCircle2 size={18} className="text-slate-950" />
-            <span className="tracking-wide uppercase text-xs">{notification}</span>
+            <CheckCircle2 size={20} className="text-slate-950" />
+            <span className="tracking-widest uppercase font-black">{notification}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -446,7 +439,7 @@ export default function PirateDashboard() {
                animate={{ opacity: 1 }} 
                exit={{ opacity: 0 }} 
                onClick={handleCloseModal} 
-               className="absolute inset-0 bg-black/90 backdrop-blur-md" 
+               className="absolute inset-0 bg-black/95 backdrop-blur-md" 
              />
              
              {/* The Old Scroll container (Pure Black & Gold styling) */}
@@ -454,24 +447,24 @@ export default function PirateDashboard() {
                initial={{ scale: 0.9, y: 50, opacity: 0 }} 
                animate={{ scale: 1, y: 0, opacity: 1 }} 
                exit={{ scale: 0.9, y: 50, opacity: 0 }} 
-               className="relative w-full max-w-lg bg-[#0c0c0c] border-4 border-amber-500/30 rounded-[3rem] shadow-[0_0_60px_rgba(245,158,11,0.35)] p-8 overflow-hidden flex flex-col justify-between z-10"
+               className="relative w-full max-w-lg bg-[#0c0c0c] border-4 border-amber-500/40 rounded-[3rem] shadow-[0_0_80px_rgba(245,158,11,0.4)] p-8 overflow-hidden flex flex-col justify-between z-10"
              >
                 {/* Close Button */}
-                <button onClick={handleCloseModal} className="absolute top-6 right-6 text-amber-500/40 hover:text-amber-300 transition-colors z-20">
-                  <X size={24} />
+                <button onClick={handleCloseModal} className="absolute top-6 right-6 text-amber-500/50 hover:text-amber-300 transition-colors z-20">
+                  <X size={28} />
                 </button>
 
                 <div className="space-y-6">
                    
                    {/* Pirate Portrait Header */}
-                   <div className="flex items-center gap-4 border-b border-amber-500/20 pb-4">
-                      <div className="w-16 h-16 rounded-[1.5rem] bg-[#111] border-2 border-amber-500/20 flex items-center justify-center text-4xl shadow-md">
+                   <div className="flex items-center gap-4 border-b border-amber-500/25 pb-4">
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-[#111] border-2 border-amber-500/30 flex items-center justify-center text-4xl shadow-md">
                          {selectedMerchant.pirateAvatar}
                       </div>
                       <div className="text-left">
-                         <span className="text-[8px] font-black uppercase tracking-widest text-amber-500/50 block">Торговец сундуками</span>
-                         <h3 className="text-xl font-bold text-amber-100 leading-none uppercase">{selectedMerchant.pirateName}</h3>
-                         <p className="text-[10px] text-amber-100/40 italic mt-1 leading-tight">{selectedMerchant.pirateTitle}</p>
+                         <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500 block">Торговец сундуками</span>
+                         <h3 className="text-2xl font-black text-amber-100 leading-none uppercase tracking-tight">{selectedMerchant.pirateName}</h3>
+                         <p className="text-xs text-amber-200/50 font-bold italic mt-1 leading-tight">{selectedMerchant.pirateTitle}</p>
                       </div>
                    </div>
 
@@ -484,7 +477,7 @@ export default function PirateDashboard() {
                              y: [0, -5, 0, -5, 0]
                            }}
                            transition={{ repeat: Infinity, duration: 0.3 }}
-                           className="text-8xl filter drop-shadow-[0_0_20px_rgba(245,158,11,0.4)] select-none"
+                           className="text-8xl filter drop-shadow-[0_0_30px_rgba(245,158,11,0.5)] select-none"
                          >
                             💼
                          </motion.div>
@@ -500,23 +493,23 @@ export default function PirateDashboard() {
                             {selectedMerchant.treasureIcon}
                          </motion.div>
                       ) : (
-                         <div className="text-8xl select-none filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.85)]">
+                         <div className="text-8xl select-none filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.95)]">
                             {selectedMerchant.chestIcon}
                          </div>
                       )}
                       
                       {isOpeningChest && (
-                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full font-black uppercase text-amber-400 text-xs tracking-widest animate-pulse">
+                         <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full font-black uppercase text-amber-400 text-sm tracking-[0.2em] animate-pulse">
                             Сбиваем замки...
                          </div>
                       )}
                    </div>
 
-                   {/* Scroll of Pirate's Adventure Story */}
-                   <div className="relative p-5 bg-gradient-to-br from-[#111111] to-[#000] rounded-2xl border border-amber-500/10 text-left overflow-hidden">
+                   {/* Scroll of Pirate's Adventure Story (Boosted size/boldness) */}
+                   <div className="relative p-6 bg-gradient-to-br from-[#111] to-[#000] rounded-2xl border border-amber-500/20 text-left overflow-hidden shadow-inner">
                       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-[0.03] pointer-events-none" />
-                      <h4 className="text-[9px] font-black uppercase text-amber-400 tracking-wider mb-2">История находки от пирата:</h4>
-                      <p className="text-xs text-amber-200/80 leading-relaxed italic font-medium">
+                      <h4 className="text-[10px] font-black uppercase text-amber-400 tracking-[0.2em] mb-2.5">История находки от пирата:</h4>
+                      <p className="text-sm text-amber-100 font-bold leading-relaxed italic">
                          {selectedMerchant.story}
                       </p>
                    </div>
@@ -526,12 +519,12 @@ export default function PirateDashboard() {
                       <motion.div 
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="p-5 bg-amber-500/5 border border-amber-500/20 rounded-2xl text-left shadow-inner relative overflow-hidden"
+                        className="p-6 bg-amber-500/10 border-2 border-amber-500/30 rounded-2xl text-left shadow-2xl relative overflow-hidden"
                       >
-                         <h4 className="text-[8px] font-black uppercase tracking-widest text-amber-500 mb-1.5 flex items-center gap-1">
+                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-400 mb-2 flex items-center gap-1">
                             💝 Любовное Послание внутри:
                          </h4>
-                         <p className="text-xs text-amber-100 font-bold leading-relaxed italic text-center w-full">
+                         <p className="text-sm sm:text-base text-amber-100 font-black leading-relaxed italic text-center w-full">
                             {selectedMerchant.romanticMessage}
                          </p>
                       </motion.div>
@@ -540,23 +533,23 @@ export default function PirateDashboard() {
                 </div>
 
                 {/* Purchase Buttons Footer */}
-                <div className="mt-8 pt-4 border-t border-amber-500/10">
+                <div className="mt-8 pt-4 border-t border-amber-500/20">
                    {unlockedTreasures[selectedMerchant.id] || chestOpenedEffect ? (
-                      <div className="w-full py-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-2xl font-black uppercase tracking-widest text-xs text-center flex justify-center items-center gap-2">
-                        <CheckCircle2 size={16} /> Сундук открыт • Реликвия извлечена
+                      <div className="w-full py-4 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 rounded-2xl font-black uppercase tracking-[0.15em] text-xs sm:text-sm text-center flex justify-center items-center gap-2 shadow-inner">
+                        <CheckCircle2 size={18} /> Сундук открыт • Реликвия извлечена
                       </div>
                    ) : (
                       <button 
                         onClick={() => handleOpenChest(selectedMerchant)}
                         disabled={gold < selectedMerchant.cost || isOpeningChest}
                         className={cn(
-                          "w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2 border-2 shadow-xl cursor-pointer active:scale-95",
+                          "w-full py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs sm:text-sm transition-all flex items-center justify-center gap-2 border-2 shadow-2xl cursor-pointer active:scale-95",
                           gold >= selectedMerchant.cost 
-                            ? "bg-gradient-to-r from-amber-500 to-amber-600 border-amber-400 text-slate-950 hover:scale-[1.02] shadow-[0_0_20px_rgba(245,158,11,0.3)]" 
+                            ? "bg-gradient-to-r from-amber-500 to-amber-600 border-amber-400 text-slate-950 hover:scale-[1.02] shadow-[0_0_30px_rgba(245,158,11,0.4)]" 
                             : "bg-[#111111] text-slate-500 border-slate-900 cursor-not-allowed"
                         )}
                       >
-                         <Coins size={14} /> Выкупить и Сбить Замки ({selectedMerchant.cost} дублонов)
+                         <Coins size={16} /> Выкупить и Сбить Замки ({selectedMerchant.cost} дублонов)
                       </button>
                    )}
                 </div>
@@ -571,7 +564,7 @@ export default function PirateDashboard() {
         {/* HEADER BLOCK */}
         <header className="flex flex-col md:flex-row justify-between items-center gap-6 border-b-2 border-amber-500/20 pb-8">
            <div className="text-center md:text-left space-y-2">
-              <div className="flex items-center justify-center md:justify-start gap-2.5 text-amber-500/60 uppercase text-[10px] font-black tracking-[0.5em]">
+              <div className="flex items-center justify-center md:justify-start gap-2.5 text-amber-500/70 uppercase text-[11px] font-black tracking-[0.4em]">
                  <Anchor size={14} className="text-amber-500" />
                  <span>Капитанский Мостик · Тортуга</span>
               </div>
@@ -585,7 +578,7 @@ export default function PirateDashboard() {
              whileHover={{ scale: 1.03, y: -2 }}
              whileTap={{ scale: 0.98 }}
              onClick={() => setCocoOpen(true)}
-             className="flex items-center gap-4 bg-gradient-to-br from-[#111111] to-[#000000] border-2 border-amber-500/20 hover:border-amber-500/60 rounded-[2rem] pl-5 pr-12 py-3.5 shadow-2xl backdrop-blur-md transition-all relative group cursor-pointer"
+             className="flex items-center gap-4 bg-gradient-to-br from-[#111] to-[#000] border-2 border-amber-500/20 hover:border-amber-500/60 rounded-[2rem] pl-5 pr-12 py-3.5 shadow-2xl backdrop-blur-md transition-all relative group cursor-pointer"
            >
               <div className="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2rem]" />
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-[#050505] border border-amber-500/20 text-3xl shadow-lg relative group-hover:rotate-12 transition-transform duration-300">
@@ -593,7 +586,7 @@ export default function PirateDashboard() {
               </div>
               <div className="text-left">
                  <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-400 leading-none">Попугай Коко</p>
-                 <p className="text-[11px] text-amber-100/50 mt-1 leading-tight whitespace-nowrap">Мудрый советник в амурных баталиях</p>
+                 <p className="text-xs text-amber-100 font-bold mt-1 leading-tight whitespace-nowrap">Мудрый советник в амурных баталиях</p>
               </div>
               <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-amber-500">
                 <ArrowRight size={16} />
@@ -601,10 +594,10 @@ export default function PirateDashboard() {
            </motion.button>
         </header>
 
-        {/* 3D INTERACTIVE SAFE PIRATE BAY SCENARIO (Fully Black theme frame) */}
+        {/* 3D INTERACTIVE SAFE PIRATE BAY SCENARIO */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
            
-           {/* Left Column: Huge 3D Interactive Haven Diorama (Black Container) */}
+           {/* Left Column: Huge 3D Interactive Haven Diorama */}
            <div className="lg:col-span-8 h-[380px] md:h-[450px] rounded-[3rem] border-4 border-amber-500/30 overflow-hidden relative shadow-[0_0_60px_rgba(245,158,11,0.35)] bg-black">
               {isMounted ? (
                 <BayScene />
@@ -616,38 +609,38 @@ export default function PirateDashboard() {
               )}
            </div>
 
-           {/* Right Column: Immersive safe harbor black status sheet */}
+           {/* Right Column: Immersive safe harbor status sheet */}
            <div className="lg:col-span-4 rounded-[3rem] p-8 bg-gradient-to-br from-[#0c0c0c] to-[#000000] border-2 border-amber-500/20 relative shadow-2xl overflow-hidden flex flex-col justify-between">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-5 pointer-events-none" />
               <div className="absolute top-0 left-0 w-full h-[150px] bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none" />
 
               <div className="space-y-6 text-left relative z-10">
-                 <div className="border-b border-amber-500/10 pb-4">
-                    <span className="text-[8px] font-black uppercase text-amber-500 tracking-[0.3em] block">Ведомости бухты</span>
+                 <div className="border-b border-amber-500/20 pb-4">
+                    <span className="text-[10px] font-black uppercase text-amber-500 tracking-[0.25em] block">Ведомости бухты</span>
                     <h2 className="text-2xl font-black text-amber-100 uppercase tracking-tight mt-1">Мирная Гавань Тортуга</h2>
                  </div>
 
-                 <p className="text-xs text-amber-100/70 leading-relaxed font-sans font-medium">
+                 <p className="text-sm text-amber-100/90 leading-relaxed font-sans font-bold">
                     Капитан! Пришвартовывайся к тихой пристани. Это самое **безопасное и теплое место** во всем архипелаге. Здесь шторма бессильны, пушки молчат, а команда может спокойно отдохнуть в таверне, пока ты изучаешь сокровища и планируешь новые приключения с Полиной.
                  </p>
 
-                 <div className="p-4 bg-black border border-white/5 rounded-2xl space-y-3.5 shadow-inner">
-                    <h4 className="text-[9px] font-black uppercase text-amber-400 tracking-wider">Сводка по форпосту:</h4>
-                    <div className="grid grid-cols-2 gap-4 text-xs font-sans">
+                 <div className="p-5 bg-black border border-white/5 rounded-2xl space-y-4 shadow-inner">
+                    <h4 className="text-[10px] font-black uppercase text-amber-400 tracking-widest">Сводка по форпосту:</h4>
+                    <div className="grid grid-cols-2 gap-4 text-xs font-sans font-black">
                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span className="text-amber-100/60 font-bold">Бухта безопасна</span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-amber-100 font-black">Бухта безопасна</span>
                        </div>
                        <div className="flex items-center gap-2">
                           <span>🔥</span>
-                          <span className="text-amber-100/60 font-bold">Костер разожжен</span>
+                          <span className="text-amber-100 font-black">Костер разожжен</span>
                        </div>
                     </div>
                  </div>
               </div>
 
               <div className="pt-6 border-t border-amber-500/10 text-center relative z-10">
-                 <p className="text-[9px] text-amber-500/40 uppercase tracking-[0.2em] font-black">
+                 <p className="text-[10px] text-amber-500/50 uppercase tracking-[0.2em] font-black">
                     Коко вещает: «Любовь греет круче рома!»
                  </p>
               </div>
@@ -656,22 +649,22 @@ export default function PirateDashboard() {
         </section>
 
         {/* TABS SELECTOR */}
-        <div className="flex items-center justify-center bg-black/95 p-2 rounded-[2.5rem] border border-amber-500/20 backdrop-blur-sm shadow-2xl relative z-20 max-w-3xl mx-auto">
-           <div className="flex items-center justify-between w-full gap-2">
+        <div className="flex items-center justify-center bg-black/95 p-2.5 rounded-[2.5rem] border border-amber-500/20 backdrop-blur-sm shadow-2xl relative z-20 max-w-3xl mx-auto">
+           <div className="flex items-center justify-between w-full gap-2.5">
              {[
-               { id: 'ship', label: 'Борт фрегата', icon: <Anchor size={14} /> },
-               { id: 'crew', label: 'Офицеры WANTED', icon: <Users size={14} /> },
-               { id: 'raids', label: 'Карта походов', icon: <Compass size={14} /> },
-               { id: 'chests', label: 'Сундуки сделок', icon: <Trophy size={14} /> },
+               { id: 'ship', label: 'Борт фрегата', icon: <Anchor size={16} /> },
+               { id: 'crew', label: 'Офицеры WANTED', icon: <Users size={16} /> },
+               { id: 'raids', label: 'Карта походов', icon: <Compass size={16} /> },
+               { id: 'chests', label: 'Сундуки сделок', icon: <Trophy size={16} /> },
              ].map(tab => (
                <button
                  key={tab.id}
                  onClick={() => setActiveTab(tab.id as any)}
                  className={cn(
-                   "flex-1 flex items-center justify-center gap-2 px-3 sm:px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[9px] sm:text-xs transition-all cursor-pointer",
+                   "flex-1 flex items-center justify-center gap-2 px-3 sm:px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm transition-all cursor-pointer",
                    activeTab === tab.id 
                     ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-[0_0_30px_rgba(245,158,11,0.4)] scale-105" 
-                    : "text-amber-500/55 hover:text-amber-300 hover:bg-amber-950/20"
+                    : "text-amber-500/60 hover:text-amber-300 hover:bg-amber-950/20"
                  )}
                >
                  {tab.icon} <span>{tab.label}</span>
@@ -684,7 +677,7 @@ export default function PirateDashboard() {
         <div className="relative min-h-[480px] z-10">
           <AnimatePresence mode="wait">
              
-             {/* TAB 1: SHIP (БОРТ) — Unified, highly visual Captain's Console */}
+             {/* TAB 1: SHIP (БОРТ) — Unified Captain's Steering Console */}
              {activeTab === 'ship' && (
                 <motion.div
                   key="ship"
@@ -694,7 +687,7 @@ export default function PirateDashboard() {
                   transition={{ duration: 0.3 }}
                   className="space-y-8"
                 >
-                   {/* Captain's Steering Console Panel (Sleek black & glowing amber console) */}
+                   {/* Captain's Steering Console Panel */}
                    <div className="bg-[#050505] rounded-[3.5rem] border-2 border-amber-500/20 p-8 shadow-2xl relative overflow-hidden flex flex-col lg:flex-row gap-8 items-center justify-between min-h-[380px]">
                       
                       {/* Rotating ship wheel background vector */}
@@ -710,18 +703,18 @@ export default function PirateDashboard() {
 
                       {/* Left: Decorative console description & status indicator */}
                       <div className="text-left space-y-4 max-w-sm z-10">
-                         <span className="text-[8px] font-black uppercase tracking-[0.3em] text-amber-500">Система Навигации</span>
+                         <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500">Система Навигации</span>
                          <h3 className="text-3xl font-black text-amber-100 uppercase tracking-tight leading-none">Приборная Панель</h3>
-                         <p className="text-xs text-amber-100/50 leading-relaxed font-sans font-medium">
+                         <p className="text-sm text-amber-100/70 font-bold leading-relaxed font-sans">
                             Эти приборы показывают текущее физическое и душевное состояние вашего корабля. Держите прочность высокой, а трюмы полными, чтобы экипаж оставался лояльным и готовым к плаваниям!
                          </p>
                          <div className="flex gap-2">
                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse mt-0.5" />
-                           <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Системы функционируют нормально</span>
+                           <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Системы функционируют нормально</span>
                          </div>
                       </div>
 
-                      {/* Right: 3 Ornate Vintage Compass Gauges */}
+                      {/* Right: 3 Ornate Vintage Compass Gauges (Flawless centered circles using responsive viewBox="0 0 100 100") */}
                       <div className="flex flex-col sm:flex-row gap-8 items-center justify-center w-full lg:w-auto z-10">
                          
                          {/* Dial 1: Hull */}
@@ -730,21 +723,30 @@ export default function PirateDashboard() {
                                <div className="absolute inset-0 rounded-full bg-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                
                                <Shield size={24} className="text-orange-400 group-hover:scale-110 transition-transform duration-300" />
-                               <span className="text-2xl font-black text-amber-100 mt-1">{hull}%</span>
-                               <span className="text-[8px] font-black uppercase tracking-widest text-orange-400/60 mt-0.5">Корпус</span>
+                               <span className="text-3xl font-black text-amber-100 mt-1">{hull}%</span>
+                               <span className="text-[10px] font-black uppercase tracking-widest text-orange-400/80 mt-0.5">Корпус</span>
                                
-                               {/* Glowing circle progress overlay */}
-                               <svg className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none p-1.5">
-                                 <circle cx="66" cy="66" r="60" className="stroke-orange-500/25 fill-none" strokeWidth="4" />
-                                 <circle cx="66" cy="66" r="60" className="stroke-orange-500 fill-none transition-all duration-700" strokeWidth="4" strokeDasharray="376" strokeDashoffset={376 - (376 * hull) / 100} strokeLinecap="round" />
+                               {/* Glowing circle progress overlay - Flawlessly Centered and bounds-constrained */}
+                               <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none">
+                                 <circle cx="50" cy="50" r="44" className="stroke-orange-500/10 fill-none" strokeWidth="4" />
+                                 <circle 
+                                   cx="50" 
+                                   cy="50" 
+                                   r="44" 
+                                   className="stroke-orange-500 fill-none transition-all duration-700" 
+                                   strokeWidth="4" 
+                                   strokeDasharray="276.4" 
+                                   strokeDashoffset={276.4 - (276.4 * hull) / 100} 
+                                   strokeLinecap="round" 
+                                 />
                                </svg>
                             </div>
                             
                             <button 
                               onClick={handleRepair}
-                              className="px-5 py-2.5 bg-gradient-to-r from-[#111] to-[#000] hover:from-orange-500 hover:to-orange-600 hover:text-slate-950 rounded-xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-orange-400 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-lg"
+                              className="px-5 py-3 bg-gradient-to-r from-[#111] to-[#000] hover:from-orange-500 hover:to-orange-600 hover:text-slate-950 rounded-xl font-black uppercase tracking-widest text-xs border border-amber-500/30 hover:border-orange-400 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-lg"
                             >
-                               <Hammer size={12} /> Чинить (+10%)
+                               <Hammer size={14} /> Чинить (+10%)
                             </button>
                          </div>
 
@@ -754,21 +756,30 @@ export default function PirateDashboard() {
                                <div className="absolute inset-0 rounded-full bg-sky-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                
                                <Package size={24} className="text-sky-400 group-hover:scale-110 transition-transform duration-300" />
-                               <span className="text-2xl font-black text-amber-100 mt-1">{hold}%</span>
-                               <span className="text-[8px] font-black uppercase tracking-widest text-sky-400/60 mt-0.5">Трюмы</span>
+                               <span className="text-3xl font-black text-amber-100 mt-1">{hold}%</span>
+                               <span className="text-[10px] font-black uppercase tracking-widest text-sky-400/80 mt-0.5">Трюмы</span>
                                
-                               {/* Glowing circle progress overlay */}
-                               <svg className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none p-1.5">
-                                 <circle cx="66" cy="66" r="60" className="stroke-sky-500/25 fill-none" strokeWidth="4" />
-                                 <circle cx="66" cy="66" r="60" className="stroke-sky-400 fill-none transition-all duration-700" strokeWidth="4" strokeDasharray="376" strokeDashoffset={376 - (376 * hold) / 100} strokeLinecap="round" />
+                               {/* Glowing circle progress overlay - Flawlessly Centered and bounds-constrained */}
+                               <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none">
+                                 <circle cx="50" cy="50" r="44" className="stroke-sky-500/10 fill-none" strokeWidth="4" />
+                                 <circle 
+                                   cx="50" 
+                                   cy="50" 
+                                   r="44" 
+                                   className="stroke-sky-400 fill-none transition-all duration-700" 
+                                   strokeWidth="4" 
+                                   strokeDasharray="276.4" 
+                                   strokeDashoffset={276.4 - (276.4 * hold) / 100} 
+                                   strokeLinecap="round" 
+                                 />
                                </svg>
                             </div>
                             
                             <button 
                               onClick={handleLoad}
-                              className="px-5 py-2.5 bg-gradient-to-r from-[#111] to-[#000] hover:from-sky-500 hover:to-sky-600 hover:text-slate-950 rounded-xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-sky-400 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-lg"
+                              className="px-5 py-3 bg-gradient-to-r from-[#111] to-[#000] hover:from-sky-500 hover:to-sky-600 hover:text-slate-950 rounded-xl font-black uppercase tracking-widest text-xs border border-amber-500/30 hover:border-sky-400 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-lg"
                             >
-                               <Package size={12} /> Грузить (+10%)
+                               <Package size={14} /> Грузить (+10%)
                             </button>
                          </div>
 
@@ -778,21 +789,30 @@ export default function PirateDashboard() {
                                <div className="absolute inset-0 rounded-full bg-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                
                                <Beer size={24} className="text-red-400 group-hover:scale-110 transition-transform duration-300" />
-                               <span className="text-2xl font-black text-amber-100 mt-1">{morale}%</span>
-                               <span className="text-[8px] font-black uppercase tracking-widest text-red-400/60 mt-0.5">Дух</span>
+                               <span className="text-3xl font-black text-amber-100 mt-1">{morale}%</span>
+                               <span className="text-[10px] font-black uppercase tracking-widest text-red-400/80 mt-0.5">Дух</span>
                                
-                               {/* Glowing circle progress overlay */}
-                               <svg className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none p-1.5">
-                                 <circle cx="66" cy="66" r="60" className="stroke-red-500/25 fill-none" strokeWidth="4" />
-                                 <circle cx="66" cy="66" r="60" className="stroke-red-500 fill-none transition-all duration-700" strokeWidth="4" strokeDasharray="376" strokeDashoffset={376 - (376 * morale) / 100} strokeLinecap="round" />
+                               {/* Glowing circle progress overlay - Flawlessly Centered and bounds-constrained */}
+                               <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none">
+                                 <circle cx="50" cy="50" r="44" className="stroke-red-500/10 fill-none" strokeWidth="4" />
+                                 <circle 
+                                   cx="50" 
+                                   cy="50" 
+                                   r="44" 
+                                   className="stroke-red-500 fill-none transition-all duration-700" 
+                                   strokeWidth="4" 
+                                   strokeDasharray="276.4" 
+                                   strokeDashoffset={276.4 - (276.4 * morale) / 100} 
+                                   strokeLinecap="round" 
+                                 />
                                </svg>
                             </div>
                             
                             <button 
                               onClick={handleRum}
-                              className="px-5 py-2.5 bg-gradient-to-r from-[#111] to-[#000] hover:from-red-500 hover:to-red-600 hover:text-slate-950 rounded-xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-red-400 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-lg"
+                              className="px-5 py-3 bg-gradient-to-r from-[#111] to-[#000] hover:from-red-500 hover:to-red-600 hover:text-slate-950 rounded-xl font-black uppercase tracking-widest text-xs border border-amber-500/30 hover:border-red-400 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-lg"
                             >
-                               <Beer size={12} /> Налить Рома (+15%)
+                               <Beer size={14} /> Налить Рома (+15%)
                             </button>
                          </div>
 
@@ -802,40 +822,40 @@ export default function PirateDashboard() {
 
                    {/* Gossip & Weather (Pure Black Glass cards) */}
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="relative p-6 rounded-[2.5rem] bg-black border-2 border-red-500/20 text-left shadow-lg overflow-hidden">
+                      <div className="relative p-6 rounded-[2.5rem] bg-black border-2 border-red-500/25 text-left shadow-lg overflow-hidden">
                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-5 pointer-events-none" />
-                         <div className="flex justify-between items-center border-b border-red-500/10 pb-3 mb-4">
-                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400 flex items-center gap-1.5">
-                               <Wind size={12} /> Штормовое предупреждение
+                         <div className="flex justify-between items-center border-b border-red-500/15 pb-3 mb-4">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-400 flex items-center gap-1.5">
+                               <Wind size={14} /> Штормовое предупреждение
                             </p>
-                            <span className="text-[8px] font-black text-red-500 bg-red-950/20 px-2.5 py-0.5 rounded-full border border-red-500/20">Опасно</span>
+                            <span className="text-[9px] font-black text-red-400 bg-red-950/20 px-2.5 py-0.5 rounded-full border border-red-500/25">Опасно</span>
                          </div>
                          <div className="flex items-start gap-4">
-                            <div className="p-3 bg-red-500/10 rounded-2xl text-red-400 border border-red-500/20 shrink-0">
+                            <div className="p-3.5 bg-red-500/10 rounded-2xl text-red-400 border border-red-500/20 shrink-0">
                                <CloudLightning size={24} className="animate-pulse" />
                             </div>
                             <div className="space-y-1">
-                               <h4 className="text-sm font-bold text-amber-100">Буря в Карибском море</h4>
-                               <p className="text-[10px] text-amber-100/50 italic leading-relaxed font-medium">Волны высотой до 8 метров. Кораблям не рекомендуется покидать бухту Тортуга до полного отлива во избежание крушения.</p>
+                               <h4 className="text-base font-black text-amber-100">Буря в Карибском море</h4>
+                               <p className="text-xs text-amber-100 font-bold leading-relaxed">Волны высотой до 8 метров. Кораблям не рекомендуется покидать бухту Тортуга до полного отлива во избежание крушения.</p>
                             </div>
                          </div>
                       </div>
 
-                      <div className="relative p-6 rounded-[2.5rem] bg-black border-2 border-amber-500/15 text-left shadow-lg overflow-hidden">
+                      <div className="relative p-6 rounded-[2.5rem] bg-black border-2 border-amber-500/20 text-left shadow-lg overflow-hidden">
                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-5 pointer-events-none" />
-                         <div className="flex justify-between items-center border-b border-amber-500/10 pb-3 mb-4">
-                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500/50 flex items-center gap-1.5">
-                               <Scroll size={12} /> Слухи из таверны «Кракен»
+                         <div className="flex justify-between items-center border-b border-amber-500/15 pb-3 mb-4">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500/60 flex items-center gap-1.5">
+                               <Scroll size={14} /> Слухи из таверны «Кракен»
                             </p>
-                            <span className="text-[8px] font-black text-amber-400 bg-amber-950/20 px-2.5 py-0.5 rounded-full border border-amber-500/20">Слухи</span>
+                            <span className="text-[9px] font-black text-amber-400 bg-amber-950/20 px-2.5 py-0.5 rounded-full border border-amber-500/20">Слухи</span>
                          </div>
                          <div className="flex items-start gap-4">
-                            <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-400 border border-amber-500/20 shrink-0">
+                            <div className="p-3.5 bg-amber-500/10 rounded-2xl text-amber-400 border border-amber-500/20 shrink-0">
                                <Coins size={24} />
                             </div>
                             <div className="space-y-1">
-                               <h4 className="text-sm font-bold text-amber-100">Испанский Золотой Галеон</h4>
-                               <p className="text-[10px] text-amber-100/50 italic leading-relaxed font-medium">Матросы шепчутся, что груженый до краев галеон бросил якорь неподалеку. Это отличный шанс наполнить казну золотом!</p>
+                               <h4 className="text-base font-black text-amber-100">Испанский Золотой Галеон</h4>
+                               <p className="text-xs text-amber-100 font-bold leading-relaxed">Матросы шепчутся, что груженый до краев галеон бросил якорь неподалеку. Это отличный шанс наполнить казну золотом!</p>
                             </div>
                          </div>
                       </div>
@@ -844,7 +864,7 @@ export default function PirateDashboard() {
                 </motion.div>
              )}
 
-             {/* TAB 2: OFFICERS (ЭКИПАЖ) — WANTED posters layout (Sleek Dark plaques) */}
+             {/* TAB 2: OFFICERS (ЭКИПАЖ) — WANTED posters layout */}
              {activeTab === 'crew' && (
                 <motion.div
                   key="crew"
@@ -868,34 +888,34 @@ export default function PirateDashboard() {
                             
                             <div className="relative z-10 space-y-6 flex flex-col items-center text-center">
                                {/* Wanted Badge */}
-                               <div className="px-4 py-1 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-400 text-[8px] font-black uppercase tracking-[0.2em] shadow-md">
+                               <div className="px-4 py-1.5 bg-amber-500/15 border border-amber-500/35 rounded-lg text-amber-400 text-[10px] font-black uppercase tracking-[0.25em] shadow-md">
                                   WANTED • ЖИВЫМ
                                </div>
 
                                {/* Portrait frame */}
-                               <div className="w-24 h-24 rounded-[2rem] bg-black border-4 border-amber-500/20 flex items-center justify-center text-5xl shadow-[0_0_20px_rgba(0,0,0,0.8)] relative group-hover:rotate-3 transition-transform duration-300">
+                               <div className="w-24 h-24 rounded-[2rem] bg-black border-4 border-amber-500/25 flex items-center justify-center text-5xl shadow-[0_0_20px_rgba(0,0,0,0.8)] relative group-hover:rotate-3 transition-transform duration-300">
                                   {officer.avatar}
                                </div>
 
                                <div className="space-y-1">
-                                  <h4 className="text-2xl font-bold text-amber-100 tracking-tight leading-none uppercase">{officer.name}</h4>
-                                  <p className="text-[9px] font-black text-amber-400 uppercase tracking-widest leading-none mt-1">{officer.role}</p>
+                                  <h4 className="text-2xl font-black text-amber-100 tracking-tight leading-none uppercase">{officer.name}</h4>
+                                  <p className="text-[11px] font-black text-amber-400 uppercase tracking-widest leading-none mt-1">{officer.role}</p>
                                </div>
 
-                               <p className="text-[10px] text-amber-100/50 italic leading-relaxed px-2 font-medium">"{officer.description}"</p>
+                               <p className="text-xs text-amber-100 font-bold leading-relaxed px-2 italic">"{officer.description}"</p>
 
                                {/* Custom loyalty bar with anchors */}
-                               <div className="w-full space-y-2 px-2 bg-black/55 p-4 rounded-2xl border border-white/5">
-                                  <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-amber-500/40">
-                                     <span className="flex items-center gap-1"><HeartHandshake size={10} /> Преданность</span>
-                                     <span className={cn(officer.loyalty > 70 ? "text-emerald-400" : "text-yellow-400")}>{officer.loyalty}%</span>
+                               <div className="w-full space-y-2 px-2 bg-black/60 p-4 rounded-2xl border border-white/5">
+                                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-500/50">
+                                     <span className="flex items-center gap-1"><HeartHandshake size={12} /> Преданность</span>
+                                     <span className={cn(officer.loyalty > 70 ? "text-emerald-400 font-black" : "text-yellow-400 font-black")}>{officer.loyalty}%</span>
                                   </div>
-                                  <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-amber-950/20 p-0.5">
+                                  <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden border border-amber-950/20 p-0.5">
                                      <div className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-700" style={{ width: `${officer.loyalty}%` }} />
                                   </div>
-                                  <div className="flex justify-between items-center pt-1 text-[8px] text-amber-100/30 italic">
+                                  <div className="flex justify-between items-center pt-1 text-[10px] text-amber-100/40 font-bold italic">
                                      <span>Статус: <strong className={officer.statusColor}>{officer.status}</strong></span>
-                                     <span>Награда: {officer.wantedReward}</span>
+                                     <span>Награда: <strong className="text-amber-400 font-black">{officer.wantedReward}</strong></span>
                                   </div>
                                 </div>
                             </div>
@@ -904,9 +924,9 @@ export default function PirateDashboard() {
                             <div className="relative z-10 mt-6 pt-4 border-t border-amber-500/10">
                                <button 
                                  onClick={() => rewardOfficer(officer.id)}
-                                 className="w-full py-4 bg-gradient-to-r from-[#111111] to-[#050505] hover:from-amber-500 hover:to-amber-600 hover:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[9px] border border-amber-500/20 hover:border-amber-400 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-md"
+                                 className="w-full py-4 bg-gradient-to-r from-[#111111] to-[#050505] hover:from-amber-500 hover:to-amber-600 hover:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs border border-amber-500/30 hover:border-amber-400 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-md"
                                >
-                                  <Coins size={12} /> Жалованье (25 золотых)
+                                  <Coins size={14} /> Жалованье (25 золотых)
                                </button>
                             </div>
                          </div>
@@ -915,7 +935,7 @@ export default function PirateDashboard() {
                 </motion.div>
              )}
 
-             {/* TAB 3: EXPEDITIONS (РЕЙДЫ) — Epic Interactive Captain's Voyages Map */}
+             {/* TAB 3: EXPEDITIONS (РЕЙДЫ) — Epic Interactive Voyages Map */}
              {activeTab === 'raids' && (
                 <motion.div
                   key="raids"
@@ -928,7 +948,7 @@ export default function PirateDashboard() {
                    {/* Interactive Map Layout Container */}
                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                       
-                      {/* Left: Sea Archipelago Navigation Map (60% width) */}
+                      {/* Left: Sea Archipelago Navigation Map */}
                       <div className="lg:col-span-8 bg-[#04090e] border-2 border-cyan-500/20 rounded-[3rem] p-6 relative overflow-hidden min-h-[400px] shadow-[inset_0_0_40px_rgba(0,255,200,0.08)] flex flex-col justify-between group">
                          
                          {/* Nautical grid lines and decorations */}
@@ -943,10 +963,10 @@ export default function PirateDashboard() {
                          {/* Title overlay */}
                          <div className="relative z-10 flex justify-between items-start">
                             <div>
-                               <span className="text-[8px] font-black uppercase tracking-[0.25em] text-cyan-400">Навигационная Карта</span>
-                               <h3 className="text-xl font-bold uppercase tracking-tight text-amber-100">Карта Плаваний</h3>
+                               <span className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-400">Навигационная Карта</span>
+                               <h3 className="text-2xl font-black uppercase tracking-tight text-amber-100">Карта Плаваний</h3>
                             </div>
-                            <span className="text-[8px] font-black text-cyan-400 bg-cyan-950/40 px-2.5 py-1 rounded-lg border border-cyan-500/20">Архипелаг Грез</span>
+                            <span className="text-[10px] font-black text-cyan-400 bg-cyan-950/40 px-2.5 py-1.5 rounded-lg border border-cyan-500/20">Архипелаг Грез</span>
                          </div>
 
                          {/* Interactive Island Nodes (Dotted lines leading to Tortuga at bottom center) */}
@@ -957,7 +977,7 @@ export default function PirateDashboard() {
                                <div className="w-10 h-10 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-sm shadow-[0_0_15px_rgba(245,158,11,0.4)]">
                                   ⚓
                                 </div>
-                                <span className="text-[8px] font-black uppercase text-amber-400 tracking-wider mt-1 bg-black/80 px-2 py-0.5 rounded border border-amber-500/25">Тортуга</span>
+                                <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider mt-1 bg-black/80 px-2 py-0.5 rounded border border-amber-500/25">Тортуга</span>
                             </div>
 
                             {/* Node 1: Остров Сладких Грез (Top Left) */}
@@ -981,8 +1001,8 @@ export default function PirateDashboard() {
                                   {raidStates[1] === 'claim' && (
                                      <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-ping">🪙</span>
                                   )}
-                                  <span className="text-xl">🌴</span>
-                                  <span className="text-[9px] font-black uppercase tracking-wider">Грезы</span>
+                                  <span className="text-2xl">🌴</span>
+                                  <span className="text-xs font-black uppercase tracking-wider">Грезы</span>
                                </button>
                             </div>
 
@@ -1003,8 +1023,8 @@ export default function PirateDashboard() {
                                   {raidStates[2] === 'claim' && (
                                      <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-ping">🪙</span>
                                   )}
-                                  <span className="text-xl">🌋</span>
-                                  <span className="text-[9px] font-black uppercase tracking-wider">Объятия</span>
+                                  <span className="text-2xl">🌋</span>
+                                  <span className="text-xs font-black uppercase tracking-wider">Объятия</span>
                                </button>
                             </div>
 
@@ -1025,31 +1045,31 @@ export default function PirateDashboard() {
                                   {raidStates[3] === 'claim' && (
                                      <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-ping">🪙</span>
                                   )}
-                                  <span className="text-xl">📜</span>
-                                  <span className="text-[9px] font-black uppercase tracking-wider">Записки</span>
+                                  <span className="text-2xl">📜</span>
+                                  <span className="text-xs font-black uppercase tracking-wider">Записки</span>
                                </button>
                             </div>
 
                          </div>
 
                          {/* Bottom status helper */}
-                         <div className="relative z-10 mt-auto flex justify-between text-[9px] font-black uppercase tracking-widest text-cyan-400/60 pointer-events-none">
+                         <div className="relative z-10 mt-auto flex justify-between text-[10px] font-black uppercase tracking-widest text-cyan-400/60 pointer-events-none">
                             <span>🗺️ Выбери порт на карте для отправки</span>
                             <span>Тортуга Форпост</span>
                          </div>
                       </div>
 
-                      {/* Right: Logbook & Captain's orders (40% width) */}
+                      {/* Right: Logbook & Captain's orders */}
                       <div className="lg:col-span-4 bg-black border-2 border-amber-500/20 rounded-[3rem] p-6 flex flex-col justify-between min-h-[400px] shadow-2xl relative">
                          <div className="space-y-6 text-left">
                             
                             {/* Mission Header */}
                             <div className="border-b border-amber-500/25 pb-3">
                                <div className="flex justify-between items-center">
-                                  <span className="text-[8px] font-black uppercase text-amber-500 tracking-[0.25em]">Судовой Журнал</span>
-                                  <span className="text-[8px] font-bold text-amber-500 bg-amber-950/20 px-2 py-0.5 rounded border border-amber-500/20">Порт #{activeRaid.id}</span>
+                                  <span className="text-[10px] font-black uppercase text-amber-500 tracking-[0.2em]">Судовой Журнал</span>
+                                  <span className="text-[10px] font-black text-amber-400 bg-amber-950/20 px-2 py-0.5 rounded border border-amber-500/20">Порт #{activeRaid.id}</span>
                                </div>
-                               <h3 className="text-2xl font-bold uppercase tracking-tight text-amber-100 mt-1">{activeRaid.name}</h3>
+                               <h3 className="text-2xl font-black uppercase tracking-tight text-amber-100 mt-1">{activeRaid.name}</h3>
                             </div>
 
                             {/* Details list */}
@@ -1059,36 +1079,36 @@ export default function PirateDashboard() {
                                      {activeRaid.icon}
                                   </div>
                                   <div>
-                                     <p className="text-[10px] text-amber-100/50 font-bold uppercase tracking-wider">Описание:</p>
-                                     <p className="text-xs text-amber-100/80 italic">"{activeRaid.desc}"</p>
+                                     <p className="text-[10px] text-amber-100/50 font-black uppercase tracking-wider">Описание:</p>
+                                     <p className="text-xs text-amber-100 font-bold italic">"{activeRaid.desc}"</p>
                                   </div>
                                </div>
 
-                               <div className="p-4 bg-[#0a0a0a] rounded-2xl border border-white/5 space-y-2 text-xs">
+                               <div className="p-4 bg-[#0a0a0a] rounded-2xl border border-white/5 space-y-2 text-sm">
                                   <div className="flex justify-between">
-                                     <span className="text-amber-100/40">Награда:</span>
-                                     <strong className="text-amber-400 font-bold flex items-center gap-1"><Coins size={12} />+{activeRaid.reward} дублонов</strong>
+                                     <span className="text-amber-100/50 font-bold">Награда:</span>
+                                     <strong className="text-amber-400 font-black flex items-center gap-1"><Coins size={14} />+{activeRaid.reward} дублонов</strong>
                                   </div>
                                   <div className="flex justify-between">
-                                     <span className="text-amber-100/40">Время пути:</span>
+                                     <span className="text-amber-100/50 font-bold">Время пути:</span>
                                      <strong className="text-amber-100 font-black">{activeRaid.duration} сек</strong>
                                   </div>
                                   <div className="flex justify-between">
-                                     <span className="text-amber-100/40">Матросы:</span>
+                                     <span className="text-amber-100/50 font-bold">Матросы:</span>
                                      <strong className="text-amber-100 font-black">{activeRaid.crewRequired} чел</strong>
                                   </div>
                                </div>
 
-                               <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-2xl text-[10px] text-amber-100/80 leading-relaxed font-sans relative overflow-hidden">
+                               <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl text-xs text-amber-100 font-bold leading-relaxed relative overflow-hidden shadow-inner">
                                   <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-[0.03] pointer-events-none" />
-                                  <span className="font-black uppercase text-amber-400 tracking-wider text-[8px] block mb-0.5">Суть экспедиции:</span>
+                                  <span className="font-black uppercase text-amber-400 tracking-wider text-[9px] block mb-0.5">Суть экспедиции:</span>
                                   {activeRaid.mission}
-                               </div>
+                                </div>
 
-                               {/* Sailing progress bar WITH SLIDING SHIP MINI-ANIMATION */}
+                               {/* Sailing progress bar */}
                                {raidStates[activeRaid.id] === 'sailing' && (
                                   <div className="space-y-2 pt-2 relative">
-                                     <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-amber-400">
+                                     <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-400">
                                         <span className="flex items-center gap-1"><Clock size={10} /> До причала: {raidTimers[activeRaid.id] || 0} сек</span>
                                         <span>{Math.round(((activeRaid.duration - (raidTimers[activeRaid.id] || 0)) / activeRaid.duration) * 100)}%</span>
                                      </div>
@@ -1115,18 +1135,18 @@ export default function PirateDashboard() {
                                  onClick={() => startRaid(activeRaid.id, activeRaid.crewRequired, activeRaid.duration)}
                                  disabled={crewCount < activeRaid.crewRequired}
                                  className={cn(
-                                   "w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[9px] transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 border-2 shadow-lg",
+                                   "w-full py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 border-2 shadow-lg",
                                    crewCount >= activeRaid.crewRequired 
                                      ? "bg-gradient-to-r from-amber-500 to-amber-600 border-amber-400 text-slate-950 hover:scale-[1.02] shadow-[0_0_20px_rgba(245,158,11,0.25)]" 
                                      : "bg-[#111] text-slate-500 border-slate-900 cursor-not-allowed"
                                  )}
                                >
-                                  <Play size={10} /> {crewCount >= activeRaid.crewRequired ? `Поднять Паруса!` : `Не хватает команды (нужно ${activeRaid.crewRequired})`}
+                                  <Play size={12} /> {crewCount >= activeRaid.crewRequired ? `Поднять Паруса!` : `Не хватает команды (нужно ${activeRaid.crewRequired})`}
                                </button>
                             ) : null}
 
                             {raidStates[activeRaid.id] === 'sailing' && (
-                               <div className="w-full py-3.5 bg-black border border-amber-500/10 rounded-2xl text-[9px] font-black text-amber-400/60 uppercase tracking-widest text-center flex items-center justify-center gap-1.5">
+                               <div className="w-full py-3.5 bg-black border border-amber-500/10 rounded-2xl text-[10px] font-black text-amber-400/60 uppercase tracking-widest text-center flex items-center justify-center gap-1.5 shadow-inner">
                                   <Anchor size={12} className="animate-spin-slow text-amber-500/60" /> Фрегат режет волны...
                                </div>
                             )}
@@ -1134,14 +1154,14 @@ export default function PirateDashboard() {
                             {raidStates[activeRaid.id] === 'claim' && (
                                <button 
                                  onClick={() => claimRaidReward(activeRaid.id, activeRaid.reward)}
-                                 className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-slate-950 rounded-2xl font-black uppercase tracking-widest text-[9px] border-2 border-orange-400 shadow-[0_0_25px_rgba(245,158,11,0.4)] animate-bounce cursor-pointer flex items-center justify-center gap-1.5"
+                                 className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-slate-950 rounded-2xl font-black uppercase tracking-[0.2em] text-xs border-2 border-orange-400 shadow-[0_0_25px_rgba(245,158,11,0.4)] animate-bounce cursor-pointer flex items-center justify-center gap-1.5"
                                >
-                                  <Coins size={12} /> Разгрузить добычу!
+                                  <Coins size={14} /> Разгрузить добычу!
                                </button>
                             )}
 
                             {raidStates[activeRaid.id] === 'completed' && (
-                               <div className="w-full py-3.5 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl text-[9px] font-black text-emerald-400 uppercase tracking-widest text-center flex items-center justify-center gap-1.5">
+                               <div className="w-full py-3.5 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl text-[10px] font-black text-emerald-400 uppercase tracking-widest text-center flex items-center justify-center gap-1.5">
                                   <UserCheck size={12} /> Поход Успешно Завершен
                                </div>
                             )}
@@ -1165,9 +1185,9 @@ export default function PirateDashboard() {
                 >
                    {/* Chest Shop Header */}
                    <div className="text-center space-y-2 max-w-xl mx-auto">
-                      <span className="text-[9px] font-black uppercase tracking-[0.3em] text-amber-500">Сделки на причале</span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Сделки на причале</span>
                       <h2 className="text-3xl font-black uppercase tracking-tight text-amber-100">Контрабандные Сундуки Пиратов</h2>
-                      <p className="text-xs text-amber-500/50 italic leading-relaxed">
+                      <p className="text-sm text-amber-500/70 font-bold leading-relaxed">
                          «Проезжие пираты постоянно завозят в гавань закрытые сундуки. Выкупайте их у купцов, слушайте их невероятные истории и взламывайте замки, чтобы добраться до истинных сокровищ любви!»
                       </p>
                    </div>
@@ -1183,7 +1203,7 @@ export default function PirateDashboard() {
                               key={merchant.id}
                               onClick={() => setSelectedMerchant(merchant)}
                               className={cn(
-                                "relative rounded-[2.5rem] p-6 border-4 transition-all flex flex-col justify-between items-center text-center overflow-hidden group pirate-wood shadow-2xl min-h-[420px] cursor-pointer hover:scale-[1.02]",
+                                "relative rounded-[2.5rem] p-6 border-4 transition-all flex flex-col justify-between items-center text-center overflow-hidden group shadow-2xl min-h-[420px] cursor-pointer hover:scale-[1.02] bg-[#0c0c0c]",
                                 isUnlocked 
                                   ? `border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.1)]` 
                                   : "border-amber-900/40 hover:border-amber-500/50 hover:shadow-[0_0_35px_rgba(245,158,11,0.2)]"
@@ -1195,18 +1215,18 @@ export default function PirateDashboard() {
                                <div className="relative z-10 w-full flex flex-col items-center space-y-3.5">
                                   {/* Rarity Label */}
                                   <span className={cn(
-                                     "text-[8px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border",
+                                     "text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border",
                                      isUnlocked 
                                        ? "text-emerald-400 border-emerald-500/20 bg-emerald-950/20" 
-                                       : "text-amber-500/40 border-amber-500/10 bg-amber-950/10"
+                                       : "text-amber-500 border-amber-500/10 bg-amber-950/10"
                                   )}>
                                      {merchant.rarity}
                                   </span>
 
                                   {/* Pirate Seller Avatar Badge */}
-                                  <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1 rounded-full border border-white/5">
+                                  <div className="flex items-center gap-1.5 bg-black/45 px-3 py-1 rounded-full border border-white/5">
                                      <span className="text-sm">{merchant.pirateAvatar}</span>
-                                     <span className="text-[8px] font-black uppercase tracking-wider text-amber-100/60 truncate max-w-[100px]">{merchant.pirateName}</span>
+                                     <span className="text-[10px] font-black uppercase tracking-wider text-amber-100/60 truncate max-w-[100px]">{merchant.pirateName}</span>
                                   </div>
                                </div>
 
@@ -1228,10 +1248,10 @@ export default function PirateDashboard() {
 
                                {/* Chest Details */}
                                <div className="relative z-10 w-full space-y-1">
-                                  <h3 className="text-md font-black text-amber-100 leading-tight uppercase tracking-tight">
+                                  <h3 className="text-lg font-black text-amber-100 leading-tight uppercase tracking-tight">
                                      {isUnlocked ? merchant.treasureName : merchant.name}
                                   </h3>
-                                  <p className="text-[8px] text-amber-100/35 italic font-bold">
+                                  <p className="text-[10px] text-amber-100/40 font-black italic">
                                      {isUnlocked ? 'Сундук взломан' : 'Кликни, чтобы узнать историю'}
                                   </p>
                                </div>
@@ -1239,19 +1259,19 @@ export default function PirateDashboard() {
                                {/* Unlock Status or Price Button */}
                                <div className="relative z-10 w-full mt-6 pt-4 border-t border-amber-500/10">
                                   {isUnlocked ? (
-                                     <div className="w-full py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl font-black uppercase tracking-widest text-[8px] flex justify-center items-center gap-1.5 shadow-inner">
+                                     <div className="w-full py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl font-black uppercase tracking-widest text-[9px] flex justify-center items-center gap-1.5 shadow-inner">
                                        <CheckCircle2 size={12} /> Открыт • Посмотреть
                                      </div>
                                   ) : (
                                      <div 
                                        className={cn(
-                                         "w-full py-3 rounded-xl font-black uppercase tracking-widest text-[8px] flex items-center justify-center gap-1.5 border transition-all",
+                                         "w-full py-3 rounded-xl font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-1.5 border transition-all",
                                          canAfford 
                                            ? "bg-[#111111] border-amber-500/20 text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-950 group-hover:border-amber-400" 
                                            : "bg-[#050505] text-slate-500 border-slate-900"
                                        )}
                                      >
-                                        <Coins size={10} /> {merchant.cost} дублонов
+                                        <Coins size={12} /> {merchant.cost} дублонов
                                      </div>
                                   )}
                                </div>
