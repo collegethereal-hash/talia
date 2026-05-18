@@ -224,8 +224,8 @@ function SafeBayDiorama() {
           </mesh>
 
           {/* Bow / Front cone shape */}
-          <mesh position={[0.34, 0.04, 0]} rotation={[0, 0, -Math.PI / 8]}>
-            <coneGeometry args={[0.14, 0.15, 4]} rotation={[0, 0, Math.PI / 2]} />
+          <mesh position={[0.34, 0.04, 0]} rotation={[0, 0, Math.PI / 2 - Math.PI / 8]}>
+            <coneGeometry args={[0.14, 0.15, 4]} />
             <meshStandardMaterial color="#4d2f1d" roughness={0.85} />
           </mesh>
 

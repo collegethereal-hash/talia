@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Book, Send, Sparkles, MessageCircle, 
   Trash2, Heart, Trees, Moon, Ship, 
-  Sword, Scroll, Anchor, Ink, PenTool as Quill
+  Sword, Scroll, Anchor, PenTool as Quill
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';

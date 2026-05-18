@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Coins, Users, Sword, Ship, Anchor, Shield, Navigation, 
-  Beer, Crosshair, Wind, Flame, Skull, Settings, Hammer, Gem
+  Beer, Crosshair, Wind, Flame, Skull, Settings, Hammer, Gem, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -177,13 +177,13 @@ export default function PirateStore() {
                            <p className="text-xs text-amber-100/40 italic leading-relaxed h-10">"{item.desc}"</p>
                         </div>
 
-                        {item.type === 'crew' && (
-                          <div className="flex justify-center">
-                             <div className="px-4 py-1 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-xs font-black uppercase tracking-widest">
-                               +{item.value} Матросов
-                             </div>
-                          </div>
-                        )}
+                         {item.type === 'crew' && 'value' in item && (
+                           <div className="flex justify-center">
+                              <div className="px-4 py-1 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-xs font-black uppercase tracking-widest">
+                                +{(item as any).value} Матросов
+                              </div>
+                           </div>
+                         )}
                      </div>
 
                      <div className="relative z-10 mt-8 pt-6 border-t border-amber-500/10">

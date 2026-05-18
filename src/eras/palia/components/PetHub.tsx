@@ -82,7 +82,7 @@ const LEVEL_MILESTONES = [
 
 export const PetHub = () => {
   const [petType] = useState<PetType>('dog');
-  const [activeTab, setActiveTab] = useState<'status' | 'history' | 'log' | 'progress'>('status');
+  const [activeTab, setActiveTab] = useState<'status' | 'history' | 'log' | 'progress' | 'closet'>('status');
   const [state, setState] = useState<PetState>({
     hunger: 80,
     happiness: 90,
