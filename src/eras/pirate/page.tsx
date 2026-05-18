@@ -6,12 +6,12 @@ import {
   Anchor, Shield, Heart, Hammer, Package, Beer, Users,
   Telescope, CloudLightning, Scroll, Wind, Coins, CheckCircle2,
   Navigation, Compass, Trophy, Sword, Gem, Clock, Play,
-  Lock, Unlock, ArrowRight, Flame, UserCheck, HeartHandshake, X
+  Lock, Unlock, ArrowRight, Flame, UserCheck, HeartHandshake, X,
+  UserX, ShieldAlert, Award, ArrowDown, UserPlus, HelpCircle
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useData } from "@/components/DataProvider";
 import Link from 'next/link';
-import { ParrotKoko } from "@/eras/pirate/components/ParrotKoko";
 import BayScene from "@/eras/pirate/components/BayScene";
 
 interface Officer {
@@ -24,17 +24,28 @@ interface Officer {
   avatar: string;
   description: string;
   wantedReward: string;
+  isDismissed?: boolean; // Fired/Dismissed status
 }
 
-interface Raid {
+interface IncidentChoice {
+  text: string;
+  actionText: string;
+  effect: string;
+  resolve: (stats: { gold: number; hull: number; morale: number; crew: number }) => {
+    gold: number;
+    hull: number;
+    morale: number;
+    crew: number;
+    log: string;
+  };
+}
+
+interface Incident {
   id: number;
-  name: string;
+  title: string;
   desc: string;
-  mission: string;
-  crewRequired: number;
-  duration: number; // in seconds
-  reward: number;
-  icon: React.ReactNode;
+  icon: string;
+  choices: IncidentChoice[];
 }
 
 interface ChestMerchant {
@@ -55,8 +66,7 @@ interface ChestMerchant {
 
 export default function PirateDashboard() {
   const { currentUser } = useData();
-  const [activeTab, setActiveTab] = useState<'ship' | 'crew' | 'raids' | 'chests'>('ship');
-  const [cocoOpen, setCocoOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'ship' | 'crew' | 'incidents' | 'chests'>('ship');
   const [notification, setNotification] = useState<string | null>(null);
   
   // Mounted check for Hydration-safe R3F Canvas
@@ -67,25 +77,25 @@ export default function PirateDashboard() {
   const [hold, setHold] = useState(85);
   const [morale, setMorale] = useState(94);
 
-  // Economy & Crew from store
+  // Economy & Crew
   const [gold, setGold] = useState(1500);
   const [crewCount, setCrewCount] = useState(25);
 
-  // Selected Voyage on the interactive map
-  const [selectedRaidId, setSelectedRaidId] = useState<number>(1);
-
-  // Officers State
+  // Officers State (Now expanded to 6 unique officers)
   const [officers, setOfficers] = useState<Officer[]>([
     { id: 1, name: "Билл 'Бочонок'", role: 'Штурман', status: 'Пьян', statusColor: 'text-red-400', loyalty: 45, avatar: "🧭", description: "Напивается быстрее, чем прокладывает курс, но имеет золотое сердце.", wantedReward: "50 дублонов" },
     { id: 2, name: "Джон 'Длинный'", role: 'Кок', status: 'Недоволен', statusColor: 'text-yellow-400', loyalty: 30, avatar: "🍳", description: "Его похлебка может свалить акулу, зато он знает все сплетни Тортуги.", wantedReward: "100 дублонов" },
     { id: 3, name: "Джек 'Громила'", role: 'Канонир', status: 'Готов к бою', statusColor: 'text-emerald-400', loyalty: 80, avatar: "💣", description: "Лучший стрелок Карибского моря. Любит взрывы и крепкие объятия.", wantedReward: "250 дублонов" },
+    { id: 4, name: "Энн Бонни", role: 'Старпом', status: 'Безупречно', statusColor: 'text-emerald-400', loyalty: 90, avatar: "⚔️", description: "Гроза морей, держит команду в ежовых рукавицах. Безответно влюблена в море и порядок.", wantedReward: "500 дублонов" },
+    { id: 5, name: "Слепой Пью", role: 'Казначей', status: 'Считает золото', statusColor: 'text-cyan-400', loyalty: 70, avatar: "🪙", description: "Подсчитывает дублоны по звуку их падения. Обмануть его невозможно, даже будучи капитаном.", wantedReward: "400 дублонов" },
+    { id: 6, name: "Эдвард Тич мл.", role: 'Юнга', status: 'Чистит палубу', statusColor: 'text-amber-400', loyalty: 50, avatar: "🧹", description: "Мечтает стать великим пиратом. Пока только чистит палубу и ворует изюм у кока.", wantedReward: "150 дублонов" },
   ]);
 
-  // Raid system states
-  const [raidTimers, setRaidTimers] = useState<Record<number, number>>({}); // id -> remaining seconds
-  const [raidStates, setRaidStates] = useState<Record<number, 'ready' | 'sailing' | 'claim' | 'completed'>>({});
+  // Daily Incidents System State
+  const [currentIncidentIndex, setCurrentIncidentIndex] = useState(0);
+  const [resolvedLog, setResolvedLog] = useState<string | null>(null);
 
-  // Treasures unlocked state (mysterious chests purchased)
+  // Treasures unlocked state
   const [unlockedTreasures, setUnlockedTreasures] = useState<Record<string, boolean>>({});
 
   // Mystery Chest Modal viewing state
@@ -115,24 +125,22 @@ export default function PirateDashboard() {
       if (savedHold) setHold(parseInt(savedHold, 10));
       if (savedMorale) setMorale(parseInt(savedMorale, 10));
 
-      // Load officers loyalty
+      // Load officers
       const savedOfficers = localStorage.getItem('pirate_officers');
       if (savedOfficers) {
         setOfficers(JSON.parse(savedOfficers));
-      }
-
-      // Load raid states
-      const savedRaidStates = localStorage.getItem('pirate_raid_states');
-      if (savedRaidStates) {
-        setRaidStates(JSON.parse(savedRaidStates));
-      } else {
-        setRaidStates({ 1: 'ready', 2: 'ready', 3: 'ready' });
       }
 
       // Load treasures
       const savedTreasures = localStorage.getItem('pirate_treasures');
       if (savedTreasures) {
         setUnlockedTreasures(JSON.parse(savedTreasures));
+      }
+
+      // Load current incident index
+      const savedIncident = localStorage.getItem('pirate_incident_idx');
+      if (savedIncident) {
+        setCurrentIncidentIndex(parseInt(savedIncident, 10));
       }
     };
 
@@ -177,11 +185,6 @@ export default function PirateDashboard() {
     localStorage.setItem('pirate_officers', JSON.stringify(newOfficers));
   };
 
-  const saveRaidStates = (states: Record<number, 'ready' | 'sailing' | 'claim' | 'completed'>) => {
-    setRaidStates(states);
-    localStorage.setItem('pirate_raid_states', JSON.stringify(states));
-  };
-
   const saveTreasures = (treasures: Record<string, boolean>) => {
     setUnlockedTreasures(treasures);
     localStorage.setItem('pirate_treasures', JSON.stringify(treasures));
@@ -211,7 +214,7 @@ export default function PirateDashboard() {
 
   // Officer interactions
   const rewardOfficer = (id: number) => {
-    const cost = 25;
+    const cost = 30;
     if (gold < cost) return showNotif('❌ Недостаточно золота для премии!');
 
     const updated = officers.map(o => {
@@ -221,7 +224,13 @@ export default function PirateDashboard() {
           return o;
         }
         showNotif(`💰 Премия выдана! Преданность ${o.name} возросла!`);
-        return { ...o, loyalty: Math.min(100, o.loyalty + 15), status: 'Счастлив', statusColor: 'text-emerald-400 font-bold' };
+        return { 
+          ...o, 
+          loyalty: Math.min(100, o.loyalty + 15), 
+          status: 'Безупречно', 
+          statusColor: 'text-emerald-400 font-bold',
+          role: o.role === 'Юнга' ? 'Матрос' : o.role // Auto-promote minor ranks on reward
+        };
       }
       return o;
     });
@@ -230,84 +239,296 @@ export default function PirateDashboard() {
     saveOfficers(updated);
   };
 
-  // Raid list configuration
-  const raids: Raid[] = [
-    { 
-      id: 1, 
-      name: 'Остров Сладких Грез', 
-      desc: 'Романтический побег под теплый плед с какао.', 
-      mission: 'Устроить уютный домашний кинопросмотр.',
-      crewRequired: 10, 
-      duration: 15, 
-      reward: 150, 
-      icon: <Clock size={28} className="text-cyan-400 animate-pulse" /> 
+  // New demote action (Понизить)
+  const demoteOfficer = (id: number) => {
+    const updated = officers.map(o => {
+      if (o.id === id) {
+        if (o.role === 'Юнга' || o.role === 'Шваброносец') {
+          showNotif(`🧹 ${o.name} уже занимает самое низкое звание!`);
+          return o;
+        }
+        const oldRole = o.role;
+        showNotif(`📉 ${o.name} разжалован из звания '${oldRole}'!`);
+        return {
+          ...o,
+          role: 'Юнга',
+          loyalty: Math.max(0, o.loyalty - 20),
+          status: 'Чистит палубу',
+          statusColor: 'text-red-400 font-bold'
+        };
+      }
+      return o;
+    });
+
+    saveOfficers(updated);
+  };
+
+  // New dismiss action (Списать на берег / Уволить)
+  const dismissOfficer = (id: number) => {
+    const updated = officers.map(o => {
+      if (o.id === id) {
+        showNotif(`🚶 ${o.name} списан на берег в таверну!`);
+        return {
+          ...o,
+          isDismissed: true,
+          status: 'В таверне',
+          statusColor: 'text-slate-500 font-bold'
+        };
+      }
+      return o;
+    });
+
+    saveOfficers(updated);
+  };
+
+  // New rehire action (Вернуть на службу)
+  const rehireOfficer = (id: number) => {
+    const rehireCost = 50;
+    if (gold < rehireCost) return showNotif('❌ Не хватает золота, чтобы нанять офицера обратно!');
+
+    const updated = officers.map(o => {
+      if (o.id === id) {
+        showNotif(`⚓ ${o.name} вернулся в строй!`);
+        return {
+          ...o,
+          isDismissed: false,
+          status: 'В строю',
+          statusColor: 'text-emerald-400 font-bold',
+          loyalty: 40 // resets to baseline loyalty
+        };
+      }
+      return o;
+    });
+
+    saveGold(gold - rehireCost);
+    saveOfficers(updated);
+  };
+
+  // SHIP DAILY INCIDENTS LIST
+  const shipIncidents: Incident[] = [
+    {
+      id: 1,
+      title: 'Драка из-за рома в трюме!',
+      icon: '🍺',
+      desc: 'Боцман и кок подрались в трюме из-за последней бутылки элитного ямайского рома. Матросы делают ставки, в трюме крики и звон стали!',
+      choices: [
+        {
+          text: 'Конфисковать бутылку себе',
+          actionText: 'Забрать ром в каюту капитана',
+          effect: 'Мораль -15%, Золото +50',
+          resolve: (stats) => {
+            return {
+              gold: stats.gold + 50,
+              hull: stats.hull,
+              morale: Math.max(0, stats.morale - 15),
+              crew: stats.crew,
+              log: 'Вы забрали элитный ром себе! Матросы недовольно ворчат, но вы выгодно продали бутылку контрабандистам. Казна пополнена!'
+            };
+          }
+        },
+        {
+          text: 'Устроить бой подушками',
+          actionText: 'Пусть решат спор в честном поединке на подушках',
+          effect: 'Мораль +20%, Прочность -5%',
+          resolve: (stats) => {
+            return {
+              gold: stats.gold,
+              hull: Math.max(0, stats.hull - 5),
+              morale: Math.min(100, stats.morale + 20),
+              crew: stats.crew,
+              log: 'Матросы в восторге от комичного зрелища! Боевой дух взлетел, но в ходе драки они случайно вышибли перегородку в трюме.'
+            };
+          }
+        },
+        {
+          text: 'Выкатить бочку пива',
+          actionText: 'Угостить всех пивом из личных запасов капитана',
+          effect: 'Мораль +10%, Золото -40',
+          resolve: (stats) => {
+            return {
+              gold: Math.max(0, stats.gold - 40),
+              hull: stats.hull,
+              morale: Math.min(100, stats.morale + 10),
+              crew: stats.crew,
+              log: 'Все быстро помирились, обнялись и поют романтические пиратские баллады. Капитан — отец родной!'
+            };
+          }
+        }
+      ]
     },
-    { 
-      id: 2, 
-      name: 'Мыс Страстных Объятий', 
-      desc: 'Тайное десантирование в пиццерию за самой вкусной едой.', 
-      mission: 'Заказать пиццу и кушать прямо на полу.',
-      crewRequired: 20, 
-      duration: 30, 
-      reward: 350, 
-      icon: <Flame size={28} className="text-orange-500 animate-bounce" /> 
+    {
+      id: 2,
+      title: 'Случайный поджог камбуза!',
+      icon: '🔥',
+      desc: 'Наш кок Джон пытался приготовить романтический ужин при свечах для своей подруги и случайно поджег занавеску! Пламя стремительно подбирается к пороховому складу!',
+      choices: [
+        {
+          text: 'Тушить элитным ромом',
+          actionText: 'Залить пламя ромом (вода слишком далеко)',
+          effect: 'Прочность +10%, Мораль -10%',
+          resolve: (stats) => {
+            return {
+              gold: stats.gold,
+              hull: Math.min(100, stats.hull + 10),
+              morale: Math.max(0, stats.morale - 10),
+              crew: stats.crew,
+              log: 'Пламя потушено дорогим выдержанным ромом! Корпус спасен, но команда рыдает над пролитыми литрами драгоценного нектара.'
+            };
+          }
+        },
+        {
+          text: 'Выстроить команду с ведрами',
+          actionText: 'Организовать живую цепь матросов с водой',
+          effect: 'Прочность -15%, Матросы -2 (в лазарете)',
+          resolve: (stats) => {
+            return {
+              gold: stats.gold,
+              hull: Math.max(0, stats.hull - 15),
+              morale: stats.morale,
+              crew: Math.max(5, stats.crew - 2),
+              log: 'Камбуз сильно выгорел, а пара матросов получили ожоги и временно лежат в лазарете. Но порох спасен!'
+            };
+          }
+        },
+        {
+          text: 'Резкий крен корабля',
+          actionText: 'Гениальный маневр: зачерпнуть бортом волну!',
+          effect: 'Прочность +5%, Трюмы промокли (Золото -50)',
+          resolve: (stats) => {
+            return {
+              gold: Math.max(0, stats.gold - 50),
+              hull: Math.min(100, stats.hull + 5),
+              morale: stats.morale,
+              crew: stats.crew,
+              log: 'Гениальный капитанский маневр! Волна хлестнула в иллюминатор и мгновенно потушила огонь, но припасы в трюме промокли.'
+            };
+          }
+        }
+      ]
     },
-    { 
-      id: 3, 
-      name: 'Бухта Нежных Записок', 
-      desc: 'Запуск почтовых бутылок с посланиями в Судовой Журнал.', 
-      mission: 'Написать друг другу нежные письма.',
-      crewRequired: 35, 
-      duration: 60, 
-      reward: 800, 
-      icon: <Scroll size={28} className="text-amber-400" /> 
+    {
+      id: 3,
+      title: 'Матросы выловили русалку!',
+      icon: '🧜‍♀️',
+      desc: 'Рыбаки вытащили сетью говорящую русалку! Она обещает указать путь к сундуку испанского короля, если мы отпустим её, но коку она нужна для легендарной ухи...',
+      choices: [
+        {
+          text: 'Отпустить русалку с миром',
+          actionText: 'Даровать ей свободу',
+          effect: 'Золото +200, Мораль +10%',
+          resolve: (stats) => {
+            return {
+              gold: stats.gold + 200,
+              hull: stats.hull,
+              morale: Math.min(100, stats.morale + 10),
+              crew: stats.crew,
+              log: 'Русалка в благодарность скинула на палубу карту испанских сокровищ! Матросы поют песни о вашей доброте и благородстве.'
+            };
+          }
+        },
+        {
+          text: 'Сварить праздничную уху',
+          actionText: 'Устроить грандиозный пир для команды',
+          effect: 'Мораль +30%, Золото -55',
+          resolve: (stats) => {
+            return {
+              gold: Math.max(0, stats.gold - 55),
+              hull: stats.hull,
+              morale: Math.min(100, stats.morale + 30),
+              crew: stats.crew,
+              log: 'Легендарная уха получилась потрясающей! Сытая команда поет веселые частушки, дух на корабле на пике!'
+            };
+          }
+        },
+        {
+          text: 'Продать русалку купцам',
+          actionText: 'Сдать ее в зоопарк Тортуги',
+          effect: 'Золото +500, Мораль -20%',
+          resolve: (stats) => {
+            return {
+              gold: stats.gold + 500,
+              hull: stats.hull,
+              morale: Math.max(0, stats.morale - 20),
+              crew: stats.crew,
+              log: 'Вы выгодно продали диковинное создание купцам Тортуги! Но матросы боятся проклятия морского царя и крестятся при виде волн.'
+            };
+          }
+        }
+      ]
+    },
+    {
+      id: 4,
+      title: 'Утечка в каюте капитана!',
+      icon: '💧',
+      desc: 'В вашей каюте обнаружена подозрительная течь прямо под сундуком с судовыми дублонами! Вода медленно, но верно прибывает на ковер!',
+      choices: [
+        {
+          text: 'Заткнуть любовным письмом',
+          actionText: 'Использовать пачку нежных записок от Grinch',
+          effect: 'Прочность +15%, Мораль +15%',
+          resolve: (stats) => {
+            return {
+              gold: stats.gold,
+              hull: Math.min(100, stats.hull + 15),
+              morale: Math.min(100, stats.morale + 15),
+              crew: stats.crew,
+              log: 'Письма оказались невероятно плотными, теплыми и заряженными любовью — они буквально окаменели, намертво запечатав течь! Магия любви спасла каюту!'
+            };
+          }
+        },
+        {
+          text: 'Нанять плотника с Тортуги',
+          actionText: 'Вызвать мастера за плату',
+          effect: 'Прочность +10%, Золото -30',
+          resolve: (stats) => {
+            return {
+              gold: Math.max(0, stats.gold - 30),
+              hull: Math.min(100, stats.hull + 10),
+              morale: stats.morale,
+              crew: stats.crew,
+              log: 'Профессиональный плотник быстро заколотил брешь дубовой доской, хотя казна лишилась нескольких монет.'
+            };
+          }
+        },
+        {
+          text: 'Игнорировать пробоину',
+          actionText: 'Устроить домашний бассейн на ковре',
+          effect: 'Прочность -25%, Золото -80',
+          resolve: (stats) => {
+            return {
+              gold: Math.max(0, stats.gold - 80),
+              hull: Math.max(0, stats.hull - 25),
+              morale: stats.morale,
+              crew: stats.crew,
+              log: 'Бассейн не удался. Соленая вода залила каюту, размочила половину мебели, а часть золотых дублонов начала ржаветь!'
+            };
+          }
+        }
+      ]
     }
   ];
 
-  // Raid interactions
-  const startRaid = (id: number, crewRequired: number, duration: number) => {
-    if (crewCount < crewRequired) return showNotif(`❌ Нужно как минимум ${crewRequired} матросов! Наймите их в казне!`);
-    if (raidStates[id] === 'sailing') return;
+  // Resolve current active incident choice
+  const handleResolveIncident = (choice: IncidentChoice) => {
+    const active = shipIncidents[currentIncidentIndex];
+    const results = choice.resolve({ gold, hull, morale, crew: crewCount });
 
-    // Start timer
-    setRaidTimers(prev => ({ ...prev, [id]: duration }));
-    const newStates = { ...raidStates, [id]: 'sailing' as const };
-    saveRaidStates(newStates);
+    saveGold(results.gold);
+    saveHull(results.hull);
+    saveHold(results.hull); // Sync hold supply
+    saveMorale(results.morale);
+    saveCrew(results.crew);
 
-    showNotif('⛵ Корабль поднял паруса! Рейд начался!');
+    setResolvedLog(results.log);
   };
 
-  // Timer tick effect for sailing raids
-  useEffect(() => {
-    const activeIds = Object.keys(raidTimers).map(Number).filter(id => raidTimers[id] > 0);
-    if (activeIds.length === 0) return;
-
-    const interval = setInterval(() => {
-      setRaidTimers(prev => {
-        const next = { ...prev };
-        activeIds.forEach(id => {
-          if (next[id] <= 1) {
-            next[id] = 0;
-            // Transition raid to claim
-            const newStates = { ...raidStates, [id]: 'claim' as const };
-            saveRaidStates(newStates);
-            showNotif('🪙 Корабль вернулся из плавания с добычей!');
-          } else {
-            next[id] -= 1;
-          }
-        });
-        return next;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [raidTimers, raidStates]);
-
-  const claimRaidReward = (id: number, reward: number) => {
-    saveGold(gold + reward);
-    const newStates = { ...raidStates, [id]: 'completed' as const };
-    saveRaidStates(newStates);
-    showNotif(`🪙 Добыча собрана! Казна пополнена на +${reward} дублонов!`);
+  // Roll to next incident
+  const handleNextIncident = () => {
+    const nextIdx = (currentIncidentIndex + 1) % shipIncidents.length;
+    setCurrentIncidentIndex(nextIdx);
+    localStorage.setItem('pirate_incident_idx', nextIdx.toString());
+    setResolvedLog(null);
+    showNotif('🎲 Новое происшествие добавлено в судовой журнал!');
   };
 
   // DYNAMIC MYSTERY CHESTS MERCHANT LOGIC CONFIGURATION
@@ -374,14 +595,13 @@ export default function PirateDashboard() {
     }
   ];
 
-  // Chest purchase and shake unlock animation logic
+  // Chest purchase logic
   const handleOpenChest = (chest: ChestMerchant) => {
     if (gold < chest.cost) return showNotif('❌ В казне не хватает золотых дублонов!');
     if (unlockedTreasures[chest.id]) return;
 
     setIsOpeningChest(true);
 
-    // Simulated shaking unlock effect
     setTimeout(() => {
       setIsOpeningChest(false);
       setChestOpenedEffect(true);
@@ -399,8 +619,7 @@ export default function PirateDashboard() {
     setIsOpeningChest(false);
   };
 
-  // Get active selected raid data
-  const activeRaid = raids.find(r => r.id === selectedRaidId) || raids[0];
+  const activeIncident = shipIncidents[currentIncidentIndex];
 
   return (
     <div className="relative min-h-screen bg-[#000000] text-amber-100 font-serif overflow-x-hidden selection:bg-amber-500/30 pb-32">
@@ -427,13 +646,10 @@ export default function PirateDashboard() {
         )}
       </AnimatePresence>
 
-      <ParrotKoko open={cocoOpen} onClose={() => setCocoOpen(false)} showTrigger={false} />
-
       {/* DETAILED PIRATE DEAL SCROLL MODAL */}
       <AnimatePresence>
         {selectedMerchant && (
           <div className="fixed inset-0 z-[500] flex items-center justify-center p-4">
-             {/* Dark overlay backdrop */}
              <motion.div 
                initial={{ opacity: 0 }} 
                animate={{ opacity: 1 }} 
@@ -442,21 +658,17 @@ export default function PirateDashboard() {
                className="absolute inset-0 bg-black/95 backdrop-blur-md" 
              />
              
-             {/* The Old Scroll container (Pure Black & Gold styling) */}
              <motion.div 
                initial={{ scale: 0.9, y: 50, opacity: 0 }} 
                animate={{ scale: 1, y: 0, opacity: 1 }} 
                exit={{ scale: 0.9, y: 50, opacity: 0 }} 
                className="relative w-full max-w-lg bg-[#0c0c0c] border-4 border-amber-500/40 rounded-[3rem] shadow-[0_0_80px_rgba(245,158,11,0.4)] p-8 overflow-hidden flex flex-col justify-between z-10"
              >
-                {/* Close Button */}
                 <button onClick={handleCloseModal} className="absolute top-6 right-6 text-amber-500/50 hover:text-amber-300 transition-colors z-20">
                   <X size={28} />
                 </button>
 
                 <div className="space-y-6">
-                   
-                   {/* Pirate Portrait Header */}
                    <div className="flex items-center gap-4 border-b border-amber-500/25 pb-4">
                       <div className="w-16 h-16 rounded-[1.5rem] bg-[#111] border-2 border-amber-500/30 flex items-center justify-center text-4xl shadow-md">
                          {selectedMerchant.pirateAvatar}
@@ -468,7 +680,6 @@ export default function PirateDashboard() {
                       </div>
                    </div>
 
-                   {/* Chest Illustration with Dynamic Shaking Animation */}
                    <div className="py-6 flex justify-center relative">
                       {isOpeningChest ? (
                          <motion.div 
@@ -505,7 +716,6 @@ export default function PirateDashboard() {
                       )}
                    </div>
 
-                   {/* Scroll of Pirate's Adventure Story (Boosted size/boldness) */}
                    <div className="relative p-6 bg-gradient-to-br from-[#111] to-[#000] rounded-2xl border border-amber-500/20 text-left overflow-hidden shadow-inner">
                       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-[0.03] pointer-events-none" />
                       <h4 className="text-[10px] font-black uppercase text-amber-400 tracking-[0.2em] mb-2.5">История находки от пирата:</h4>
@@ -514,7 +724,6 @@ export default function PirateDashboard() {
                       </p>
                    </div>
 
-                   {/* Romantic message revealed */}
                    {(chestOpenedEffect || unlockedTreasures[selectedMerchant.id]) && (
                       <motion.div 
                         initial={{ opacity: 0, y: 15 }}
@@ -532,7 +741,6 @@ export default function PirateDashboard() {
 
                 </div>
 
-                {/* Purchase Buttons Footer */}
                 <div className="mt-8 pt-4 border-t border-amber-500/20">
                    {unlockedTreasures[selectedMerchant.id] || chestOpenedEffect ? (
                       <div className="w-full py-4 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 rounded-2xl font-black uppercase tracking-[0.15em] text-xs sm:text-sm text-center flex justify-center items-center gap-2 shadow-inner">
@@ -561,9 +769,9 @@ export default function PirateDashboard() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-10 space-y-12">
         
-        {/* HEADER BLOCK */}
+        {/* HEADER BLOCK (Coco Parrot card removed) */}
         <header className="flex flex-col md:flex-row justify-between items-center gap-6 border-b-2 border-amber-500/20 pb-8">
-           <div className="text-center md:text-left space-y-2">
+           <div className="text-center md:text-left space-y-2 w-full">
               <div className="flex items-center justify-center md:justify-start gap-2.5 text-amber-500/70 uppercase text-[11px] font-black tracking-[0.4em]">
                  <Anchor size={14} className="text-amber-500" />
                  <span>Капитанский Мостик · Тортуга</span>
@@ -572,26 +780,6 @@ export default function PirateDashboard() {
                  Бухта Тортуга
               </h1>
            </div>
-
-           {/* Coco Plaque Card */}
-           <motion.button
-             whileHover={{ scale: 1.03, y: -2 }}
-             whileTap={{ scale: 0.98 }}
-             onClick={() => setCocoOpen(true)}
-             className="flex items-center gap-4 bg-gradient-to-br from-[#111] to-[#000] border-2 border-amber-500/20 hover:border-amber-500/60 rounded-[2rem] pl-5 pr-12 py-3.5 shadow-2xl backdrop-blur-md transition-all relative group cursor-pointer"
-           >
-              <div className="absolute inset-0 bg-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2rem]" />
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-[#050505] border border-amber-500/20 text-3xl shadow-lg relative group-hover:rotate-12 transition-transform duration-300">
-                 🦜
-              </div>
-              <div className="text-left">
-                 <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-400 leading-none">Попугай Коко</p>
-                 <p className="text-xs text-amber-100 font-bold mt-1 leading-tight whitespace-nowrap">Мудрый советник в амурных баталиях</p>
-              </div>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-amber-500">
-                <ArrowRight size={16} />
-              </div>
-           </motion.button>
         </header>
 
         {/* 3D INTERACTIVE SAFE PIRATE BAY SCENARIO */}
@@ -621,7 +809,7 @@ export default function PirateDashboard() {
                  </div>
 
                  <p className="text-sm text-amber-100/90 leading-relaxed font-sans font-bold">
-                    Капитан! Пришвартовывайся к тихой пристани. Это самое **безопасное и теплое место** во всем архипелаге. Здесь шторма бессильны, пушки молчат, а команда может спокойно отдохнуть в таверне, пока ты изучаешь сокровища и планируешь новые приключения с Полиной.
+                    Капитан! Пришвартовывайся к тихой пристани. Это самое **безопасное и теплое место** во всем архипелаге. Здесь шторма бессильны, пушки молчат, а команда может спокойно отдохнуть в таверне, пока ты изучаешь сокровища и решаешь насущные корабельные дела.
                  </p>
 
                  <div className="p-5 bg-black border border-white/5 rounded-2xl space-y-4 shadow-inner">
@@ -648,13 +836,13 @@ export default function PirateDashboard() {
 
         </section>
 
-        {/* TABS SELECTOR */}
+        {/* TABS SELECTOR (raids removed, incidents added) */}
         <div className="flex items-center justify-center bg-black/95 p-2.5 rounded-[2.5rem] border border-amber-500/20 backdrop-blur-sm shadow-2xl relative z-20 max-w-3xl mx-auto">
            <div className="flex items-center justify-between w-full gap-2.5">
              {[
                { id: 'ship', label: 'Борт фрегата', icon: <Anchor size={16} /> },
                { id: 'crew', label: 'Офицеры WANTED', icon: <Users size={16} /> },
-               { id: 'raids', label: 'Карта походов', icon: <Compass size={16} /> },
+               { id: 'incidents', label: 'Будни фрегата', icon: <ShieldAlert size={16} /> },
                { id: 'chests', label: 'Сундуки сделок', icon: <Trophy size={16} /> },
              ].map(tab => (
                <button
@@ -687,7 +875,6 @@ export default function PirateDashboard() {
                   transition={{ duration: 0.3 }}
                   className="space-y-8"
                 >
-                   {/* Captain's Steering Console Panel */}
                    <div className="bg-[#050505] rounded-[3.5rem] border-2 border-amber-500/20 p-8 shadow-2xl relative overflow-hidden flex flex-col lg:flex-row gap-8 items-center justify-between min-h-[380px]">
                       
                       {/* Rotating ship wheel background vector */}
@@ -701,7 +888,6 @@ export default function PirateDashboard() {
                          </svg>
                       </div>
 
-                      {/* Left: Decorative console description & status indicator */}
                       <div className="text-left space-y-4 max-w-sm z-10">
                          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-amber-500">Система Навигации</span>
                          <h3 className="text-3xl font-black text-amber-100 uppercase tracking-tight leading-none">Приборная Панель</h3>
@@ -714,7 +900,6 @@ export default function PirateDashboard() {
                          </div>
                       </div>
 
-                      {/* Right: 3 Ornate Vintage Compass Gauges (Flawless centered circles using responsive viewBox="0 0 100 100") */}
                       <div className="flex flex-col sm:flex-row gap-8 items-center justify-center w-full lg:w-auto z-10">
                          
                          {/* Dial 1: Hull */}
@@ -726,19 +911,9 @@ export default function PirateDashboard() {
                                <span className="text-3xl font-black text-amber-100 mt-1">{hull}%</span>
                                <span className="text-[10px] font-black uppercase tracking-widest text-orange-400/80 mt-0.5">Корпус</span>
                                
-                               {/* Glowing circle progress overlay - Flawlessly Centered and bounds-constrained */}
                                <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none">
                                  <circle cx="50" cy="50" r="44" className="stroke-orange-500/10 fill-none" strokeWidth="4" />
-                                 <circle 
-                                   cx="50" 
-                                   cy="50" 
-                                   r="44" 
-                                   className="stroke-orange-500 fill-none transition-all duration-700" 
-                                   strokeWidth="4" 
-                                   strokeDasharray="276.4" 
-                                   strokeDashoffset={276.4 - (276.4 * hull) / 100} 
-                                   strokeLinecap="round" 
-                                 />
+                                 <circle cx="50" cy="50" r="44" className="stroke-orange-500 fill-none transition-all duration-700" strokeWidth="4" strokeDasharray="276.4" strokeDashoffset={276.4 - (276.4 * hull) / 100} strokeLinecap="round" />
                                </svg>
                             </div>
                             
@@ -759,19 +934,9 @@ export default function PirateDashboard() {
                                <span className="text-3xl font-black text-amber-100 mt-1">{hold}%</span>
                                <span className="text-[10px] font-black uppercase tracking-widest text-sky-400/80 mt-0.5">Трюмы</span>
                                
-                               {/* Glowing circle progress overlay - Flawlessly Centered and bounds-constrained */}
                                <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none">
                                  <circle cx="50" cy="50" r="44" className="stroke-sky-500/10 fill-none" strokeWidth="4" />
-                                 <circle 
-                                   cx="50" 
-                                   cy="50" 
-                                   r="44" 
-                                   className="stroke-sky-400 fill-none transition-all duration-700" 
-                                   strokeWidth="4" 
-                                   strokeDasharray="276.4" 
-                                   strokeDashoffset={276.4 - (276.4 * hold) / 100} 
-                                   strokeLinecap="round" 
-                                 />
+                                 <circle cx="50" cy="50" r="44" className="stroke-sky-400 fill-none transition-all duration-700" strokeWidth="4" strokeDasharray="276.4" strokeDashoffset={276.4 - (276.4 * hold) / 100} strokeLinecap="round" />
                                </svg>
                             </div>
                             
@@ -792,19 +957,9 @@ export default function PirateDashboard() {
                                <span className="text-3xl font-black text-amber-100 mt-1">{morale}%</span>
                                <span className="text-[10px] font-black uppercase tracking-widest text-red-400/80 mt-0.5">Дух</span>
                                
-                               {/* Glowing circle progress overlay - Flawlessly Centered and bounds-constrained */}
                                <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full transform -rotate-90 pointer-events-none">
                                  <circle cx="50" cy="50" r="44" className="stroke-red-500/10 fill-none" strokeWidth="4" />
-                                 <circle 
-                                   cx="50" 
-                                   cy="50" 
-                                   r="44" 
-                                   className="stroke-red-500 fill-none transition-all duration-700" 
-                                   strokeWidth="4" 
-                                   strokeDasharray="276.4" 
-                                   strokeDashoffset={276.4 - (276.4 * morale) / 100} 
-                                   strokeLinecap="round" 
-                                 />
+                                 <circle cx="50" cy="50" r="44" className="stroke-red-500 fill-none transition-all duration-700" strokeWidth="4" strokeDasharray="276.4" strokeDashoffset={276.4 - (276.4 * morale) / 100} strokeLinecap="round" />
                                </svg>
                             </div>
                             
@@ -820,7 +975,7 @@ export default function PirateDashboard() {
 
                    </div>
 
-                   {/* Gossip & Weather (Pure Black Glass cards) */}
+                   {/* Gossip & Weather */}
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="relative p-6 rounded-[2.5rem] bg-black border-2 border-red-500/25 text-left shadow-lg overflow-hidden">
                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-5 pointer-events-none" />
@@ -864,7 +1019,7 @@ export default function PirateDashboard() {
                 </motion.div>
              )}
 
-             {/* TAB 2: OFFICERS (ЭКИПАЖ) — WANTED posters layout */}
+             {/* TAB 2: OFFICERS (ЭКИПАЖ) — WANTED posters layout (Dismiss & Demote actions added) */}
              {activeTab === 'crew' && (
                 <motion.div
                   key="crew"
@@ -874,301 +1029,218 @@ export default function PirateDashboard() {
                   transition={{ duration: 0.3 }}
                   className="space-y-8"
                 >
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {officers.map(officer => (
-                         <div 
-                           key={officer.id}
-                           className="relative rounded-[2.5rem] p-6 border-4 border-amber-500/20 flex flex-col justify-between overflow-hidden shadow-2xl group bg-gradient-to-b from-[#111111] to-[#050505]"
-                         >
-                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors z-0" />
-                            
-                            {/* Decorative wanted lines */}
-                            <div className="absolute inset-x-4 top-4 h-0.5 bg-amber-500/10 z-10" />
-                            <div className="absolute inset-x-4 bottom-4 h-0.5 bg-amber-500/10 z-10" />
-                            
-                            <div className="relative z-10 space-y-6 flex flex-col items-center text-center">
-                               {/* Wanted Badge */}
-                               <div className="px-4 py-1.5 bg-amber-500/15 border border-amber-500/35 rounded-lg text-amber-400 text-[10px] font-black uppercase tracking-[0.25em] shadow-md">
-                                  WANTED • ЖИВЫМ
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                      {officers.map(officer => {
+                         const isFired = officer.isDismissed || false;
+
+                         return (
+                            <div 
+                              key={officer.id}
+                              className={cn(
+                                "relative rounded-[2.5rem] p-6 border-4 flex flex-col justify-between overflow-hidden shadow-2xl group transition-all duration-300",
+                                isFired 
+                                  ? "border-slate-800 bg-[#070707] opacity-60" 
+                                  : "border-amber-500/20 bg-gradient-to-b from-[#111111] to-[#050505]"
+                              )}
+                            >
+                               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors z-0" />
+                               
+                               <div className="absolute inset-x-4 top-4 h-0.5 bg-amber-500/10 z-10" />
+                               <div className="absolute inset-x-4 bottom-4 h-0.5 bg-amber-500/10 z-10" />
+                               
+                               <div className="relative z-10 space-y-6 flex flex-col items-center text-center">
+                                  
+                                  {/* Fired / Rehire indicator */}
+                                  {isFired ? (
+                                     <div className="px-4 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-400 text-[10px] font-black uppercase tracking-[0.25em] shadow-md animate-pulse">
+                                        Списан в таверну
+                                     </div>
+                                  ) : (
+                                     <div className="px-4 py-1.5 bg-amber-500/15 border border-amber-500/35 rounded-lg text-amber-400 text-[10px] font-black uppercase tracking-[0.25em] shadow-md">
+                                        WANTED • В СТРОЮ
+                                     </div>
+                                  )}
+
+                                  {/* Portrait frame */}
+                                  <div className={cn(
+                                     "w-24 h-24 rounded-[2rem] bg-black border-4 flex items-center justify-center text-5xl shadow-[0_0_20px_rgba(0,0,0,0.8)] relative group-hover:rotate-3 transition-transform duration-300",
+                                     isFired ? "border-slate-800" : "border-amber-500/25"
+                                  )}>
+                                     {officer.avatar}
+                                  </div>
+
+                                  <div className="space-y-1">
+                                     <h4 className="text-2xl font-black text-amber-100 tracking-tight leading-none uppercase">{officer.name}</h4>
+                                     <p className="text-[11px] font-black text-amber-400 uppercase tracking-widest leading-none mt-1">{officer.role}</p>
+                                  </div>
+
+                                  <p className="text-xs text-amber-100 font-bold leading-relaxed px-2 italic">"{officer.description}"</p>
+
+                                  {/* Loyalty widget */}
+                                  {!isFired && (
+                                     <div className="w-full space-y-2 px-2 bg-black/60 p-4 rounded-2xl border border-white/5">
+                                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-500/50">
+                                           <span className="flex items-center gap-1"><HeartHandshake size={12} /> Преданность</span>
+                                           <span className={cn(officer.loyalty > 70 ? "text-emerald-400 font-black" : "text-yellow-400 font-black")}>{officer.loyalty}%</span>
+                                        </div>
+                                        <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden border border-amber-950/20 p-0.5">
+                                           <div className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-700" style={{ width: `${officer.loyalty}%` }} />
+                                        </div>
+                                        <div className="flex justify-between items-center pt-1 text-[10px] text-amber-100/40 font-bold italic">
+                                           <span>Статус: <strong className={officer.statusColor}>{officer.status}</strong></span>
+                                           <span>Награда: <strong className="text-amber-400 font-black">{officer.wantedReward}</strong></span>
+                                        </div>
+                                     </div>
+                                  )}
                                </div>
 
-                               {/* Portrait frame */}
-                               <div className="w-24 h-24 rounded-[2rem] bg-black border-4 border-amber-500/25 flex items-center justify-center text-5xl shadow-[0_0_20px_rgba(0,0,0,0.8)] relative group-hover:rotate-3 transition-transform duration-300">
-                                  {officer.avatar}
+                               {/* Action buttons (Dismiss, demote, rehire) */}
+                               <div className="relative z-10 mt-6 pt-4 border-t border-amber-500/10 space-y-2">
+                                  {isFired ? (
+                                     <button 
+                                       onClick={() => rehireOfficer(officer.id)}
+                                       className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs border-2 border-amber-400 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-md"
+                                     >
+                                        <UserPlus size={14} /> Нанять обратно (50 золотых)
+                                     </button>
+                                  ) : (
+                                     <>
+                                        {/* Reward / Premium */}
+                                        <button 
+                                          onClick={() => rewardOfficer(officer.id)}
+                                          className="w-full py-3 bg-gradient-to-r from-[#111] to-[#000] hover:from-amber-500 hover:to-amber-600 hover:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs border border-amber-500/20 hover:border-amber-400 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-md"
+                                        >
+                                           <Award size={14} /> Повысить / Одобрить (30 дублонов)
+                                        </button>
+
+                                        <div className="grid grid-cols-2 gap-2">
+                                           {/* Demote */}
+                                           <button 
+                                             onClick={() => demoteOfficer(officer.id)}
+                                             className="py-2.5 bg-black/40 hover:bg-orange-500/10 text-orange-400 hover:text-orange-300 rounded-xl font-black uppercase tracking-widest text-[9px] border border-orange-500/20 hover:border-orange-500/40 transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                                           >
+                                              <ArrowDown size={11} /> Разжаловать
+                                           </button>
+                                           
+                                           {/* Dismiss */}
+                                           <button 
+                                             onClick={() => dismissOfficer(officer.id)}
+                                             className="py-2.5 bg-black/40 hover:bg-red-500/10 text-red-400 hover:text-red-300 rounded-xl font-black uppercase tracking-widest text-[9px] border border-red-500/20 hover:border-red-500/40 transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                                           >
+                                              <UserX size={11} /> Уволить
+                                           </button>
+                                        </div>
+                                     </>
+                                  )}
                                </div>
-
-                               <div className="space-y-1">
-                                  <h4 className="text-2xl font-black text-amber-100 tracking-tight leading-none uppercase">{officer.name}</h4>
-                                  <p className="text-[11px] font-black text-amber-400 uppercase tracking-widest leading-none mt-1">{officer.role}</p>
-                               </div>
-
-                               <p className="text-xs text-amber-100 font-bold leading-relaxed px-2 italic">"{officer.description}"</p>
-
-                               {/* Custom loyalty bar with anchors */}
-                               <div className="w-full space-y-2 px-2 bg-black/60 p-4 rounded-2xl border border-white/5">
-                                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-500/50">
-                                     <span className="flex items-center gap-1"><HeartHandshake size={12} /> Преданность</span>
-                                     <span className={cn(officer.loyalty > 70 ? "text-emerald-400 font-black" : "text-yellow-400 font-black")}>{officer.loyalty}%</span>
-                                  </div>
-                                  <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden border border-amber-950/20 p-0.5">
-                                     <div className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-700" style={{ width: `${officer.loyalty}%` }} />
-                                  </div>
-                                  <div className="flex justify-between items-center pt-1 text-[10px] text-amber-100/40 font-bold italic">
-                                     <span>Статус: <strong className={officer.statusColor}>{officer.status}</strong></span>
-                                     <span>Награда: <strong className="text-amber-400 font-black">{officer.wantedReward}</strong></span>
-                                  </div>
-                                </div>
                             </div>
-
-                            {/* Award premium button */}
-                            <div className="relative z-10 mt-6 pt-4 border-t border-amber-500/10">
-                               <button 
-                                 onClick={() => rewardOfficer(officer.id)}
-                                 className="w-full py-4 bg-gradient-to-r from-[#111111] to-[#050505] hover:from-amber-500 hover:to-amber-600 hover:text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs border border-amber-500/30 hover:border-amber-400 transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-md"
-                               >
-                                  <Coins size={14} /> Жалованье (25 золотых)
-                               </button>
-                            </div>
-                         </div>
-                      ))}
+                         );
+                      })}
                    </div>
                 </motion.div>
              )}
 
-             {/* TAB 3: EXPEDITIONS (РЕЙДЫ) — Epic Interactive Voyages Map */}
-             {activeTab === 'raids' && (
+             {/* TAB 3: DAILY INCIDENTS (БУДНИ ФРЕГАТА) — Interactive ship crisis game */}
+             {activeTab === 'incidents' && (
                 <motion.div
-                  key="raids"
+                  key="incidents"
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -15 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-6"
+                  className="max-w-3xl mx-auto space-y-8"
                 >
-                   {/* Interactive Map Layout Container */}
-                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-                      
-                      {/* Left: Sea Archipelago Navigation Map */}
-                      <div className="lg:col-span-8 bg-[#04090e] border-2 border-cyan-500/20 rounded-[3rem] p-6 relative overflow-hidden min-h-[400px] shadow-[inset_0_0_40px_rgba(0,255,200,0.08)] flex flex-col justify-between group">
-                         
-                         {/* Nautical grid lines and decorations */}
-                         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,204,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,204,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
-                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-dashed border-cyan-500/5 rounded-full pointer-events-none" />
-                         
-                         {/* Compass Rose vector element */}
-                         <div className="absolute bottom-6 left-6 text-cyan-500/10 pointer-events-none">
-                            <Compass size={120} className="animate-spin-slow" />
-                         </div>
+                   {/* Header description */}
+                   <div className="text-center space-y-2">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 flex items-center justify-center gap-1.5"><ShieldAlert size={14} /> Чрезвычайные дела</span>
+                      <h2 className="text-3xl font-black uppercase tracking-tight text-amber-100">Будни Фрегата</h2>
+                      <p className="text-sm text-amber-500/70 font-bold leading-relaxed">
+                         «Каждый день на пиратском корабле случаются форс-мажоры: драки, левиафаны, поджоги или пропажа провизии. Принимайте судьбоносные капитанские решения и управляйте кораблем!»
+                      </p>
+                   </div>
 
-                         {/* Title overlay */}
-                         <div className="relative z-10 flex justify-between items-start">
-                            <div>
-                               <span className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-400">Навигационная Карта</span>
-                               <h3 className="text-2xl font-black uppercase tracking-tight text-amber-100">Карта Плаваний</h3>
-                            </div>
-                            <span className="text-[10px] font-black text-cyan-400 bg-cyan-950/40 px-2.5 py-1.5 rounded-lg border border-cyan-500/20">Архипелаг Грез</span>
-                         </div>
+                   {/* Active Incident Logbook Scroll Plaque */}
+                   <div className="bg-[#0c0c0c] border-4 border-amber-500/30 rounded-[3rem] p-8 shadow-2xl relative overflow-hidden">
+                      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-5 pointer-events-none" />
+                      <div className="absolute top-0 left-0 w-full h-[150px] bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none" />
 
-                         {/* Interactive Island Nodes (Dotted lines leading to Tortuga at bottom center) */}
-                         <div className="absolute inset-0 pointer-events-auto">
-                            
-                            {/* Tortuga Base Point (Bottom Center) */}
-                            <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 flex flex-col items-center">
-                               <div className="w-10 h-10 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-sm shadow-[0_0_15px_rgba(245,158,11,0.4)]">
-                                  ⚓
-                                </div>
-                                <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider mt-1 bg-black/80 px-2 py-0.5 rounded border border-amber-500/25">Тортуга</span>
-                            </div>
-
-                            {/* Node 1: Остров Сладких Грез (Top Left) */}
-                            <div className="absolute top-[18%] left-[18%]">
-                               <svg className="absolute top-10 left-10 w-[200px] h-[150px] pointer-events-none opacity-20 overflow-visible">
-                                  <path d="M 0,0 C 50,50 100,100 150,150" fill="none" stroke="#22d3ee" strokeWidth="2" strokeDasharray="6 6" />
-                               </svg>
-                               
-                               <button 
-                                 onClick={() => setSelectedRaidId(1)}
-                                 className={cn(
-                                   "p-3 rounded-2xl border-2 flex flex-col items-center gap-1 hover:scale-105 transition-all shadow-xl cursor-pointer relative",
-                                   selectedRaidId === 1 
-                                     ? "bg-cyan-950/80 border-cyan-400 text-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.3)]" 
-                                     : "bg-black/90 border-cyan-500/20 text-cyan-500/60 hover:border-cyan-400"
-                                 )}
-                               >
-                                  {raidStates[1] === 'sailing' && (
-                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-bounce">⛵</span>
-                                  )}
-                                  {raidStates[1] === 'claim' && (
-                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-ping">🪙</span>
-                                  )}
-                                  <span className="text-2xl">🌴</span>
-                                  <span className="text-xs font-black uppercase tracking-wider">Грезы</span>
-                               </button>
-                            </div>
-
-                            {/* Node 2: Мыс Страстных Объятий (Middle Right) */}
-                            <div className="absolute top-[35%] right-[22%]">
-                               <button 
-                                 onClick={() => setSelectedRaidId(2)}
-                                 className={cn(
-                                   "p-3 rounded-2xl border-2 flex flex-col items-center gap-1 hover:scale-105 transition-all shadow-xl cursor-pointer relative",
-                                   selectedRaidId === 2 
-                                     ? "bg-cyan-950/80 border-cyan-400 text-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.3)]" 
-                                     : "bg-black/90 border-cyan-500/20 text-cyan-500/60 hover:border-cyan-400"
-                                 )}
-                               >
-                                  {raidStates[2] === 'sailing' && (
-                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-bounce">⛵</span>
-                                  )}
-                                  {raidStates[2] === 'claim' && (
-                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-ping">🪙</span>
-                                  )}
-                                  <span className="text-2xl">🌋</span>
-                                  <span className="text-xs font-black uppercase tracking-wider">Объятия</span>
-                               </button>
-                            </div>
-
-                            {/* Node 3: Бухта Нежных Записок (Top Right) */}
-                            <div className="absolute top-[12%] right-[12%]">
-                               <button 
-                                 onClick={() => setSelectedRaidId(3)}
-                                 className={cn(
-                                   "p-3 rounded-2xl border-2 flex flex-col items-center gap-1 hover:scale-105 transition-all shadow-xl cursor-pointer relative",
-                                   selectedRaidId === 3 
-                                     ? "bg-cyan-950/80 border-cyan-400 text-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.3)]" 
-                                     : "bg-black/90 border-cyan-500/20 text-cyan-500/60 hover:border-cyan-400"
-                                 )}
-                               >
-                                  {raidStates[3] === 'sailing' && (
-                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-bounce">⛵</span>
-                                  )}
-                                  {raidStates[3] === 'claim' && (
-                                     <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[8px] font-black text-slate-950 animate-ping">🪙</span>
-                                  )}
-                                  <span className="text-2xl">📜</span>
-                                  <span className="text-xs font-black uppercase tracking-wider">Записки</span>
-                               </button>
-                            </div>
-
-                         </div>
-
-                         {/* Bottom status helper */}
-                         <div className="relative z-10 mt-auto flex justify-between text-[10px] font-black uppercase tracking-widest text-cyan-400/60 pointer-events-none">
-                            <span>🗺️ Выбери порт на карте для отправки</span>
-                            <span>Тортуга Форпост</span>
-                         </div>
-                      </div>
-
-                      {/* Right: Logbook & Captain's orders */}
-                      <div className="lg:col-span-4 bg-black border-2 border-amber-500/20 rounded-[3rem] p-6 flex flex-col justify-between min-h-[400px] shadow-2xl relative">
-                         <div className="space-y-6 text-left">
-                            
-                            {/* Mission Header */}
-                            <div className="border-b border-amber-500/25 pb-3">
-                               <div className="flex justify-between items-center">
-                                  <span className="text-[10px] font-black uppercase text-amber-500 tracking-[0.2em]">Судовой Журнал</span>
-                                  <span className="text-[10px] font-black text-amber-400 bg-amber-950/20 px-2 py-0.5 rounded border border-amber-500/20">Порт #{activeRaid.id}</span>
-                               </div>
-                               <h3 className="text-2xl font-black uppercase tracking-tight text-amber-100 mt-1">{activeRaid.name}</h3>
-                            </div>
-
-                            {/* Details list */}
-                            <div className="space-y-4">
-                               <div className="flex gap-3">
-                                  <div className="w-12 h-12 rounded-xl bg-black border border-amber-500/20 flex items-center justify-center shrink-0">
-                                     {activeRaid.icon}
+                      <AnimatePresence mode="wait">
+                         {!resolvedLog ? (
+                            <motion.div 
+                              key="active_incident"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              className="space-y-6 text-left"
+                            >
+                               {/* Incident Icon & Name */}
+                               <div className="flex items-center gap-4 border-b border-amber-500/20 pb-4">
+                                  <div className="w-16 h-16 rounded-2xl bg-black border border-amber-500/20 flex items-center justify-center text-4xl shadow-md animate-pulse">
+                                     {activeIncident.icon}
                                   </div>
                                   <div>
-                                     <p className="text-[10px] text-amber-100/50 font-black uppercase tracking-wider">Описание:</p>
-                                     <p className="text-xs text-amber-100 font-bold italic">"{activeRaid.desc}"</p>
+                                     <span className="text-[9px] font-black uppercase text-red-500 tracking-[0.2em] block">Судовое Происшествие</span>
+                                     <h3 className="text-2xl font-black text-amber-100 uppercase tracking-tight leading-none mt-1">{activeIncident.title}</h3>
                                   </div>
                                </div>
 
-                               <div className="p-4 bg-[#0a0a0a] rounded-2xl border border-white/5 space-y-2 text-sm">
-                                  <div className="flex justify-between">
-                                     <span className="text-amber-100/50 font-bold">Награда:</span>
-                                     <strong className="text-amber-400 font-black flex items-center gap-1"><Coins size={14} />+{activeRaid.reward} дублонов</strong>
-                                  </div>
-                                  <div className="flex justify-between">
-                                     <span className="text-amber-100/50 font-bold">Время пути:</span>
-                                     <strong className="text-amber-100 font-black">{activeRaid.duration} сек</strong>
-                                  </div>
-                                  <div className="flex justify-between">
-                                     <span className="text-amber-100/50 font-bold">Матросы:</span>
-                                     <strong className="text-amber-100 font-black">{activeRaid.crewRequired} чел</strong>
-                                  </div>
+                               {/* Scenario Description */}
+                               <p className="text-base text-amber-100 font-bold leading-relaxed italic">
+                                  "{activeIncident.desc}"
+                               </p>
+
+                               {/* Multi Choices buttons */}
+                               <div className="space-y-3 pt-4">
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-500/40 block mb-2">Варианты Капитанских приказов:</span>
+                                  {activeIncident.choices.map((choice, idx) => (
+                                     <button
+                                       key={idx}
+                                       onClick={() => handleResolveIncident(choice)}
+                                       className="w-full text-left p-5 rounded-2xl border-2 border-amber-500/20 bg-black/60 hover:bg-amber-500 hover:text-slate-950 hover:border-amber-400 hover:scale-[1.01] transition-all cursor-pointer shadow-lg group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 active:scale-95"
+                                     >
+                                        <div>
+                                           <span className="text-sm font-black group-hover:text-slate-950 text-amber-100 block">{choice.text}</span>
+                                           <span className="text-[11px] font-bold text-amber-100/50 group-hover:text-slate-950/60 block mt-0.5 italic">Решение: {choice.actionText}</span>
+                                        </div>
+                                        <span className="px-3 py-1 bg-black/40 group-hover:bg-slate-950 group-hover:text-amber-400 rounded-lg text-[10px] font-black uppercase tracking-widest border border-amber-500/10 shrink-0 self-start sm:self-center">
+                                           {choice.effect}
+                                        </span>
+                                     </button>
+                                  ))}
+                               </div>
+                            </motion.div>
+                         ) : (
+                            <motion.div 
+                              key="resolved_incident"
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="space-y-6 text-center py-8"
+                            >
+                               <div className="w-20 h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center text-4xl shadow-[0_0_20px_rgba(16,185,129,0.3)] mx-auto animate-bounce">
+                                  📜
                                </div>
 
-                               <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl text-xs text-amber-100 font-bold leading-relaxed relative overflow-hidden shadow-inner">
-                                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-[0.03] pointer-events-none" />
-                                  <span className="font-black uppercase text-amber-400 tracking-wider text-[9px] block mb-0.5">Суть экспедиции:</span>
-                                  {activeRaid.mission}
-                                </div>
+                               <div className="space-y-2">
+                                  <span className="text-[9px] font-black uppercase text-emerald-400 tracking-[0.25em] block">Происшествие Разрешено</span>
+                                  <h3 className="text-3xl font-black text-amber-100 uppercase tracking-tight">Отчет Квартирмейстера</h3>
+                               </div>
 
-                               {/* Sailing progress bar */}
-                               {raidStates[activeRaid.id] === 'sailing' && (
-                                  <div className="space-y-2 pt-2 relative">
-                                     <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-amber-400">
-                                        <span className="flex items-center gap-1"><Clock size={10} /> До причала: {raidTimers[activeRaid.id] || 0} сек</span>
-                                        <span>{Math.round(((activeRaid.duration - (raidTimers[activeRaid.id] || 0)) / activeRaid.duration) * 100)}%</span>
-                                     </div>
-                                     
-                                     <div className="w-full h-3 bg-black/60 rounded-full overflow-hidden border border-amber-950/20 p-0.5 relative">
-                                        <motion.div 
-                                          className="absolute top-1/2 -translate-y-1/2 text-xs z-20"
-                                          style={{ left: `${Math.min(92, Math.max(2, ((activeRaid.duration - (raidTimers[activeRaid.id] || 0)) / activeRaid.duration) * 100))}%` }}
-                                        >
-                                          ⛵
-                                        </motion.div>
-                                        <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)]" style={{ width: `${((activeRaid.duration - (raidTimers[activeRaid.id] || 0)) / activeRaid.duration) * 100}%` }} />
-                                     </div>
-                                  </div>
-                               )}
-                            </div>
+                               <div className="p-6 bg-gradient-to-br from-[#111] to-[#000] border border-amber-500/20 rounded-2xl max-w-lg mx-auto text-left shadow-inner">
+                                  <p className="text-sm sm:text-base text-amber-100 font-bold leading-relaxed italic text-center w-full">
+                                     {resolvedLog}
+                                  </p>
+                               </div>
 
-                         </div>
-
-                         {/* Action Buttons */}
-                         <div className="pt-6 border-t border-amber-500/10">
-                            {raidStates[activeRaid.id] === 'ready' || !raidStates[activeRaid.id] ? (
-                               <button 
-                                 onClick={() => startRaid(activeRaid.id, activeRaid.crewRequired, activeRaid.duration)}
-                                 disabled={crewCount < activeRaid.crewRequired}
-                                 className={cn(
-                                   "w-full py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 border-2 shadow-lg",
-                                   crewCount >= activeRaid.crewRequired 
-                                     ? "bg-gradient-to-r from-amber-500 to-amber-600 border-amber-400 text-slate-950 hover:scale-[1.02] shadow-[0_0_20px_rgba(245,158,11,0.25)]" 
-                                     : "bg-[#111] text-slate-500 border-slate-900 cursor-not-allowed"
-                                 )}
+                               {/* Next Incident Trigger Button */}
+                               <button
+                                 onClick={handleNextIncident}
+                                 className="px-8 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs border-2 border-amber-400 hover:scale-102 cursor-pointer active:scale-95 shadow-[0_0_30px_rgba(245,158,11,0.3)]"
                                >
-                                  <Play size={12} /> {crewCount >= activeRaid.crewRequired ? `Поднять Паруса!` : `Не хватает команды (нужно ${activeRaid.crewRequired})`}
+                                  Зарегистрировать Новое Событие
                                </button>
-                            ) : null}
-
-                            {raidStates[activeRaid.id] === 'sailing' && (
-                               <div className="w-full py-3.5 bg-black border border-amber-500/10 rounded-2xl text-[10px] font-black text-amber-400/60 uppercase tracking-widest text-center flex items-center justify-center gap-1.5 shadow-inner">
-                                  <Anchor size={12} className="animate-spin-slow text-amber-500/60" /> Фрегат режет волны...
-                               </div>
-                            )}
-
-                            {raidStates[activeRaid.id] === 'claim' && (
-                               <button 
-                                 onClick={() => claimRaidReward(activeRaid.id, activeRaid.reward)}
-                                 className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-slate-950 rounded-2xl font-black uppercase tracking-[0.2em] text-xs border-2 border-orange-400 shadow-[0_0_25px_rgba(245,158,11,0.4)] animate-bounce cursor-pointer flex items-center justify-center gap-1.5"
-                               >
-                                  <Coins size={14} /> Разгрузить добычу!
-                               </button>
-                            )}
-
-                            {raidStates[activeRaid.id] === 'completed' && (
-                               <div className="w-full py-3.5 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl text-[10px] font-black text-emerald-400 uppercase tracking-widest text-center flex items-center justify-center gap-1.5">
-                                  <UserCheck size={12} /> Поход Успешно Завершен
-                               </div>
-                            )}
-                         </div>
-
-                      </div>
-
+                            </motion.div>
+                         )}
+                      </AnimatePresence>
                    </div>
                 </motion.div>
              )}
@@ -1183,7 +1255,6 @@ export default function PirateDashboard() {
                   transition={{ duration: 0.3 }}
                   className="space-y-8"
                 >
-                   {/* Chest Shop Header */}
                    <div className="text-center space-y-2 max-w-xl mx-auto">
                       <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500">Сделки на причале</span>
                       <h2 className="text-3xl font-black uppercase tracking-tight text-amber-100">Контрабандные Сундуки Пиратов</h2>
@@ -1192,7 +1263,6 @@ export default function PirateDashboard() {
                       </p>
                    </div>
 
-                   {/* Grid of 4 columns, showing merchants with closed chests */}
                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                       {chestMerchants.map(merchant => {
                          const isUnlocked = unlockedTreasures[merchant.id] || false;
@@ -1211,9 +1281,7 @@ export default function PirateDashboard() {
                             >
                                <div className="absolute inset-0 bg-black/55 z-0 transition-colors group-hover:bg-black/45" />
 
-                               {/* Merchant Header */}
                                <div className="relative z-10 w-full flex flex-col items-center space-y-3.5">
-                                  {/* Rarity Label */}
                                   <span className={cn(
                                      "text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border",
                                      isUnlocked 
@@ -1223,14 +1291,12 @@ export default function PirateDashboard() {
                                      {merchant.rarity}
                                   </span>
 
-                                  {/* Pirate Seller Avatar Badge */}
                                   <div className="flex items-center gap-1.5 bg-black/45 px-3 py-1 rounded-full border border-white/5">
                                      <span className="text-sm">{merchant.pirateAvatar}</span>
                                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-100/60 truncate max-w-[100px]">{merchant.pirateName}</span>
                                   </div>
                                </div>
 
-                               {/* Chest or Unlocked Item Graphic */}
                                <div className="relative z-10 my-4 flex items-center justify-center">
                                   {isUnlocked ? (
                                      <div className={cn(
@@ -1246,7 +1312,6 @@ export default function PirateDashboard() {
                                   )}
                                </div>
 
-                               {/* Chest Details */}
                                <div className="relative z-10 w-full space-y-1">
                                   <h3 className="text-lg font-black text-amber-100 leading-tight uppercase tracking-tight">
                                      {isUnlocked ? merchant.treasureName : merchant.name}
@@ -1256,7 +1321,6 @@ export default function PirateDashboard() {
                                   </p>
                                </div>
 
-                               {/* Unlock Status or Price Button */}
                                <div className="relative z-10 w-full mt-6 pt-4 border-t border-amber-500/10">
                                   {isUnlocked ? (
                                      <div className="w-full py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl font-black uppercase tracking-widest text-[9px] flex justify-center items-center gap-1.5 shadow-inner">
