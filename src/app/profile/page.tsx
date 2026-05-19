@@ -763,17 +763,7 @@ export default function ProfilePage() {
             </motion.div>
           ))}
 
-          {whispers.length === 0 && (
-            <div className="col-span-full py-16 flex flex-col items-center justify-center text-center space-y-6 bg-[#fdfaf3]/50 rounded-[3rem] border-8 border-dashed border-[#e6d5bc]/30">
-              <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center text-[#e6d5bc] shadow-inner border-4 border-[#e6d5bc]">
-                <Mail size={40} className="opacity-20" />
-              </div>
-              <div className="space-y-2">
-                <p className="text-2xl font-serif font-black text-[#5c4a33]">История чиста</p>
-                <p className="text-sm text-[#8b7355] italic max-w-xs mx-auto">"Ваши тайные письма появятся здесь после отправки в дневнике."</p>
-              </div>
-            </div>
-          )}
+
         </div>
       </section>
 
@@ -943,7 +933,7 @@ export default function ProfilePage() {
         <button 
           onClick={claimMail}
           disabled={isMailClaimed || !hasMail}
-          className="group relative px-20 py-10 rounded-[3rem] bg-[#5c4a33] text-[#fdfaf3] font-serif font-black text-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all overflow-hidden border-8 border-[#e6d5bc] flex items-center gap-8"
+          className="group relative px-20 py-10 rounded-[3rem] bg-[#5c4a33] text-[#fdfaf3] font-serif font-black text-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all overflow-hidden border-8 border-[#e6d5bc] flex items-center gap-8 disabled:opacity-50 disabled:pointer-events-none"
         >
           <div className="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
           <AnimatePresence mode="wait">
@@ -957,6 +947,16 @@ export default function ProfilePage() {
                 <Sparkles size={40} className="animate-spin-slow text-[#e6d5bc]" />
                 Забираю письмо...
               </motion.div>
+            ) : !hasMail ? (
+              <motion.div
+                key="nomail"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="relative flex items-center gap-6 opacity-60"
+              >
+                <Mail size={40} className="text-[#e6d5bc]" />
+                Нет новых посланий
+              </motion.div>
             ) : (
               <motion.div
                 key="unclaimed"
@@ -964,17 +964,8 @@ export default function ProfilePage() {
                 animate={{ opacity: 1 }}
                 className="relative flex items-center gap-6"
               >
-                {hasMail ? (
-                  <>
-                    <Mail fill="currentColor" size={40} className="animate-bounce text-[#e6d5bc]" />
-                    Послание прибыло!
-                  </>
-                ) : (
-                  <>
-                    <Mail size={40} className="opacity-20" />
-                    <span className="opacity-40">Почта пуста</span>
-                  </>
-                )}
+                <Mail fill="currentColor" size={40} className="animate-bounce text-[#e6d5bc]" />
+                Послание прибыло!
               </motion.div>
             )}
           </AnimatePresence>

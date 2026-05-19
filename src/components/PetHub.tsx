@@ -90,6 +90,15 @@ export const PetHub = () => {
     careLog: []
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<'The Grinch' | 'Cindy Lou'>('The Grinch');
+
+  // Read current user from localStorage (same as DataProvider)
+  useEffect(() => {
+    const auth = localStorage.getItem('lumina_auth');
+    if (auth) {
+      setCurrentUser(auth === 'grinch' ? 'The Grinch' : 'Cindy Lou');
+    }
+  }, []);
 
   // Body scroll lock
   useEffect(() => {
@@ -288,7 +297,7 @@ export const PetHub = () => {
       // Update care log
       const newAction: CareAction = {
         id: Date.now(),
-        user: Math.random() > 0.5 ? 'The Grinch' : 'Cindy Lou', // В реальности это будет зависеть от авторизации
+        user: currentUser,
         type,
         timestamp: Date.now()
       };
