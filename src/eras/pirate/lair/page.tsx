@@ -19,6 +19,28 @@ interface Zone {
   y: string;
 }
 
+type Fighter = {
+  id: string;
+  side: 'player' | 'enemy';
+  zoneY: number; // Y% of their initial zone (15, 45, 75)
+  startX: number;
+  startY: number;
+  offsetX: number;
+  offsetY: number;
+  jitterX: number[];
+  jitterY: number[];
+  duration: number;
+  isDead?: boolean;
+};
+
+const getOffset = (i: number) => {
+  const r = ((i * 137.5) % 25);
+  const theta = i * 2.39996;
+  const dx = r * Math.cos(theta);
+  const dy = r * Math.sin(theta);
+  return { dx, dy };
+};
+
 export default function LairPage() {
   const [battleLog, setBattleLog] = useState<string[]>([
     "Капитан! Вражеский галеон подошел на расстояние выстрела!",
@@ -41,7 +63,8 @@ export default function LairPage() {
 
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [isAttacking, setIsAttacking] = useState(false);
-  const [boardingDots, setBoardingDots] = useState<{id: number, x: number, y: number}[]>([]);
+  const [battlePhase, setBattlePhase] = useState<'idle' | 'gathering' | 'moving_to_bridge' | 'fighting' | 'returning'>('idle');
+  const [activeFighters, setActiveFighters] = useState<Fighter[]>([]);
 
   const playerZones: Zone[] = [
     { id: 'helm', name: 'Штурвал', desc: 'Маневр', maxCrew: 5, x: '50%', y: '15%' },
@@ -60,44 +83,178 @@ export default function LairPage() {
   };
 
   const startBoarding = () => {
-    if (playerCrew.deck < 5) {
-      addLog("❌ Слишком мало людей на палубе для абордажа!");
+    const totalPlayer = playerCrew.helm + playerCrew.cannons + playerCrew.deck;
+    if (totalPlayer < 5) {
+      addLog("❌ Слишком мало людей для абордажа!");
       return;
     }
+    if (isAttacking) return;
 
     setIsAttacking(true);
-    addLog("⚔️ АБОРДАЖ! Твои люди прыгают на вражеский корабль!");
+    addLog("⚔️ АБОРДАЖ! Вся команда срывается на мост!");
 
-    // Create dots moving from Player Deck to Enemy Deck
-    const newDots = Array.from({ length: 10 }).map((_, i) => ({
-      id: Date.now() + i,
-      x: 300, // Starting X (Player Deck area)
-      y: 400  // Starting Y
-    }));
-    setBoardingDots(newDots);
+    const generateJitter = (range: number) => {
+      const arr = [0];
+      for (let k = 0; k < 8; k++) arr.push(Math.random() * range - range / 2);
+      arr.push(0);
+      return arr;
+    };
 
-    // Animate dots moving to the right (Enemy ship)
-    setTimeout(() => {
-      setBoardingDots(prev => prev.map(dot => ({ ...dot, x: dot.x + 300 })));
-      
-      // Simulate fight and deaths
-      setTimeout(() => {
-        setEnemyCrew(prev => ({ ...prev, deck: Math.max(0, prev.deck - 15) }));
-        setPlayerCrew(prev => ({ ...prev, deck: Math.max(0, prev.deck - 5) }));
-        setBoardingDots([]);
-        setIsAttacking(false);
-        addLog("💥 Бой на палубе! Враг потерял 15 человек, мы потеряли 5.");
-      }, 1000);
-    }, 100);
+    const pFighters: Fighter[] = [];
+    ['helm', 'cannons', 'deck'].forEach(zoneId => {
+       const count = playerCrew[zoneId];
+       const startY = zoneId === 'helm' ? 15 : zoneId === 'cannons' ? 45 : 75;
+       for (let i = 0; i < count; i++) {
+          const { dx, dy } = getOffset(i);
+          pFighters.push({
+             id: `p-${zoneId}-${Date.now()}-${i}`,
+             side: 'player',
+             zoneY: startY,
+             startX: dx,
+             startY: dy,
+             offsetX: Math.random() * 40 - 20, // Небольшой разброс на мосту (Y)
+             offsetY: Math.random() * 20 - 10,
+             jitterX: generateJitter(12), // Малый горизонтальный дергун — не уходят за мост!
+             jitterY: generateJitter(20), // Вертикальный дергун для хаоса
+             duration: 6 + Math.random() * 4,
+          });
+       }
+    });
+
+    const eFighters: Fighter[] = [];
+    ['helm', 'cannons', 'deck'].forEach(zoneId => {
+       const count = enemyCrew[zoneId];
+       const startY = zoneId === 'helm' ? 15 : zoneId === 'cannons' ? 45 : 75;
+       for (let i = 0; i < count; i++) {
+          const { dx, dy } = getOffset(i);
+          eFighters.push({
+             id: `e-${zoneId}-${Date.now()}-${i}`,
+             side: 'enemy',
+             zoneY: startY,
+             startX: dx,
+             startY: dy,
+             offsetX: Math.random() * 40 - 20,
+             offsetY: Math.random() * 20 - 10,
+             jitterX: generateJitter(12),
+             jitterY: generateJitter(20),
+             duration: 6 + Math.random() * 4,
+          });
+       }
+    });
+
+    setPlayerCrew({ helm: 0, cannons: 0, deck: 0 });
+    setEnemyCrew({ helm: 0, cannons: 0, deck: 0 });
+
+    setActiveFighters([...pFighters, ...eFighters]);
+    setBattlePhase('gathering'); // Сначала собираются у входа на мост
   };
+
+  useEffect(() => {
+    const logMsg = (msg: string) => setBattleLog(prev => [...prev, msg]);
+
+    if (battlePhase === 'gathering') {
+      const t = setTimeout(() => {
+        setBattlePhase('moving_to_bridge');
+      }, 4000); // 4 секунды на ооочень медленный спуск к мосту
+      return () => clearTimeout(t);
+    }
+
+    if (battlePhase === 'moving_to_bridge') {
+      const t = setTimeout(() => {
+        setBattlePhase('fighting');
+        logMsg("💥 Бой кипит по всему мосту!");
+      }, 10000); // 10 секунд на продвижение (чтобы точно дошли друг до друга)
+      return () => clearTimeout(t);
+    }
+
+    // Коллизии — работают с самого начала абордажа
+    if (battlePhase === 'gathering' || battlePhase === 'moving_to_bridge' || battlePhase === 'fighting') {
+      const t = setInterval(() => {
+        setActiveFighters(prev => {
+          const next = prev.map(f => ({...f}));
+          
+          const players = next.filter(f => !f.isDead && f.side === 'player');
+          const enemies = next.filter(f => !f.isDead && f.side === 'enemy');
+
+          if (players.length === 0 || enemies.length === 0) {
+             clearInterval(t);
+             setTimeout(() => {
+                setBattlePhase('returning');
+                const winner = players.length > 0 ? "Мы захватили судно!" : (enemies.length > 0 ? "Враг отбил атаку!" : "Ничья!");
+                logMsg(`🏴‍☠️ Бой окончен. ${winner}`);
+             }, 0);
+             return next.filter(f => !f.isDead);
+          }
+
+          // Проверяем каждую пару — убиваем СРАЗУ при касании (50px радиус)
+          const dead = new Set<string>();
+          for (const f1 of players) {
+             if (dead.has(f1.id)) continue;
+             const el1 = document.getElementById(f1.id);
+             if (!el1) continue;
+             const r1 = el1.getBoundingClientRect();
+
+             for (const f2 of enemies) {
+                if (dead.has(f2.id)) continue;
+                const el2 = document.getElementById(f2.id);
+                if (!el2) continue;
+                const r2 = el2.getBoundingClientRect();
+
+                const dist = Math.hypot(r1.x - r2.x, r1.y - r2.y);
+                if (dist < 50) { // 50px — касание = смерть одного!
+                   // Случайно один из двух умирает
+                   dead.add(Math.random() > 0.5 ? f1.id : f2.id);
+                   break; // Этот игрок уже сразился
+                }
+             }
+          }
+
+          if (dead.size > 0) {
+             return next.filter(f => !dead.has(f.id));
+          }
+          return prev;
+        });
+      }, 200);
+      return () => clearInterval(t);
+    }
+
+    if (battlePhase === 'returning') {
+      const t = setTimeout(() => {
+        setActiveFighters(prev => {
+          const aliveP = prev.filter(f => f.side === 'player');
+          const aliveE = prev.filter(f => f.side === 'enemy');
+          
+          const newPlayerCrew = { helm: 0, cannons: 0, deck: 0 };
+          aliveP.forEach(f => {
+             if (f.zoneY === 15) newPlayerCrew.helm++;
+             else if (f.zoneY === 45) newPlayerCrew.cannons++;
+             else newPlayerCrew.deck++;
+          });
+
+          const newEnemyCrew = { helm: 0, cannons: 0, deck: 0 };
+          aliveE.forEach(f => {
+             if (f.zoneY === 15) newEnemyCrew.helm++;
+             else if (f.zoneY === 45) newEnemyCrew.cannons++;
+             else newEnemyCrew.deck++;
+          });
+          
+          setPlayerCrew(newPlayerCrew);
+          setEnemyCrew(newEnemyCrew);
+          
+          return [];
+        });
+        setBattlePhase('idle');
+        setIsAttacking(false);
+        logMsg("⚓ Выжившие вернулись на свои посты.");
+      }, 8000); // Возвращаются очень медленно
+      return () => clearTimeout(t);
+    }
+  }, [battlePhase]);
 
   const renderCrewDots = (count: number, color: string) => {
     const dots = [];
     for (let i = 0; i < count; i++) {
-      const r = Math.random() * 25;
-      const theta = Math.random() * 2 * Math.PI;
-      const dx = r * Math.cos(theta);
-      const dy = r * Math.sin(theta);
+      const { dx, dy } = getOffset(i);
       
       dots.push(
         <div
@@ -147,8 +304,69 @@ export default function LairPage() {
                {/* Grid background */}
                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')]" />
                
+               {/* Арена бойцов (Общий слой поверх всего) */}
+               <div className="absolute inset-0 pointer-events-none z-50">
+                  <AnimatePresence>
+                     {activeFighters.map(fighter => {
+                        // Единый формат для обеих команд: calc(50% + Npx)
+                        // Игрок: отрицательный N (левее центра), Враг: положительный N (правее центра)
+                        const dir = fighter.side === 'player' ? -1 : 1;
+
+                        // Старт = внутри своего корабля у моста
+                        const gatherX = dir * 200;
+                        // Цель = центр моста
+                        const fightX = dir * (8 + Math.abs(fighter.offsetX) * 0.2);
+
+                        let leftPx: number;
+                        let phaseDuration = 4;
+
+                        if (battlePhase === 'gathering') {
+                           leftPx = gatherX;
+                           phaseDuration = 4;
+                        } else if (battlePhase === 'moving_to_bridge' || battlePhase === 'fighting') {
+                           leftPx = fightX;
+                           phaseDuration = 12;
+                        } else {
+                           // returning — идут назад к своему кораблю
+                           leftPx = gatherX;
+                           phaseDuration = 8;
+                        }
+
+                        const left = `calc(50% + ${leftPx}px)`;
+                        const top = `calc(0% + ${404 + fighter.offsetY}px)`;
+                        const isActive = battlePhase !== 'idle' && battlePhase !== 'returning';
+
+                        // Стартовая позиция через style — без initial, без телепортации
+                        return (
+                           <motion.div
+                              key={fighter.id}
+                              id={fighter.id}
+                              style={{ left: `calc(50% + ${gatherX}px)`, top }}
+                              animate={{ 
+                                 left, 
+                                 top,
+                                 x: isActive ? fighter.jitterX : 0,
+                                 y: isActive ? fighter.jitterY : 0,
+                              }}
+                              transition={{
+                                 left: { duration: phaseDuration, ease: "linear" },
+                                 top: { duration: phaseDuration, ease: "linear" },
+                                 x: { duration: fighter.duration, repeat: isActive ? Infinity : 0, ease: "easeInOut" },
+                                 y: { duration: fighter.duration, repeat: isActive ? Infinity : 0, ease: "easeInOut" },
+                              }}
+                              exit={{ opacity: 0, scale: 0, transition: { duration: 0.3 } }}
+                              className={cn(
+                                 "w-3 h-3 rounded-full absolute z-50 -translate-x-1/2 -translate-y-1/2",
+                                 fighter.side === 'player' ? "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]" : "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]"
+                              )}
+                           />
+                        );
+                     })}
+                  </AnimatePresence>
+               </div>
+
                {/* PLAYER SHIP (Left) */}
-               <div className="relative w-[250px] h-[450px] border-4 border-cyan-500/30 rounded-[80px] bg-cyan-900/10 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
+               <div className="relative z-20 w-[250px] h-[450px] border-4 border-cyan-500/30 rounded-[80px] bg-cyan-900/10 shadow-[0_0_30px_rgba(6,182,212,0.2)]">
                   <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-cyan-500 text-black px-4 py-1 text-xs font-black uppercase rounded-full">Твой Корабль</div>
                   
                   {/* Bow */}
@@ -162,22 +380,10 @@ export default function LairPage() {
                         </div>
                         {/* LARGER TEXT */}
                         <p className="text-lg font-black text-white mt-2 drop-shadow-lg">{zone.name}</p>
-                        <p className="text-xs font-bold text-cyan-400">{playerCrew[zone.id]}👥</p>
+                        <p className="text-xs font-bold text-cyan-400">{playerCrew[zone.id]}</p>
                      </div>
                   ))}
-               </div>
 
-               {/* VS Gap with moving dots */}
-               <div className="absolute inset-0 pointer-events-none z-20">
-                  {boardingDots.map(dot => (
-                     <motion.div
-                        key={dot.id}
-                        initial={{ x: dot.x, y: dot.y }}
-                        animate={{ x: dot.x + 300, y: dot.y }}
-                        transition={{ duration: 1 }}
-                        className="w-3 h-3 bg-amber-400 rounded-full absolute shadow-[0_0_10px_rgba(245,158,11,1)]"
-                     />
-                  ))}
                </div>
 
                {/* Beautiful Wooden Suspension Bridge */}
@@ -251,7 +457,7 @@ export default function LairPage() {
                </div>
 
                {/* ENEMY SHIP (Right) */}
-               <div className="relative w-[250px] h-[450px] border-4 border-red-500/30 rounded-[80px] bg-red-900/10 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+               <div className="relative z-20 w-[250px] h-[450px] border-4 border-red-500/30 rounded-[80px] bg-red-900/10 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
                   <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-1 text-xs font-black uppercase rounded-full">Галеон Врага</div>
                   
                   {/* Bow */}
@@ -265,9 +471,10 @@ export default function LairPage() {
                         </div>
                         {/* LARGER TEXT */}
                         <p className="text-lg font-black text-white mt-2 drop-shadow-lg">{zone.name}</p>
-                        <p className="text-xs font-bold text-red-400">{enemyCrew[zone.id]}👥</p>
+                        <p className="text-xs font-bold text-red-400">{enemyCrew[zone.id]}</p>
                      </div>
                   ))}
+
                </div>
 
             </div>
