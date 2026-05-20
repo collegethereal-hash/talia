@@ -168,7 +168,7 @@ export default function LairPage() {
                </div>
 
                {/* VS Gap with moving dots */}
-               <div className="absolute inset-0 pointer-events-none">
+               <div className="absolute inset-0 pointer-events-none z-20">
                   {boardingDots.map(dot => (
                      <motion.div
                         key={dot.id}
@@ -178,6 +178,76 @@ export default function LairPage() {
                         className="w-3 h-3 bg-amber-400 rounded-full absolute shadow-[0_0_10px_rgba(245,158,11,1)]"
                      />
                   ))}
+               </div>
+
+               {/* Beautiful Wooden Suspension Bridge */}
+               <div className="absolute left-[calc(25%+125px)] right-[calc(25%+125px)] top-[380px] h-12 z-0 pointer-events-none select-none flex items-center justify-center">
+                  {/* Underlay shadow for depth */}
+                  <div className="absolute inset-x-0 h-6 bg-black/40 blur-md translate-y-3 rounded-full" />
+
+                  {/* Main Rope Rails */}
+                  <div className="absolute inset-x-0 -top-1 h-[2px] bg-gradient-to-r from-amber-900 via-amber-700 to-amber-900 shadow-sm border-t border-amber-950/50" />
+                  <div className="absolute inset-x-0 -bottom-1 h-[2px] bg-gradient-to-r from-amber-900 via-amber-700 to-amber-900 shadow-sm border-b border-amber-950/50" />
+
+                  {/* Dynamic Planks Container */}
+                  <div className="absolute inset-0 flex justify-around items-center px-1 overflow-hidden">
+                     {Array.from({ length: 18 }).map((_, i) => (
+                        <div
+                           key={i}
+                           className="h-full w-[10px] bg-gradient-to-b from-[#4a2f1b] via-[#634229] to-[#2b190c] border border-[#1e1007] rounded-[1px] shadow-lg flex flex-col justify-between py-[3px] relative shrink-0"
+                           style={{
+                              transform: `rotate(${(i % 3 - 1) * 1.5}deg) translateY(${i % 2 === 0 ? 1 : 0}px)`,
+                           }}
+                        >
+                           {/* Top nail */}
+                           <div className="w-[3px] h-[3px] rounded-full bg-zinc-500/80 mx-auto shadow-inner" />
+                           {/* Bottom nail */}
+                           <div className="w-[3px] h-[3px] rounded-full bg-zinc-500/80 mx-auto shadow-inner" />
+                        </div>
+                     ))}
+                  </div>
+
+                  {/* Left Lantern (Player Ship entrance) */}
+                  <div className="absolute -left-3 top-[-10px] w-5 h-8 flex flex-col items-center">
+                     {/* Lantern post */}
+                     <div className="w-1 h-3 bg-amber-900 border-x border-amber-950" />
+                     {/* Lantern glass and glow */}
+                     <div className="w-4 h-5 bg-[#1a110a] border border-amber-500/50 rounded-md relative flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+                        <motion.div 
+                           animate={{ 
+                              scale: [0.9, 1.1, 0.9],
+                              opacity: [0.7, 1, 0.7]
+                           }}
+                           transition={{
+                              repeat: Infinity,
+                              duration: 1.5,
+                              ease: "easeInOut"
+                           }}
+                           className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-amber-300 to-red-500 blur-[2px]"
+                        />
+                     </div>
+                  </div>
+
+                  {/* Right Lantern (Enemy Ship entrance) */}
+                  <div className="absolute -right-3 top-[-10px] w-5 h-8 flex flex-col items-center">
+                     {/* Lantern post */}
+                     <div className="w-1 h-3 bg-amber-900 border-x border-amber-950" />
+                     {/* Lantern glass and glow */}
+                     <div className="w-4 h-5 bg-[#1a110a] border border-amber-500/50 rounded-md relative flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)]">
+                        <motion.div 
+                           animate={{ 
+                              scale: [1, 0.8, 1],
+                              opacity: [1, 0.6, 1]
+                           }}
+                           transition={{
+                              repeat: Infinity,
+                              duration: 1.8,
+                              ease: "easeInOut"
+                           }}
+                           className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-amber-300 to-red-500 blur-[2px]"
+                        />
+                     </div>
+                  </div>
                </div>
 
                {/* ENEMY SHIP (Right) */}
