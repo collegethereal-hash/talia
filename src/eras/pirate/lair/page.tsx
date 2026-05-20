@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Skull, Anchor, Sword, Crosshair, Bomb, 
@@ -34,8 +34,9 @@ type Fighter = {
 };
 
 const getOffset = (i: number) => {
-  const r = ((i * 137.5) % 25);
-  const theta = i * 2.39996;
+  const c = 4.2;
+  const r = c * Math.sqrt(i + 0.5);
+  const theta = i * 2.399963;
   const dx = r * Math.cos(theta);
   const dy = r * Math.sin(theta);
   return { dx, dy };
@@ -49,16 +50,16 @@ export default function LairPage() {
   
   // Crew distribution for Player
   const [playerCrew, setPlayerCrew] = useState<Record<string, number>>({
-    helm: 5,
-    cannons: 15,
-    deck: 30
+    helm: 16,
+    cannons: 17,
+    deck: 17
   });
 
   // Crew distribution for Enemy
   const [enemyCrew, setEnemyCrew] = useState<Record<string, number>>({
-    helm: 5,
-    cannons: 15,
-    deck: 40
+    helm: 20,
+    cannons: 20,
+    deck: 20
   });
 
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
@@ -66,14 +67,26 @@ export default function LairPage() {
   const [battlePhase, setBattlePhase] = useState<'idle' | 'gathering' | 'moving_to_bridge' | 'fighting' | 'returning'>('idle');
   const [activeFighters, setActiveFighters] = useState<Fighter[]>([]);
 
+  // States for the premium victory/defeat stats popup
+  const [battleResult, setBattleResult] = useState<{
+    winner: 'player' | 'enemy' | 'draw';
+    playerInitial: number;
+    enemyInitial: number;
+    playerLosses: number;
+    enemyLosses: number;
+  } | null>(null);
+  const [showResultModal, setShowResultModal] = useState(false);
+
+  const initialCrewRef = useRef<{ player: number; enemy: number }>({ player: 50, enemy: 60 });
+
   const playerZones: Zone[] = [
-    { id: 'helm', name: 'Штурвал', desc: 'Маневр', maxCrew: 5, x: '50%', y: '15%' },
+    { id: 'helm', name: 'Штурвал', desc: 'Маневр', maxCrew: 20, x: '50%', y: '15%' },
     { id: 'cannons', name: 'Пушки', desc: 'Огонь', maxCrew: 20, x: '50%', y: '45%' },
     { id: 'deck', name: 'Палуба', desc: 'Резерв', maxCrew: 50, x: '50%', y: '75%' },
   ];
 
   const enemyZones: Zone[] = [
-    { id: 'helm', name: 'Мостик', desc: 'Управление', maxCrew: 5, x: '50%', y: '15%' },
+    { id: 'helm', name: 'Мостик', desc: 'Управление', maxCrew: 20, x: '50%', y: '15%' },
     { id: 'cannons', name: 'Батарея', desc: 'Огонь', maxCrew: 20, x: '50%', y: '45%' },
     { id: 'deck', name: 'Каюты', desc: 'Защита', maxCrew: 50, x: '50%', y: '75%' },
   ];
@@ -92,6 +105,12 @@ export default function LairPage() {
 
     setIsAttacking(true);
     addLog("⚔️ АБОРДАЖ! Вся команда срывается на мост!");
+
+    const totalPlayerStart = playerCrew.helm + playerCrew.cannons + playerCrew.deck;
+    const totalEnemyStart = enemyCrew.helm + enemyCrew.cannons + enemyCrew.deck;
+    initialCrewRef.current = { player: totalPlayerStart, enemy: totalEnemyStart };
+    setBattleResult(null);
+    setShowResultModal(false);
 
     const generateJitter = (range: number) => {
       const arr = [0];
@@ -168,7 +187,8 @@ export default function LairPage() {
     }
 
     // Коллизии — работают с самого начала абордажа
-    if (battlePhase === 'gathering' || battlePhase === 'moving_to_bridge' || battlePhase === 'fighting') {
+    const currentPhase = battlePhase as string;
+    if (currentPhase === 'gathering' || currentPhase === 'moving_to_bridge' || currentPhase === 'fighting') {
       const t = setInterval(() => {
         setActiveFighters(prev => {
           const next = prev.map(f => ({...f}));
@@ -178,10 +198,23 @@ export default function LairPage() {
 
           if (players.length === 0 || enemies.length === 0) {
              clearInterval(t);
+             
+             const playerSurvivors = players.length;
+             const enemySurvivors = enemies.length;
+             const winner = playerSurvivors > enemySurvivors ? 'player' : (enemySurvivors > playerSurvivors ? 'enemy' : 'draw');
+             
+             setBattleResult({
+                winner,
+                playerInitial: initialCrewRef.current.player,
+                enemyInitial: initialCrewRef.current.enemy,
+                playerLosses: initialCrewRef.current.player - playerSurvivors,
+                enemyLosses: initialCrewRef.current.enemy - enemySurvivors,
+             });
+
              setTimeout(() => {
                 setBattlePhase('returning');
-                const winner = players.length > 0 ? "Мы захватили судно!" : (enemies.length > 0 ? "Враг отбил атаку!" : "Ничья!");
-                logMsg(`🏴‍☠️ Бой окончен. ${winner}`);
+                const winnerStr = players.length > 0 ? "Мы захватили судно!" : (enemies.length > 0 ? "Враг отбил атаку!" : "Ничья!");
+                logMsg(`🏴‍☠️ Бой окончен. ${winnerStr}`);
              }, 0);
              return next.filter(f => !f.isDead);
           }
@@ -245,11 +278,26 @@ export default function LairPage() {
         });
         setBattlePhase('idle');
         setIsAttacking(false);
+        setShowResultModal(true);
         logMsg("⚓ Выжившие вернулись на свои посты.");
       }, 8000); // Возвращаются очень медленно
       return () => clearTimeout(t);
     }
   }, [battlePhase]);
+
+  const resetBattle = () => {
+    setPlayerCrew({ helm: 16, cannons: 17, deck: 17 });
+    setEnemyCrew({ helm: 20, cannons: 20, deck: 20 });
+    setBattleResult(null);
+    setShowResultModal(false);
+    setBattlePhase('idle');
+    setIsAttacking(false);
+    setActiveFighters([]);
+    setBattleLog([
+      "Капитан! Вражеский галеон подошел на расстояние выстрела!",
+      "Прикажите начать абордаж или открыть огонь!"
+    ]);
+  };
 
   const renderCrewDots = (count: number, color: string) => {
     const dots = [];
@@ -259,7 +307,7 @@ export default function LairPage() {
       dots.push(
         <div
           key={i}
-          className={cn("w-2 h-2 rounded-full absolute shadow-lg", color)}
+          className={cn("w-2 h-2 rounded-full absolute", color)}
           style={{ transform: `translate(${dx}px, ${dy}px)` }}
         />
       );
@@ -313,7 +361,7 @@ export default function LairPage() {
                         const dir = fighter.side === 'player' ? -1 : 1;
 
                         // Старт = внутри своего корабля у моста
-                        const gatherX = dir * 200;
+                        const gatherX = dir * 145;
                         // Цель = центр моста
                         const fightX = dir * (8 + Math.abs(fighter.offsetX) * 0.2);
 
@@ -376,7 +424,7 @@ export default function LairPage() {
                   {playerZones.map(zone => (
                      <div key={zone.id} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: zone.x, top: zone.y }}>
                         <div className="w-16 h-16 bg-black/80 border-2 border-cyan-500/50 rounded-full flex items-center justify-center relative">
-                           {renderCrewDots(playerCrew[zone.id], "bg-cyan-400 shadow-cyan-500/50")}
+                           {renderCrewDots(playerCrew[zone.id], "bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]")}
                         </div>
                         {/* LARGER TEXT */}
                         <p className="text-lg font-black text-white mt-2 drop-shadow-lg">{zone.name}</p>
@@ -467,7 +515,7 @@ export default function LairPage() {
                   {enemyZones.map(zone => (
                      <div key={zone.id} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: zone.x, top: zone.y }}>
                         <div className="w-16 h-16 bg-black/80 border-2 border-red-500/50 rounded-full flex items-center justify-center relative">
-                           {renderCrewDots(enemyCrew[zone.id], "bg-red-500 shadow-red-500/50")}
+                           {renderCrewDots(enemyCrew[zone.id], "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)]")}
                         </div>
                         {/* LARGER TEXT */}
                         <p className="text-lg font-black text-white mt-2 drop-shadow-lg">{zone.name}</p>
@@ -504,6 +552,163 @@ export default function LairPage() {
          </div>
 
       </div>
+
+      {/* Premium Battle Result Modal */}
+      <AnimatePresence>
+        {showResultModal && battleResult && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+             {/* Backdrop overlay */}
+             <motion.div 
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               onClick={() => setShowResultModal(false)}
+               className="absolute inset-0 bg-black/85 backdrop-blur-md"
+             />
+
+             {/* Modal Card */}
+             <motion.div
+               initial={{ opacity: 0, scale: 0.9, y: 30 }}
+               animate={{ opacity: 1, scale: 1, y: 0 }}
+               exit={{ opacity: 0, scale: 0.9, y: 30 }}
+               transition={{ type: "spring", damping: 25, stiffness: 350 }}
+               className={cn(
+                 "relative z-10 w-full max-w-md bg-gradient-to-b from-[#1c120c] to-[#070301] border-2 rounded-[2.5rem] p-8 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden text-center",
+                 battleResult.winner === 'player' 
+                   ? "border-amber-500/50 shadow-[0_0_40px_rgba(245,158,11,0.2)]" 
+                   : battleResult.winner === 'enemy'
+                     ? "border-red-600/50 shadow-[0_0_40px_rgba(220,38,38,0.2)]"
+                     : "border-zinc-500/50 shadow-[0_0_40px_rgba(113,113,122,0.2)]"
+               )}
+             >
+               {/* Ambient Glow */}
+               <div className={cn(
+                 "absolute -top-32 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-[80px] pointer-events-none opacity-40",
+                 battleResult.winner === 'player' ? "bg-amber-500" : battleResult.winner === 'enemy' ? "bg-red-600" : "bg-zinc-500"
+               )} />
+
+               {/* Result Icon */}
+               <motion.div 
+                 initial={{ scale: 0, rotate: -30 }}
+                 animate={{ scale: 1, rotate: 0 }}
+                 transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
+                 className={cn(
+                   "w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-6 relative border-2",
+                   battleResult.winner === 'player' 
+                     ? "bg-amber-500/10 border-amber-500 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]" 
+                     : battleResult.winner === 'enemy'
+                       ? "bg-red-500/10 border-red-500 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+                       : "bg-zinc-500/10 border-zinc-500 text-zinc-400"
+                 )}
+               >
+                 {battleResult.winner === 'player' ? (
+                   <Trophy size={40} className="animate-bounce" />
+                 ) : battleResult.winner === 'enemy' ? (
+                   <Skull size={40} className="animate-pulse" />
+                 ) : (
+                   <Compass size={40} />
+                 )}
+               </motion.div>
+
+               {/* Title */}
+               <h2 className={cn(
+                 "text-4xl font-black uppercase tracking-wide mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]",
+                 battleResult.winner === 'player' 
+                   ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200" 
+                   : battleResult.winner === 'enemy'
+                     ? "text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-red-500 to-orange-500"
+                     : "text-zinc-300"
+               )}>
+                 {battleResult.winner === 'player' ? "ПОБЕДА!" : battleResult.winner === 'enemy' ? "ПОРАЖЕНИЕ" : "НИЧЬЯ!"}
+               </h2>
+
+               {/* Subtitle */}
+               <p className="text-amber-100/70 text-sm font-sans italic mb-6 px-4">
+                 {battleResult.winner === 'player' 
+                   ? "«Вражеский галеон взят на абордаж! Море поет о нашей славной победе!»" 
+                   : battleResult.winner === 'enemy'
+                     ? "«Сундук Дэви Джонса забрал наших храбрецов... Но мы вернемся за реваншем!»"
+                     : "«Пороховой дым рассеялся. Ни один корабль не смог подчинить себе другого.»"}
+               </p>
+
+               {/* Casualties Card */}
+               <div className="bg-black/40 border border-amber-500/10 rounded-2xl p-4 mb-6 space-y-4 font-sans text-xs">
+                  <div className="flex justify-between items-center text-amber-500/60 font-black uppercase tracking-wider text-[10px] pb-2 border-b border-amber-500/5">
+                     <span>Характеристика</span>
+                     <span className="w-16 text-center">Твой флот</span>
+                     <span className="w-16 text-center">Враг</span>
+                  </div>
+                  
+                  {/* Total Initial */}
+                  <div className="flex justify-between items-center text-amber-100/80">
+                     <span className="flex items-center gap-1.5"><Users size={12} className="text-amber-500/50" /> Экипаж на старте:</span>
+                     <span className="w-16 font-bold text-center">{battleResult.playerInitial}</span>
+                     <span className="w-16 font-bold text-center">{battleResult.enemyInitial}</span>
+                  </div>
+
+                  {/* Survivors */}
+                  <div className="flex justify-between items-center text-amber-100/80">
+                     <span className="flex items-center gap-1.5"><Shield size={12} className="text-cyan-500/50" /> Выжившие:</span>
+                     <span className="w-16 font-bold text-cyan-400 text-center">{battleResult.playerInitial - battleResult.playerLosses}</span>
+                     <span className="w-16 font-bold text-red-400 text-center">{battleResult.enemyInitial - battleResult.enemyLosses}</span>
+                  </div>
+
+                  {/* Losses */}
+                  <div className="flex justify-between items-center text-amber-100/80">
+                     <span className="flex items-center gap-1.5"><Flame size={12} className="text-red-500/50" /> Потери:</span>
+                     <span className="w-16 font-bold text-red-500 text-center">-{battleResult.playerLosses}</span>
+                     <span className="w-16 font-bold text-red-500 text-center">-{battleResult.enemyLosses}</span>
+                  </div>
+
+                  {/* Visual ratio bar */}
+                  <div className="pt-2 border-t border-amber-500/5">
+                     <div className="flex justify-between text-[10px] text-amber-500/40 mb-1 uppercase font-black">
+                        <span>Соотношение сил выживших</span>
+                     </div>
+                     <div className="w-full h-2 bg-zinc-900 rounded-full overflow-hidden flex">
+                        <div 
+                           className="bg-cyan-500 h-full transition-all duration-1000" 
+                           style={{ 
+                              width: `${
+                                 (battleResult.playerInitial - battleResult.playerLosses) + (battleResult.enemyInitial - battleResult.enemyLosses) === 0
+                                 ? 50
+                                 : ((battleResult.playerInitial - battleResult.playerLosses) / ((battleResult.playerInitial - battleResult.playerLosses) + (battleResult.enemyInitial - battleResult.enemyLosses))) * 100
+                              }%` 
+                           }} 
+                        />
+                        <div className="bg-red-600 h-full flex-1" />
+                     </div>
+                  </div>
+               </div>
+
+               {/* Buttons */}
+               <div className="flex gap-3">
+                 <button
+                   onClick={() => setShowResultModal(false)}
+                   className="flex-1 py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/50 rounded-xl text-xs font-black uppercase text-zinc-400 tracking-wider transition-all"
+                 >
+                   Закрыть
+                 </button>
+                 <button
+                   onClick={resetBattle}
+                   className={cn(
+                     "flex-[1.5] py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all hover:scale-[1.03] shadow-md flex items-center justify-center gap-1.5 text-black",
+                     battleResult.winner === 'player'
+                       ? "bg-gradient-to-r from-amber-400 to-amber-500 hover:shadow-[0_0_15px_rgba(245,158,11,0.4)]"
+                       : battleResult.winner === 'enemy'
+                         ? "bg-gradient-to-r from-red-500 to-orange-500 text-white hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] border border-red-400/20"
+                         : "bg-gradient-to-r from-zinc-300 to-zinc-400 hover:shadow-[0_0_15px_rgba(228,228,231,0.4)]"
+                   )}
+                 >
+                   <RefreshCw size={14} className="animate-spin-slow" />
+                   Новая битва
+                 </button>
+               </div>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      
     </div>
   );
 }
