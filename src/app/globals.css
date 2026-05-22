@@ -58,8 +58,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', sans-serif;
-  background-image: radial-gradient(circle at top left, var(--talia-lavender), transparent 40%),
-                    radial-gradient(circle at bottom right, var(--talia-peach), transparent 40%);
   min-height: 100vh;
   width: 100%;
 }
