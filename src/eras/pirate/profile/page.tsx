@@ -124,7 +124,7 @@ export default function PirateProfile() {
         <div className="absolute bottom-0 left-0 w-full h-[600px] bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.05)_0%,transparent_50%)]" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 pb-32 space-y-20">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 pb-40 space-y-20">
         
         {/* HEADER */}
         <header className="text-center space-y-6 relative">

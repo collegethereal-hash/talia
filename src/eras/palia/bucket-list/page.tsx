@@ -278,7 +278,7 @@ export default function BucketListPage() {
   const activeQuests = quests.filter(q => q.approvedByPartner || q.proposedBy === currentUser);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 pt-12 pb-32 space-y-16 relative">
+    <div className="max-w-6xl mx-auto px-4 pt-12 pb-40 space-y-16 relative">
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] z-0" />
 
       <header className="text-center space-y-6 relative z-10">

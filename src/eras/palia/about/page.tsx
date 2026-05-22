@@ -164,7 +164,7 @@ export default function AboutPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 pt-20 relative z-10 space-y-24">
+      <main className="max-w-6xl mx-auto px-4 pt-20 pb-40 relative z-10 space-y-24">
         {/* Detailed Info Categories */}
         <div className="grid grid-cols-1 gap-12">
           {categories.map((cat, idx) => (

@@ -356,7 +356,7 @@ export default function ProfilePage() {
   const selectedProfile = selectedProfileId ? profiles[selectedProfileId] : null;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 pt-12 pb-32 space-y-20 relative min-h-screen">
+    <div className="max-w-5xl mx-auto px-4 pt-12 pb-40 space-y-20 relative min-h-screen">
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] z-0" />
       
       <AnimatePresence>

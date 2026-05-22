@@ -192,7 +192,7 @@ export default function PirateDashboard() {
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-10 pb-32 space-y-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-10 pb-40 space-y-12">
         
         {/* HEADER BLOCK */}
         <header className="flex flex-row justify-between items-center gap-6 border-b-2 border-amber-500/20 pb-8">

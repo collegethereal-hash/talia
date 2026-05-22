@@ -386,7 +386,7 @@ function JournalContent() {
   const rightNotes = filteredNotes.filter((_, idx) => idx % 2 !== 0);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 pt-12 pb-32 space-y-12 relative">
+    <div className="max-w-6xl mx-auto px-4 pt-12 pb-40 space-y-12 relative">
       {/* Paper texture overlay */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] z-0" />
 

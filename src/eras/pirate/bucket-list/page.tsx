@@ -133,7 +133,7 @@ export default function PirateBucketList() {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 pb-32 space-y-12">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 pb-40 space-y-12">
         
         {/* Header */}
         <header className="text-center space-y-4 relative">

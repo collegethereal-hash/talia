@@ -153,7 +153,7 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-4xl mx-auto px-4 pt-12 pb-32 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 pt-12 pb-40 space-y-8">
         {/* Floating Bottle Section */}
         <div className="fixed bottom-28 right-6 z-[100] md:bottom-32 md:right-12">
           <motion.button

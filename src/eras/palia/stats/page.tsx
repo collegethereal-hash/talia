@@ -158,7 +158,7 @@ export default function StatsPage() {
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pt-12 pb-32 space-y-20">
+    <div className="max-w-7xl mx-auto px-4 pt-12 pb-40 space-y-20">
       <header className="text-center space-y-6">
         <div className="inline-flex items-center gap-4 px-8 py-3 bg-[#5c4a33] text-[#fdfaf3] rounded-full border-4 border-[#e6d5bc] shadow-2xl">
           <ScrollText size={24} />

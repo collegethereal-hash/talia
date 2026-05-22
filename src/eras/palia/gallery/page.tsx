@@ -255,7 +255,7 @@ export default function GalleryPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pt-12 pb-32 space-y-12">
+    <div className="max-w-7xl mx-auto px-4 pt-12 pb-40 space-y-12">
       {/* Header with Stats & Gamification */}
       <header className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">
         <div className="lg:col-span-2 space-y-4">

@@ -382,7 +382,7 @@ export default function LairPage() {
       <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] bg-cyan-600/20 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-[-100px] right-[-100px] w-[600px] h-[600px] bg-red-600/20 rounded-full blur-[100px] pointer-events-none" />
       
-      <div className="relative z-10 max-w-7xl mx-auto space-y-8 pb-32">
+      <div className="relative z-10 max-w-7xl mx-auto space-y-8 pb-40">
          
          {/* Header */}
          <div className="flex justify-between items-center border-b-2 border-amber-500/30 pb-4">
