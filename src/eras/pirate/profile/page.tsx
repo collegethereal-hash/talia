@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, Skull, Anchor, Sword, Scroll, 
   Compass, Coins, Heart, 
-  Ship, Wind, X, Flame, Target, Trophy, Crown, Eye, Crosshair, Shield, CheckCircle, Info, Beer, Wrench, History, Navigation
+  Ship, Wind, X, Flame, Target, Trophy, Crown, Eye, Crosshair, Shield, CheckCircle, Info, Beer, Wrench, History
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { useData } from '@/components/DataProvider';
@@ -22,38 +22,6 @@ export default function PirateProfile() {
   const [shipHealth, setShipHealth] = useState(45); // e.g. 45% damaged
 
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
-  
-  const [compassRotation, setCompassRotation] = useState(0);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [compassResult, setCompassResult] = useState<string | null>(null);
-
-  const compassOptions = [
-     "Пить ром и смотреть кино!",
-     "Спонтанный набег на кухню!",
-     "Вечер пиратских историй",
-     "Отправиться в торговый порт (Шопинг)",
-     "Делить награбленное (Массаж)",
-     "Свистать всех наверх! (Уборка)"
-  ];
-
-  const handleCompassSpin = () => {
-     if (isSpinning) return;
-     setIsSpinning(true);
-     setCompassResult(null);
-     
-     const extraSpins = 360 * 5; 
-     const randomDegree = Math.floor(Math.random() * 360);
-     const newRotation = compassRotation + extraSpins + randomDegree;
-     
-     setCompassRotation(newRotation);
-     
-     setTimeout(() => {
-        setIsSpinning(false);
-        const normalizedDeg = newRotation % 360;
-        const index = Math.floor((normalizedDeg / 360) * compassOptions.length);
-        setCompassResult(compassOptions[index]);
-     }, 3000);
-  };
 
   const [equippedParts, setEquippedParts] = useState({
     hull: 'h1',
@@ -297,62 +265,6 @@ export default function PirateProfile() {
            </div>
         </section>
 
-        {/* SECTION 6: PIRATE COMPASS */}
-        <section className="space-y-8 pt-16 border-t-4 border-emerald-500/10 pb-20">
-           <div className="flex items-center justify-center">
-             <h2 className="text-4xl font-black uppercase tracking-tighter text-emerald-500 flex items-center gap-4 drop-shadow-lg">
-               <Navigation size={36} /> Компас Желаний <Navigation size={36} />
-             </h2>
-           </div>
-           
-           <div className="max-w-2xl mx-auto p-12 bg-[#020a17] rounded-[4rem] border-4 border-emerald-900/50 shadow-[0_0_100px_rgba(16,185,129,0.1)] relative overflow-hidden flex flex-col items-center text-center">
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.1)_0%,transparent_100%)] pointer-events-none" />
-              <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/nautical-map.png')]" />
-              
-              <p className="text-emerald-100/60 font-serif italic mb-10 relative z-10 max-w-sm">"Сломанный компас? Нет... Он указывает не на север, а на то, чего вы хотите больше всего прямо сейчас."</p>
-              
-              <div className="relative w-64 h-64 mb-10 group cursor-pointer" onClick={handleCompassSpin}>
-                 {/* Outer Ring */}
-                 <div className="absolute inset-0 rounded-full border-8 border-[#0a1a10] shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]" />
-                 <div className="absolute -inset-4 rounded-full border-2 border-emerald-900/30 border-dashed animate-[spin_10s_linear_infinite] pointer-events-none" />
-                 
-                 {/* Engraved Details */}
-                 <div className="absolute inset-4 rounded-full border border-emerald-500/10" />
-                 
-                 {/* The Compass Needle */}
-                 <div className="absolute inset-0 flex items-center justify-center transition-transform duration-[3000ms] ease-out" style={{ transform: `rotate(${compassRotation}deg)` }}>
-                    <div className="h-56 w-6 bg-gradient-to-b from-red-600 via-red-900 to-slate-900 rounded-full shadow-2xl relative">
-                       <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-b-[32px] border-l-transparent border-r-transparent border-b-red-500" />
-                       <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[16px] border-r-[16px] border-t-[32px] border-l-transparent border-r-transparent border-t-slate-800" />
-                    </div>
-                 </div>
-                 
-                 {/* Center Pin */}
-                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-amber-500 rounded-full border-4 border-amber-700 shadow-[0_0_20px_rgba(245,158,11,0.5)] z-20 flex items-center justify-center">
-                    <div className="w-3 h-3 bg-amber-200 rounded-full" />
-                 </div>
-              </div>
-              
-              <div className="h-24 flex items-center justify-center relative z-10 w-full">
-                 <AnimatePresence mode="wait">
-                    {compassResult && (
-                      <motion.div key={compassResult} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="p-4 bg-emerald-900/20 rounded-2xl border border-emerald-500/30 w-full backdrop-blur-sm">
-                         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/50 mb-1">Стрелка указала на:</p>
-                         <h3 className="text-xl font-black text-emerald-100">{compassResult}</h3>
-                      </motion.div>
-                    )}
-                 </AnimatePresence>
-              </div>
-              
-              <button 
-                onClick={handleCompassSpin}
-                disabled={isSpinning}
-                className="mt-4 px-8 py-4 w-full bg-emerald-600 text-slate-950 font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-500 transition-colors shadow-[0_0_30px_rgba(16,185,129,0.3)] disabled:opacity-50 disabled:cursor-not-allowed relative z-10"
-              >
-                {isSpinning ? 'Судьба решает...' : 'Раскрутить Компас'}
-              </button>
-           </div>
-        </section>
       </div>
 
       {/* MODALS */}
