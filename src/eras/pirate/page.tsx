@@ -168,7 +168,7 @@ export default function PirateDashboard() {
   ];
 
   return (
-    <div className="relative min-h-screen bg-[#000000] text-amber-100 font-serif overflow-x-hidden selection:bg-amber-500/30 pb-32">
+    <div className="relative min-h-screen bg-[#000000] text-amber-100 font-serif overflow-x-hidden selection:bg-amber-500/30">
       
       {/* Ambient background glows */}
       <div className="absolute top-[-150px] left-[-150px] w-[600px] h-[600px] bg-amber-600/10 rounded-full blur-[140px] pointer-events-none z-0" />
@@ -192,7 +192,7 @@ export default function PirateDashboard() {
         )}
       </AnimatePresence>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-10 space-y-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 py-10 pb-32 space-y-12">
         
         {/* HEADER BLOCK */}
         <header className="flex flex-row justify-between items-center gap-6 border-b-2 border-amber-500/20 pb-8">

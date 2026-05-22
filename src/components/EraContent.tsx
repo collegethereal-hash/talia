@@ -10,7 +10,7 @@ export function EraContent({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <main className="min-h-screen pb-24">
+      <main>
         {children}
       </main>
       

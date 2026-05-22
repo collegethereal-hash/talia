@@ -121,7 +121,7 @@ export default function PirateBucketList() {
   const totalPoints = quests.filter(q => q.current === q.target).reduce((acc, q) => acc + q.points, 0);
 
   return (
-    <div className="relative min-h-screen bg-[#1c120c] text-stone-800 pb-32 font-serif overflow-hidden selection:bg-amber-800/30">
+    <div className="relative min-h-screen bg-[#1c120c] text-stone-800 font-serif overflow-hidden selection:bg-amber-800/30">
       
       {/* Background Decor: Wooden Table / Map Vibe */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -133,7 +133,7 @@ export default function PirateBucketList() {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 space-y-12">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 pb-32 space-y-12">
         
         {/* Header */}
         <header className="text-center space-y-4 relative">

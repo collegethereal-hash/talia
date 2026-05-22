@@ -42,14 +42,14 @@ export default function PirateJournal() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#020617] text-amber-100 pb-32 font-serif overflow-hidden">
+    <div className="relative min-h-screen bg-[#020617] text-amber-100 font-serif overflow-hidden">
       {/* Background Decor */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] opacity-10" />
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-b from-transparent via-blue-950/10 to-black/40" />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 pt-16 space-y-12">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 pt-16 pb-32 space-y-12">
         <header className="text-center space-y-4">
           <motion.div
             initial={{ scale: 0 }}

@@ -115,7 +115,7 @@ export default function PirateProfile() {
   const flagship = getFlagship();
 
   return (
-    <div className="relative min-h-screen bg-[#020a17] text-amber-100 pb-32 font-serif">
+    <div className="relative min-h-screen bg-[#020a17] text-amber-100 font-serif">
       
       {/* Background Decor */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -124,7 +124,7 @@ export default function PirateProfile() {
         <div className="absolute bottom-0 left-0 w-full h-[600px] bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.05)_0%,transparent_50%)]" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 space-y-20">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 pb-32 space-y-20">
         
         {/* HEADER */}
         <header className="text-center space-y-6 relative">

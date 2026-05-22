@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { 
   Skull, Map as MapIcon, X, Navigation, Anchor, 
   Coins, Ship, Sparkles, Flame, ZoomIn, ZoomOut, Maximize2,
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useData } from "@/components/DataProvider";
 
 export default function PirateGallery() {
+  const router = useRouter();
   const { moments } = useData();
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [scale, setScale] = useState(0.8); // Default zoomed out slightly
@@ -27,16 +29,112 @@ export default function PirateGallery() {
   const [activeEnemy, setActiveEnemy] = useState<any>(null);
   const [activeTavern, setActiveTavern] = useState<any>(null);
 
-  // Generate some static enemies and taverns
-  const enemies = useMemo(() => [
-    { id: 'e1', x: 25, y: 35, strength: 15, reward: 300, name: 'Испанский Галеон', defeated: false },
-    { id: 'e2', x: 75, y: 20, strength: 25, reward: 600, name: 'Британский Фрегат', defeated: false },
-    { id: 'e3', x: 60, y: 80, strength: 40, reward: 1200, name: 'Корабль Призрак', defeated: false },
-    { id: 'e4', x: 15, y: 70, strength: 5, reward: 100, name: 'Торговое Судно', defeated: false },
-    { id: 'e5', x: 85, y: 45, strength: 30, reward: 800, name: 'Пиратский Бриг', defeated: false },
-    { id: 'e6', x: 45, y: 15, strength: 10, reward: 200, name: 'Рыболовецкая Шхуна', defeated: false },
-  ], []);
-  const [liveEnemies, setLiveEnemies] = useState(enemies);
+  // Ship Classes
+  const SHIP_CLASSES = [
+    { type: 'Sloop', name: 'Торговая Шхуна', minStrength: 5, maxStrength: 15, minReward: 100, maxReward: 300, icon: 'ship' },
+    { type: 'Brig', name: 'Пиратский Бриг', minStrength: 20, maxStrength: 40, minReward: 400, maxReward: 800, icon: 'ship' },
+    { type: 'Frigate', name: 'Британский Фрегат', minStrength: 45, maxStrength: 70, minReward: 900, maxReward: 1800, icon: 'ship' },
+    { type: 'Galleon', name: 'Испанский Галеон', minStrength: 75, maxStrength: 110, minReward: 2000, maxReward: 4000, icon: 'ship' },
+    { type: 'ManOWar', name: 'Королевский Мановар', minStrength: 120, maxStrength: 200, minReward: 5000, maxReward: 10000, icon: 'crown' },
+    { type: 'Ghost', name: 'Летучий Голландец', minStrength: 150, maxStrength: 300, minReward: 15000, maxReward: 30000, icon: 'skull' },
+  ];
+
+  const generateRandomEnemy = () => {
+    const shipClass = SHIP_CLASSES[Math.floor(Math.random() * SHIP_CLASSES.length)];
+    const strength = Math.floor(Math.random() * (shipClass.maxStrength - shipClass.minStrength + 1)) + shipClass.minStrength;
+    const reward = Math.floor(Math.random() * (shipClass.maxReward - shipClass.minReward + 1)) + shipClass.minReward;
+    
+    return {
+      id: `e-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      x: Math.random() * 90 + 5,
+      y: Math.random() * 90 + 5,
+      strength,
+      reward,
+      name: shipClass.name,
+      shipType: shipClass.type,
+      defeated: false
+    };
+  };
+
+  const initialEnemies = useMemo(() => [
+     { id: 'e1', x: 25, y: 35, strength: 15, reward: 300, name: 'Испанский Галеон', shipType: 'Galleon', defeated: false },
+     { id: 'e2', x: 75, y: 20, strength: 25, reward: 600, name: 'Британский Фрегат', shipType: 'Frigate', defeated: false },
+     { id: 'e3', x: 60, y: 80, strength: 40, reward: 1200, name: 'Летучий Голландец', shipType: 'Ghost', defeated: false },
+     { id: 'e4', x: 15, y: 70, strength: 5, reward: 100, name: 'Торговая Шхуна', shipType: 'Sloop', defeated: false },
+     { id: 'e5', x: 85, y: 45, strength: 30, reward: 800, name: 'Пиратский Бриг', shipType: 'Brig', defeated: false },
+     { id: 'e6', x: 45, y: 15, strength: 10, reward: 200, name: 'Рыболовецкая Шхуна', shipType: 'Sloop', defeated: false },
+   ], []);
+
+  const [liveEnemies, setLiveEnemies] = useState<any[]>([]);
+
+  // Load and check battle results
+  useEffect(() => {
+    // 1. Load enemies from localStorage or initial
+    const savedEnemies = localStorage.getItem('pirate_enemies');
+    let currentEnemies = (savedEnemies && JSON.parse(savedEnemies).length > 0) 
+      ? JSON.parse(savedEnemies) 
+      : initialEnemies;
+
+    // 2. Check if we just returned from a battle
+    const battleResultStr = localStorage.getItem('last_battle_result');
+    if (battleResultStr) {
+      const result = JSON.parse(battleResultStr);
+      localStorage.removeItem('last_battle_result');
+
+        if (result.winner === 'player') {
+          // Find the enemy we fought and replace them with a new random one
+          currentEnemies = currentEnemies.map((e: any) => {
+            if (e.id === result.enemyId) {
+              return generateRandomEnemy();
+            }
+            return e;
+          });
+          
+          // Update stats and gold using the ACTUAL value from battle result
+          const oldSunk = parseInt(localStorage.getItem('pirate_sunk_ships') || '0', 10);
+          const newSunk = oldSunk + 1;
+          const oldGold = parseInt(localStorage.getItem('pirate_gold') || '1500', 10);
+          const newGold = oldGold + (result.reward || 500);
+          
+          setGold(newGold);
+          setSunkShips(newSunk);
+          
+          localStorage.setItem('pirate_gold', newGold.toString());
+          localStorage.setItem('pirate_sunk_ships', newSunk.toString());
+        } else if (result.winner === 'enemy') {
+        // Loss handling: crew is already updated by LairPage
+        alert("Поражение! Враг разгромил нас. Мы отступили с большими потерями...");
+      }
+    }
+
+    setLiveEnemies(currentEnemies);
+    localStorage.setItem('pirate_enemies', JSON.stringify(currentEnemies));
+
+    // Load other stats
+    const savedGold = localStorage.getItem('pirate_gold');
+    const savedCrew = localStorage.getItem('pirate_crew');
+    const savedSunk = localStorage.getItem('pirate_sunk_ships');
+    
+    if (savedGold) setGold(parseInt(savedGold, 10));
+    if (savedCrew) setCrew(parseInt(savedCrew, 10));
+    if (savedSunk) setSunkShips(parseInt(savedSunk, 10));
+    
+    const savedPos = localStorage.getItem('pirate_ship_pos');
+    if (savedPos) setShipPos(JSON.parse(savedPos));
+  }, []);
+
+  // Save state helpers
+  useEffect(() => {
+    localStorage.setItem('pirate_gold', gold.toString());
+    localStorage.setItem('pirate_crew', crew.toString());
+    localStorage.setItem('pirate_enemies', JSON.stringify(liveEnemies));
+  }, [gold, crew, liveEnemies]);
+
+  const getDistance = (p1: { x: number, y: number }, p2: { x: number, y: number }) => {
+    return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+  };
+
+  const isCloseEnough = activeEnemy ? getDistance(shipPos, activeEnemy) < 8 : false;
 
   const taverns = useMemo(() => [
     { id: 't1', x: 40, y: 45, name: 'Таверна "Кривая Чайка"' },
@@ -89,19 +187,21 @@ export default function PirateGallery() {
   };
 
   const handleAttack = () => {
-    if (!activeEnemy) return;
+    if (!activeEnemy || !isCloseEnough) return;
 
-    if (crew >= activeEnemy.strength) {
-      setGold(prev => prev + activeEnemy.reward);
-      setSunkShips(prev => prev + 1);
-      setLiveEnemies(liveEnemies.map(e => e.id === activeEnemy.id ? { ...e, defeated: true } : e));
-      setActiveEnemy(null);
-    } else {
-      const losses = Math.floor(crew * 0.3);
-      setCrew(prev => Math.max(1, prev - losses));
-      alert(`Поражение! Враг оказался сильнее. Мы потеряли ${losses} матросов.`);
-      setActiveEnemy(null);
-    }
+    // Save battle context to localStorage
+    localStorage.setItem('current_battle_enemy', JSON.stringify({
+      id: activeEnemy.id,
+      name: activeEnemy.name,
+      strength: activeEnemy.strength,
+      reward: activeEnemy.reward
+    }));
+    
+    // Save current ship position to return here later
+    localStorage.setItem('pirate_ship_pos', JSON.stringify(shipPos));
+
+    // Navigate to Lair
+    router.push('/lair');
   };
 
   const handleHire = () => {
@@ -119,13 +219,13 @@ export default function PirateGallery() {
       {/* Fleet Stats (HUD) */}
       <div className="absolute top-6 w-full px-6 z-50 flex justify-between items-start pointer-events-none">
          <div className="flex items-center gap-2 bg-[#051329]/90 p-2 rounded-2xl border-2 border-sky-500/20 backdrop-blur-md pointer-events-auto shadow-[0_0_30px_rgba(14,165,233,0.2)]">
-           <button onClick={() => setScale(s => Math.max(0.2, s - 0.2))} className="p-2 text-sky-400 hover:bg-sky-500/10 rounded-xl transition-colors">
+           <button onClick={() => setScale(s => Math.max(0.4, s - 0.2))} className="p-2 text-sky-400 hover:bg-sky-500/10 rounded-xl transition-colors">
              <ZoomOut size={20} />
            </button>
            <div className="px-4 border-x border-sky-500/20 text-sky-300 font-black uppercase tracking-widest text-[10px] whitespace-nowrap text-center leading-tight">
              Карта <br/>Архипелага
            </div>
-           <button onClick={() => setScale(s => Math.min(2, s + 0.2))} className="p-2 text-sky-400 hover:bg-sky-500/10 rounded-xl transition-colors">
+           <button onClick={() => setScale(s => Math.min(1.5, s + 0.2))} className="p-2 text-sky-400 hover:bg-sky-500/10 rounded-xl transition-colors">
              <ZoomIn size={20} />
            </button>
          </div>
@@ -143,11 +243,13 @@ export default function PirateGallery() {
       {/* Draggable Map Container (The World) */}
       <motion.div 
         drag
-        dragConstraints={{ left: -4000, right: 4000, top: -4000, bottom: 4000 }} // Massive drag area
-        dragElastic={0.1}
+        dragConstraints={{ left: -7500, right: 0, top: -7500, bottom: 0 }} // Correct constraints for 8000px map
+        dragElastic={0.05}
+        dragMomentum={false}
         initial={{ x: -2000, y: -2000 }}
+        animate={{ scale: scale }}
+        transition={{ scale: { type: 'spring', stiffness: 100, damping: 25 } }}
         className="absolute w-[8000px] h-[8000px] cursor-grab active:cursor-grabbing origin-center z-10"
-        style={{ scale: scale }}
       >
          {/* --- RICH MAP TEXTURE --- */}
          <div className="absolute inset-0 bg-[#061a38]/40 border-8 border-sky-900/30 overflow-hidden shadow-[inset_0_0_1000px_rgba(2,10,23,1)]">
@@ -180,33 +282,33 @@ export default function PirateGallery() {
                   backgroundColor: 'rgba(14,165,233,0.05)'
                 }}
               >
-                 {/* Randomly add some "Unknown Lands" text */}
-                 {i % 5 === 0 && (
-                   <span className="text-[10px] uppercase font-black tracking-[0.5em] text-sky-200/50 -rotate-12">
-                     Неизведанные Воды
-                   </span>
-                 )}
               </div>
             ))}
 
             {/* Ambient Animated Ships (Beautiful) */}
-            {[...Array(25)].map((_, i) => {
-               const duration = 500 + Math.random() * 500;
+            {[...Array(30)].map((_, i) => {
+               const startX = (i * 137.5) % 100; // Deterministic random-ish distribution
+               const startY = (i * 151.1) % 100;
+               const duration = 20 + (i % 10) * 5;
                return (
                  <motion.div
                    key={`ambient-ship-${i}`}
                    className="absolute z-10 pointer-events-none flex flex-col items-center"
-                   style={{ top: `${Math.random() * 100}%` }}
-                   animate={{ x: ['-20vw', '8000px'] }}
-                   transition={{ duration, repeat: Infinity, ease: "linear", delay: Math.random() * -duration }}
+                   style={{ left: `${startX}%`, top: `${startY}%` }}
+                   animate={{ 
+                     x: [0, 150, 0, -150, 0],
+                     y: [0, 80, 160, 80, 0],
+                     rotate: [0, 10, 0, -10, 0]
+                   }}
+                   transition={{ duration, repeat: Infinity, ease: "easeInOut", delay: -(i * 2) }}
                  >
-                   <div className="relative text-sky-200/40 transform -scale-x-100">
-                     <Ship size={100} className="drop-shadow-[0_0_10px_rgba(14,165,233,0.3)]" />
+                   <div className="relative text-sky-200/10">
+                     <Ship size={80} className="drop-shadow-[0_0_10px_rgba(14,165,233,0.1)]" />
                      {/* Wake effect */}
                      <motion.div 
-                       className="absolute -bottom-2 right-8 w-24 h-4 bg-sky-400/30 blur-lg rounded-full"
-                       animate={{ opacity: [0.2, 0.6, 0.2], scale: [1, 1.2, 1] }}
-                       transition={{ duration: 3, repeat: Infinity }}
+                       className="absolute -bottom-1 right-4 w-16 h-3 bg-sky-400/20 blur-md rounded-full"
+                       animate={{ opacity: [0.1, 0.3, 0.1], scale: [1, 1.1, 1] }}
+                       transition={{ duration: 4, repeat: Infinity }}
                      />
                    </div>
                  </motion.div>
@@ -255,36 +357,67 @@ export default function PirateGallery() {
          ))}
 
          {/* 2. Enemy Ships */}
-         {liveEnemies.map(enemy => (
-           <div
-             key={enemy.id}
-             className="absolute transform -translate-x-1/2 -translate-y-1/2 group z-30 cursor-pointer"
-             style={{ left: `${enemy.x}%`, top: `${enemy.y}%` }}
-             onClick={() => !enemy.defeated && setActiveEnemy(enemy)}
-           >
-              <motion.div 
-                whileHover={!enemy.defeated ? { scale: 1.15 } : {}}
-                animate={!enemy.defeated ? { y: [-15, 15, -15], rotate: [-3, 3, -3] } : {}}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="relative flex flex-col items-center"
-              >
-                 {enemy.defeated ? (
-                   <div className="p-6 bg-red-900/10 rounded-full border-2 border-red-900/30 opacity-50">
-                     <Skull size={48} className="text-red-900/40" />
-                   </div>
-                 ) : (
-                   <>
-                     <div className="p-6 bg-[#3a0a0a]/90 rounded-full border-4 border-red-600 flex items-center justify-center shadow-[0_0_60px_rgba(220,38,38,0.5)]">
-                       <Ship size={56} className="text-red-500 drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]" />
+         {liveEnemies.map(enemy => {
+           const isBoss = enemy.shipType === 'ManOWar' || enemy.shipType === 'Ghost';
+           const isWeak = enemy.shipType === 'Sloop';
+           
+           return (
+             <div
+               key={enemy.id}
+               className="absolute transform -translate-x-1/2 -translate-y-1/2 group z-30 cursor-pointer"
+               style={{ left: `${enemy.x}%`, top: `${enemy.y}%` }}
+               onClick={() => !enemy.defeated && setActiveEnemy(enemy)}
+             >
+                <motion.div 
+                  whileHover={!enemy.defeated ? { scale: 1.15 } : {}}
+                  animate={!enemy.defeated ? { 
+                    y: isBoss ? [-25, 25, -25] : [-15, 15, -15], 
+                    rotate: isBoss ? [-5, 5, -5] : [-3, 3, -3] 
+                  } : {}}
+                  transition={{ duration: isBoss ? 4 : 6, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative flex flex-col items-center"
+                >
+                   {enemy.defeated ? (
+                     <div className="p-6 bg-red-900/10 rounded-full border-2 border-red-900/30 opacity-50">
+                       <Skull size={48} className="text-red-900/40" />
                      </div>
-                     <div className="absolute -bottom-12 whitespace-nowrap px-4 py-2 bg-black/90 rounded-xl border border-red-600/50 text-[12px] font-black uppercase tracking-widest text-red-400 flex items-center gap-2 drop-shadow-xl">
-                       <Sword size={14} /> {enemy.name}
-                     </div>
-                   </>
-                 )}
-              </motion.div>
-           </div>
-         ))}
+                   ) : (
+                     <>
+                       <div className={cn(
+                         "p-6 rounded-full border-4 flex items-center justify-center shadow-2xl transition-all",
+                         isBoss 
+                           ? "bg-purple-900/90 border-purple-500 shadow-[0_0_80px_rgba(168,85,247,0.6)] scale-125" 
+                           : isWeak 
+                             ? "bg-slate-800/90 border-slate-500 shadow-[0_0_30px_rgba(100,116,139,0.3)] scale-90"
+                             : "bg-[#3a0a0a]/90 border-red-600 shadow-[0_0_60px_rgba(220,38,38,0.5)]"
+                       )}>
+                         {enemy.shipType === 'Ghost' ? (
+                           <Skull size={isBoss ? 72 : 56} className="text-teal-400 drop-shadow-[0_0_15px_rgba(45,212,191,0.8)]" />
+                         ) : enemy.shipType === 'ManOWar' ? (
+                           <Crown size={72} className="text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.8)]" />
+                         ) : (
+                           <Ship size={isWeak ? 40 : 56} className={cn(
+                             isWeak ? "text-slate-400" : "text-red-500",
+                             "drop-shadow-[0_0_10px_rgba(220,38,38,0.8)]"
+                           )} />
+                         )}
+                       </div>
+                       
+                       {/* Label with dynamic color */}
+                       <div className={cn(
+                         "absolute -bottom-14 whitespace-nowrap px-4 py-2 bg-black/90 rounded-xl border flex items-center gap-2 drop-shadow-xl z-10",
+                         isBoss ? "border-purple-500 text-purple-300" : isWeak ? "border-slate-500 text-slate-400" : "border-red-600 text-red-400"
+                       )}>
+                         {isBoss ? <Skull size={14} /> : isWeak ? <Anchor size={14} /> : <Sword size={14} />}
+                         <span className="font-black uppercase tracking-widest text-[10px]">{enemy.name}</span>
+                         <span className="ml-2 px-1.5 py-0.5 bg-white/10 rounded text-[9px] border border-white/5">lvl {enemy.strength}</span>
+                       </div>
+                     </>
+                   )}
+                </motion.div>
+             </div>
+           );
+         })}
 
          {/* 3. Rendering Photos as Treasure Islands (Ports) */}
          {(moments || []).map((photo: any) => {
@@ -426,12 +559,18 @@ export default function PirateGallery() {
                    >
                      <Wind size={16} /> Плыть к ним
                    </button>
-                   <button 
-                    onClick={handleAttack}
-                    className="py-4 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-[0_0_30px_rgba(220,38,38,0.4)] hover:bg-red-500 transition-colors flex items-center justify-center gap-2"
-                   >
-                     <Crosshair size={18} /> ЗАЛП!
-                   </button>
+                   {isCloseEnough ? (
+                     <button 
+                      onClick={handleAttack}
+                      className="py-4 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-[0_0_30px_rgba(220,38,38,0.4)] hover:bg-red-500 transition-colors flex items-center justify-center gap-2"
+                     >
+                       <Crosshair size={18} /> ЗАЛП!
+                     </button>
+                   ) : (
+                     <div className="py-4 bg-slate-800 text-slate-500 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 border-2 border-slate-700 opacity-60">
+                       Нужно подплыть ближе
+                     </div>
+                   )}
                 </div>
              </div>
           </ModalOverlay>

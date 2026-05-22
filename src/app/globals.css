@@ -16,11 +16,11 @@
 }
 
 .era-pirate {
-  --background: #020617; /* Deep Navy */
+  --background: #000000; /* Deep Navy */
   --foreground: #fef3c7; /* Amber/Parchment */
   --talia-lavender: #0c4a6e; /* Deep Ocean */
   --talia-peach: #78350f; /* Mahogany */
-  --talia-sand: #020617;
+  --talia-sand: #000000;
   --era-accent: #fbbf24; /* Gold */
   
   --wood-dark: #2d1a12;
@@ -28,7 +28,6 @@
   --ocean-blue: #0ea5e9;
   --gold-glow: rgba(251, 191, 36, 0.2);
 }
-
 
 @theme inline {
   --color-background: var(--background);
@@ -55,7 +54,7 @@ html, body {
 }
 
 body {
-  background: var(--background);
+  background: #000000;
   color: var(--foreground);
   font-family: 'Inter', sans-serif;
   min-height: 100vh;

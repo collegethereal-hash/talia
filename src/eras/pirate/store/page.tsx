@@ -79,7 +79,7 @@ export default function PirateStore() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#0a0a0a] text-amber-100 font-serif pb-32 overflow-hidden">
+    <div className="relative min-h-screen bg-[#0a0a0a] text-amber-100 font-serif overflow-hidden">
       
       {/* Background Ambience */}
       <div className="absolute inset-0 pointer-events-none z-0">
@@ -88,7 +88,7 @@ export default function PirateStore() {
         <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,rgba(245,158,11,0.05)_0%,transparent_50%)]" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-12 space-y-12">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-12 pb-32 space-y-12">
         
         {/* Header & Stats */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-8">
