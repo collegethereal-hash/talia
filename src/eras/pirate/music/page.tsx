@@ -483,139 +483,179 @@ export default function PirateMusicPage() {
                   <motion.div
                     key={song.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="group relative"
+                    initial={{ opacity: 0, scale: 0.8, y: 30, rotateY: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0, rotateY: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, rotateY: 10 }}
+                    transition={{ delay: index * 0.05, type: "spring", stiffness: 100 }}
+                    className="group relative perspective-[1000px]"
+                    style={{ perspective: '1000px' }}
                   >
+                    {/* Артефакт-контейнер */}
                     <div className={cn(
-                      "pirate-card p-6 rounded-[2.5rem] transition-all duration-500 overflow-hidden group relative transform hover:-translate-y-2",
-                      isYandex ? "border-red-900/30 hover:border-red-500/50" : 
-                      isVoice ? "border-emerald-900/30 hover:border-emerald-500/50" : 
-                      "border-sky-900/30 hover:border-sky-500/50"
+                      "relative transition-all duration-700 transform group-hover:scale-[1.02] group-hover:-translate-y-3",
+                      "rounded-[2rem] overflow-visible"
                     )}>
-                      {/* Animated gradient border */}
+                      {/* Внешнее свечение (аура) */}
                       <div className={cn(
-                        "absolute inset-0 rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none",
-                        "bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"
+                        "absolute -inset-3 rounded-[2.5rem] opacity-0 group-hover:opacity-60 transition-opacity duration-700 blur-2xl pointer-events-none",
+                        isYandex ? "bg-gradient-to-br from-red-600 via-orange-500 to-red-600" :
+                        isVoice ? "bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-600" :
+                        "bg-gradient-to-br from-sky-600 via-blue-500 to-sky-600"
                       )} />
                       
-                      {/* Glow effect on hover */}
+                      {/* Плавающие частицы вокруг карточки */}
+                      <div className="absolute -inset-4 pointer-events-none">
+                        <div className={cn(
+                          "absolute top-0 left-1/4 w-2 h-2 rounded-full opacity-0 group-hover:opacity-80 transition-opacity duration-500",
+                          "animate-bounce",
+                          isYandex ? "bg-red-400" : isVoice ? "bg-emerald-400" : "bg-sky-400"
+                        )} style={{ animationDuration: '2s' }} />
+                        <div className={cn(
+                          "absolute top-1/3 right-0 w-1.5 h-1.5 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-700",
+                          "animate-bounce",
+                          isYandex ? "bg-orange-400" : isVoice ? "bg-teal-400" : "bg-blue-400"
+                        )} style={{ animationDuration: '2.5s', animationDelay: '0.3s' }} />
+                        <div className={cn(
+                          "absolute bottom-1/4 left-0 w-1 h-1 rounded-full opacity-0 group-hover:opacity-70 transition-opacity duration-600",
+                          "animate-bounce",
+                          isYandex ? "bg-yellow-400" : isVoice ? "bg-green-400" : "bg-indigo-400"
+                        )} style={{ animationDuration: '1.8s', animationDelay: '0.6s' }} />
+                      </div>
+
+                      {/* Основная карточка-артефакт */}
                       <div className={cn(
-                        "absolute -inset-1 rounded-[2.6rem] opacity-0 group-hover:opacity-30 transition-opacity duration-500 blur-xl pointer-events-none",
-                        isYandex ? "bg-gradient-to-r from-red-500 via-orange-500 to-red-500" :
-                        isVoice ? "bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500" :
-                        "bg-gradient-to-r from-sky-500 via-blue-500 to-sky-500"
-                      )} />
+                        "relative backdrop-blur-xl rounded-[2rem] p-5 transition-all duration-500",
+                        "border-2 group-hover:border-opacity-60",
+                        isYandex ? "bg-gradient-to-br from-red-950/80 via-red-900/60 to-orange-950/80 border-red-500/30" :
+                        isVoice ? "bg-gradient-to-br from-emerald-950/80 via-emerald-900/60 to-teal-950/80 border-emerald-500/30" :
+                        "bg-gradient-to-br from-sky-950/80 via-blue-900/60 to-indigo-950/80 border-sky-500/30"
+                      )}>
+                        {/* Внутренний светящийся контур */}
+                        <div className={cn(
+                          "absolute inset-[2px] rounded-[1.9rem] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none",
+                          "bg-gradient-to-br from-white/5 via-transparent to-white/5"
+                        )} />
 
-                      {/* Parchment Overlay */}
-                      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/papyrus.png')] opacity-[0.03] pointer-events-none" />
-                      
-                      {/* Vinyl Disc Background (only for Yandex) */}
-                      {isYandex && (
-                        <div className="absolute -top-10 -right-10 p-4 opacity-5 group-hover:opacity-20 transition-all duration-700 group-hover:rotate-90">
-                          <Disc size={180} className="animate-spin-slow text-red-500" />
-                        </div>
-                      )}
-
-                      {/* Waves Background (only for BG music) */}
-                      {isBg && (
-                        <div className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity">
-                          <Waves size={300} className="absolute -bottom-20 -right-20 text-sky-500" />
-                        </div>
-                      )}
-
-                      <div className="relative z-10 space-y-6">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-4">
+                        {/* Заголовок с иконкой-печатью */}
+                        <div className="relative flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            {/* Иконка-печать в стиле сургучной печати */}
                             <div className={cn(
-                              "p-4 rounded-2xl shadow-xl border",
-                              isYandex ? "bg-red-500/10 text-red-500 border-red-500/20" : 
-                              isVoice ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : 
-                              "bg-sky-500/10 text-sky-500 border-sky-500/20"
+                              "relative w-12 h-12 rounded-full flex items-center justify-center",
+                              "shadow-[0_0_20px_currentColor] animate-pulse",
+                              isYandex ? "bg-red-600 text-red-200 shadow-red-500/50" :
+                              isVoice ? "bg-emerald-600 text-emerald-200 shadow-emerald-500/50" :
+                              "bg-sky-600 text-sky-200 shadow-sky-500/50"
                             )}>
-                              {isYandex ? <Music size={24} /> : isVoice ? <Mic size={24} /> : <Waves size={24} />}
+                              <div className="absolute inset-1 rounded-full border-2 border-white/30" />
+                              {isYandex ? <Music size={20} /> : isVoice ? <Mic size={20} /> : <Waves size={20} />}
                             </div>
                             <div>
-                              <h3 className="font-black uppercase tracking-widest text-base text-white line-clamp-1 drop-shadow-md">{song.title}</h3>
-                              <div className="flex items-center gap-2">
-                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
-                                   {isYandex ? 'Трек Яндекса' : isVoice ? 'Голосовое' : 'Фон'} от
-                                 </span>
-                                 <span className={cn(
-                                   "text-[10px] font-black uppercase tracking-[0.2em] underline underline-offset-4 decoration-current/30",
-                                   isYandex ? "text-red-400" : isVoice ? "text-emerald-400" : "text-sky-400"
-                                 )}>{song.sender}</span>
+                              <h3 className="font-bold text-lg text-white leading-tight line-clamp-2 drop-shadow-lg">
+                                {song.title}
+                              </h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className={cn(
+                                  "text-[10px] font-bold uppercase tracking-wider",
+                                  isYandex ? "text-red-300/70" : isVoice ? "text-emerald-300/70" : "text-sky-300/70"
+                                )}>
+                                  {isYandex ? 'Яндекс' : isVoice ? 'Голос' : 'Фон'}
+                                </span>
+                                <span className="text-white/30 text-[8px]">•</span>
+                                <span className="text-white/50 text-[10px]">{song.sender}</span>
                               </div>
                             </div>
                           </div>
                           <motion.button 
-                            whileHover={{ scale: 1.2, color: '#ef4444' }}
+                            whileHover={{ scale: 1.2, rotate: 90 }}
                             onClick={() => handleDelete(song.id)}
-                            className="p-2 text-white/10 hover:text-red-500 transition-all"
+                            className="p-2 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all"
                           >
-                            <Trash2 size={18} />
+                            <Trash2 size={16} />
                           </motion.button>
                         </div>
 
-                        {/* Audio Player / Embed Container */}
+                        {/* Центральный элемент - "магический кристалл" с контентом */}
                         <div className={cn(
-                          "rounded-[2rem] overflow-hidden bg-black border-2 min-h-[120px] flex items-center justify-center relative shadow-inner",
-                          isYandex ? "border-red-900/40 h-[180px]" : isVoice ? "border-emerald-900/20" : "border-sky-900/20"
+                          "relative rounded-[1.5rem] overflow-hidden mb-4",
+                          "border border-white/10",
+                          "shadow-[inset_0_0_30px_rgba(0,0,0,0.5)]",
+                          isYandex && getYandexEmbed(song.url) ? "h-[180px]" : "min-h-[140px]"
                         )}>
+                          {/* Фоновый градиент внутри кристалла */}
+                          <div className={cn(
+                            "absolute inset-0 opacity-30",
+                            isYandex ? "bg-gradient-to-br from-red-500/20 to-orange-500/20" :
+                            isVoice ? "bg-gradient-to-br from-emerald-500/20 to-teal-500/20" :
+                            "bg-gradient-to-br from-sky-500/20 to-indigo-500/20"
+                          )} />
+
+                          {/* Контент */}
                           {isYandex && getYandexEmbed(song.url) ? (
-                            <div className="w-full h-[180px] bg-white relative">
-                              <iframe 
-                                frameBorder="0" 
-                                style={{ border: 'none', width: '100%', height: '180px' }} 
-                                src={getYandexEmbed(song.url)!}
-                                title={song.title}
-                                className="relative z-10"
-                              />
-                            </div>
+                            <iframe 
+                              frameBorder="0" 
+                              style={{ border: 'none', width: '100%', height: '180px' }} 
+                              src={getYandexEmbed(song.url)!}
+                              title={song.title}
+                              className="relative z-10"
+                            />
                           ) : (
-                            <AudioPlayer url={song.url} bgTrackId={song.bgTrackId} bgVolume={song.bgVolume} />
+                            <div className="relative z-10 h-full flex items-center justify-center p-4">
+                              <AudioPlayer url={song.url} bgTrackId={song.bgTrackId} bgVolume={song.bgVolume} />
+                            </div>
                           )}
                         </div>
 
-                        {isVoice && song.bgVolume !== undefined && (
-                          <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/5 rounded-xl border border-emerald-500/10">
-                            <Volume2 size={12} className="text-emerald-500" />
-                            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500/60">Громкость фона: {song.bgVolume}%</span>
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between pt-2 px-1">
+                        {/* Нижняя панель с деталями */}
+                        <div className="flex items-center justify-between px-1">
+                          {/* Инфо о создателе */}
                           <div className="flex items-center gap-3">
-                             <div className={cn(
-                               "w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-black text-slate-950 shadow-lg border-2 border-white/10",
-                               isYandex ? "bg-red-500" : isVoice ? "bg-emerald-500" : "bg-sky-500"
-                             )}>
-                               {song.sender[0]}
-                             </div>
-                             <div className="flex flex-col">
-                               <span className="text-[9px] font-black uppercase text-white/30 tracking-tighter">Длительность</span>
-                               <span className="text-[10px] font-black uppercase text-white/60 tracking-widest">
-                                 {song.duration || '0:00'}
-                               </span>
-                             </div>
+                            <div className={cn(
+                              "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg",
+                              "ring-2 ring-white/20",
+                              isYandex ? "bg-gradient-to-br from-red-500 to-orange-600" :
+                              isVoice ? "bg-gradient-to-br from-emerald-500 to-teal-600" :
+                              "bg-gradient-to-br from-sky-500 to-indigo-600"
+                            )}>
+                              {song.sender[0]}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[8px] font-bold uppercase text-white/30 tracking-wider">Длительность</span>
+                              <span className="text-[11px] font-bold text-white/70">
+                                {song.duration || '—:—'}
+                              </span>
+                            </div>
                           </div>
+
+                          {/* Кнопка-ссылка */}
                           <motion.a 
-                            whileHover={{ x: 5 }}
+                            whileHover={{ scale: 1.05, x: 5 }}
+                            whileTap={{ scale: 0.95 }}
                             href={song.url} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className={cn(
-                              "flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full text-[10px] font-black uppercase border transition-all",
-                              isYandex ? "text-red-500 border-red-500/20 hover:bg-red-500 hover:text-white" : 
-                              isVoice ? "text-emerald-500 border-emerald-500/20 hover:bg-emerald-500 hover:text-white" : 
-                              "text-sky-500 border-sky-500/20 hover:bg-sky-500 hover:text-white"
+                              "flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all",
+                              "backdrop-blur-sm border",
+                              isYandex ? "bg-red-500/10 text-red-300 border-red-500/30 hover:bg-red-500 hover:text-white" :
+                              isVoice ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500 hover:text-white" :
+                              "bg-sky-500/10 text-sky-300 border-sky-500/30 hover:bg-sky-500 hover:text-white"
                             )}
                           >
-                            {isYandex ? "На борт" : isVoice ? "К истокам" : "В бездну"} <ExternalLink size={12} />
+                            {isYandex ? "Слушать" : isVoice ? "Слушать" : "Слушать"}
+                            <ExternalLink size={12} />
                           </motion.a>
                         </div>
+
+                        {/* Доп. индикатор для голосовых с фоном */}
+                        {isVoice && song.bgVolume !== undefined && (
+                          <div className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                            <Volume2 size={10} className="text-emerald-400" />
+                            <span className="text-[8px] font-bold uppercase text-emerald-300/80 tracking-wider">
+                              Фон: {song.bgVolume}%
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
