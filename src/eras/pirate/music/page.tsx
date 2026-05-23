@@ -352,12 +352,32 @@ export default function PirateMusicPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#020a17] text-amber-100 font-serif overflow-hidden">
+    <div className="relative min-h-screen bg-[#0a0e1a] text-amber-100 font-serif overflow-hidden">
       {/* Background Decor */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-10" />
-        <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,rgba(14,165,233,0.1)_0%,transparent_50%)]" />
-        <div className="absolute bottom-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.05)_0%,transparent_50%)]" />
+        {/* Deep ocean gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0e1a] via-[#0d1525] to-[#1a1025]" />
+        
+        {/* Animated stars/dust particles */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-amber-200 rounded-full animate-pulse" />
+          <div className="absolute top-1/3 right-1/4 w-0.5 h-0.5 bg-sky-200 rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/3 w-0.5 h-0.5 bg-amber-100 rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/4 right-1/3 w-1 h-1 bg-sky-100 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+          <div className="absolute bottom-1/3 left-1/4 w-0.5 h-0.5 bg-amber-200 rounded-full animate-pulse" style={{ animationDelay: '1.5s' }} />
+          <div className="absolute bottom-1/4 right-1/4 w-1 h-1 bg-sky-200 rounded-full animate-pulse" style={{ animationDelay: '2.5s' }} />
+        </div>
+        
+        {/* Wooden texture overlay */}
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-5" />
+        
+        {/* Aurora-like light effects */}
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_left,rgba(139,92,246,0.08)_0%,transparent_50%)]" />
+        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom_right,rgba(245,158,11,0.06)_0%,transparent_50%)]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-[radial-gradient(ellipse,rgba(14,165,233,0.04)_0%,transparent_70%)]" />
+        
+        {/* Subtle wave pattern at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-sky-900/5 to-transparent" />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 pt-16 pb-40">
