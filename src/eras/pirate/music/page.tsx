@@ -256,19 +256,26 @@ export default function PirateMusicPage() {
       return () => audio.removeEventListener('timeupdate', updateProgress);
     }, []);
 
-    const toggle = () => {
+    const toggle = async () => {
       if (audioRef.current) {
         if (isPlaying) {
           audioRef.current.pause();
           bgAudioRef.current?.pause();
+          setIsPlaying(false);
         } else {
-          audioRef.current.play();
-          if (bgAudioRef.current) {
-            bgAudioRef.current.volume = (bgVolume || 50) / 100;
-            bgAudioRef.current.play();
+          try {
+            await audioRef.current.play();
+            setIsPlaying(true);
+            if (bgAudioRef.current) {
+              bgAudioRef.current.volume = (bgVolume || 50) / 100;
+              await bgAudioRef.current.play().catch(() => {
+                // Игнорируем ошибки воспроизведения фонового трека
+              });
+            }
+          } catch (error) {
+            console.error('Error playing audio:', error);
           }
         }
-        setIsPlaying(!isPlaying);
       }
     };
 
