@@ -273,21 +273,25 @@ export default function PirateMusicPage() {
     };
 
     return (
-      <div className="w-full p-5 flex flex-col items-center gap-5 bg-[#120d0a]/60 backdrop-blur-sm rounded-2xl border border-amber-900/30">
+      <div className="w-full p-5 flex flex-col items-center gap-5 bg-gradient-to-br from-[#1a120b] to-[#0d0806] backdrop-blur-md rounded-3xl border border-amber-500/10 shadow-[inset_0_0_30px_rgba(245,158,11,0.05)]">
         <audio ref={audioRef} src={url} onEnded={() => { setIsPlaying(false); bgAudioRef.current?.pause(); }} />
         {bgTrack && <audio ref={bgAudioRef} src={bgTrack.url} loop />}
         
-        {/* Visualizer bars (Simulated) */}
-        <div className="flex items-end gap-1.5 h-10 w-full justify-center px-4">
-          {[...Array(16)].map((_, i) => (
+        {/* Visualizer bars (Enhanced) */}
+        <div className="flex items-end gap-1.5 h-14 w-full justify-center px-4 py-2 bg-black/20 rounded-2xl border border-amber-500/5">
+          {[...Array(20)].map((_, i) => (
             <motion.div
               key={i}
               animate={{ 
-                height: isPlaying ? [10, Math.random() * 35 + 10, 10] : 10,
-                opacity: isPlaying ? [0.4, 1, 0.4] : 0.2
+                height: isPlaying ? [8, Math.random() * 45 + 15, 8] : 8,
+                opacity: isPlaying ? [0.5, 1, 0.5] : 0.3
               }}
-              transition={{ duration: 0.4 + Math.random() * 0.4, repeat: Infinity }}
-              className="w-1.5 bg-gradient-to-t from-amber-700 to-amber-400 rounded-full"
+              transition={{ 
+                duration: 0.3 + Math.random() * 0.3, 
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="w-2 bg-gradient-to-t from-amber-600 via-amber-400 to-amber-200 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.5)]"
             />
           ))}
         </div>
@@ -310,13 +314,38 @@ export default function PirateMusicPage() {
         </div>
 
         <motion.button 
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.15 }}
           whileTap={{ scale: 0.9 }}
           onClick={toggle}
-          className="p-5 bg-amber-600 text-slate-950 rounded-full hover:bg-amber-500 transition-all shadow-[0_0_30px_rgba(245,158,11,0.3)] relative group"
+          className="relative p-6 rounded-full overflow-hidden group"
         >
-          <div className="absolute inset-0 rounded-full bg-amber-400 opacity-0 group-hover:animate-ping pointer-events-none" />
-          {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
+          {/* Animated background rings */}
+          <div className={cn(
+            "absolute inset-0 rounded-full transition-all duration-500",
+            isPlaying 
+              ? "bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 shadow-[0_0_40px_rgba(16,185,129,0.4)]" 
+              : "bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 shadow-[0_0_40px_rgba(245,158,11,0.4)]"
+          )}>
+            {/* Pulsing ring when playing */}
+            {isPlaying && (
+              <>
+                <div className="absolute inset-0 rounded-full border-2 border-emerald-300/30 animate-ping" />
+                <div className="absolute inset-2 rounded-full border border-emerald-200/20 animate-pulse" />
+              </>
+            )}
+          </div>
+          
+          {/* Shine effect */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Icon */}
+          <div className="relative z-10">
+            {isPlaying ? (
+              <Pause size={28} fill="white" className="text-white drop-shadow-lg" />
+            ) : (
+              <Play size={28} fill="white" className="text-white ml-1 drop-shadow-lg" />
+            )}
+          </div>
         </motion.button>
       </div>
     );
@@ -441,11 +470,25 @@ export default function PirateMusicPage() {
                     className="group relative"
                   >
                     <div className={cn(
-                      "pirate-card p-6 rounded-[2.5rem] border-2 transition-all overflow-hidden group relative",
+                      "pirate-card p-6 rounded-[2.5rem] transition-all duration-500 overflow-hidden group relative transform hover:-translate-y-2",
                       isYandex ? "border-red-900/30 hover:border-red-500/50" : 
                       isVoice ? "border-emerald-900/30 hover:border-emerald-500/50" : 
                       "border-sky-900/30 hover:border-sky-500/50"
                     )}>
+                      {/* Animated gradient border */}
+                      <div className={cn(
+                        "absolute inset-0 rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none",
+                        "bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"
+                      )} />
+                      
+                      {/* Glow effect on hover */}
+                      <div className={cn(
+                        "absolute -inset-1 rounded-[2.6rem] opacity-0 group-hover:opacity-30 transition-opacity duration-500 blur-xl pointer-events-none",
+                        isYandex ? "bg-gradient-to-r from-red-500 via-orange-500 to-red-500" :
+                        isVoice ? "bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500" :
+                        "bg-gradient-to-r from-sky-500 via-blue-500 to-sky-500"
+                      )} />
+
                       {/* Parchment Overlay */}
                       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/papyrus.png')] opacity-[0.03] pointer-events-none" />
                       
@@ -783,6 +826,35 @@ export default function PirateMusicPage() {
         }
         .animate-spin-slow {
           animation: spin-slow 15s linear infinite;
+        }
+        @keyframes shimmer {
+          0% {
+            background-position: -200% center;
+          }
+          100% {
+            background-position: 200% center;
+          }
+        }
+        .animate-shimmer {
+          background-size: 200% auto;
+          animation: shimmer 3s linear infinite;
+        }
+        @keyframes float-3d {
+          0%, 100% {
+            transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0);
+          }
+          25% {
+            transform: perspective(1000px) rotateX(2deg) rotateY(-1deg) translateY(-5px);
+          }
+          50% {
+            transform: perspective(1000px) rotateX(0deg) rotateY(1deg) translateY(-8px);
+          }
+          75% {
+            transform: perspective(1000px) rotateX(-2deg) rotateY(0deg) translateY(-5px);
+          }
+        }
+        .group:hover .pirate-card {
+          animation: float-3d 6s ease-in-out infinite;
         }
       `}</style>
     </div>
