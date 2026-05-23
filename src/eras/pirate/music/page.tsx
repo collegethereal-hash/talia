@@ -483,151 +483,138 @@ export default function PirateMusicPage() {
                   <motion.div
                     key={song.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.8, y: 30, rotateY: -10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0, rotateY: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, rotateY: 10 }}
-                    transition={{ delay: index * 0.05, type: "spring", stiffness: 100 }}
-                    className="group relative perspective-[1000px]"
-                    style={{ perspective: '1000px' }}
+                    initial={{ opacity: 0, y: 40, rotate: -2 }}
+                    animate={{ opacity: 1, y: 0, rotate: 0 }}
+                    exit={{ opacity: 0, y: -20, rotate: 2 }}
+                    transition={{ delay: index * 0.05, type: "spring", stiffness: 80 }}
+                    className="group relative"
                   >
-                    {/* Артефакт-контейнер */}
+                    {/* Пиратская карточка-дощечка */}
                     <div className={cn(
-                      "relative transition-all duration-700 transform group-hover:scale-[1.02] group-hover:-translate-y-3",
-                      "rounded-[2rem] overflow-visible"
+                      "relative transition-all duration-500 transform group-hover:-translate-y-2 group-hover:rotate-1",
+                      "rounded-lg overflow-hidden",
+                      "border-4",
+                      isYandex ? "border-[#5a3e2b] shadow-[8px_8px_0px_#2d1a12]" :
+                      isVoice ? "border-[#3d5a3e] shadow-[8px_8px_0px_#1a2d1a]" :
+                      "border-[#2d3a5a] shadow-[8px_8px_0px_#1a1f2d]"
                     )}>
-                      {/* Внешнее свечение (аура) */}
+                      {/* Деревянная текстура фона */}
                       <div className={cn(
-                        "absolute -inset-3 rounded-[2.5rem] opacity-0 group-hover:opacity-60 transition-opacity duration-700 blur-2xl pointer-events-none",
-                        isYandex ? "bg-gradient-to-br from-red-600 via-orange-500 to-red-600" :
-                        isVoice ? "bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-600" :
-                        "bg-gradient-to-br from-sky-600 via-blue-500 to-sky-600"
+                        "absolute inset-0 opacity-90",
+                        isYandex ? "bg-gradient-to-br from-[#3d2817] via-[#2d1a12] to-[#1a0f0a]" :
+                        isVoice ? "bg-gradient-to-br from-[#1a3d28] via-[#122d1a] to-[#0a1a0f]" :
+                        "bg-gradient-to-br from-[#1a283d] via-[#121a2d] to-[#0a0f1a]"
                       )} />
                       
-                      {/* Плавающие частицы вокруг карточки */}
-                      <div className="absolute -inset-4 pointer-events-none">
-                        <div className={cn(
-                          "absolute top-0 left-1/4 w-2 h-2 rounded-full opacity-0 group-hover:opacity-80 transition-opacity duration-500",
-                          "animate-bounce",
-                          isYandex ? "bg-red-400" : isVoice ? "bg-emerald-400" : "bg-sky-400"
-                        )} style={{ animationDuration: '2s' }} />
-                        <div className={cn(
-                          "absolute top-1/3 right-0 w-1.5 h-1.5 rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-700",
-                          "animate-bounce",
-                          isYandex ? "bg-orange-400" : isVoice ? "bg-teal-400" : "bg-blue-400"
-                        )} style={{ animationDuration: '2.5s', animationDelay: '0.3s' }} />
-                        <div className={cn(
-                          "absolute bottom-1/4 left-0 w-1 h-1 rounded-full opacity-0 group-hover:opacity-70 transition-opacity duration-600",
-                          "animate-bounce",
-                          isYandex ? "bg-yellow-400" : isVoice ? "bg-green-400" : "bg-indigo-400"
-                        )} style={{ animationDuration: '1.8s', animationDelay: '0.6s' }} />
-                      </div>
+                      {/* Текстура дерева */}
+                      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-20" />
+                      
+                      {/* Веревка по краям (декор) */}
+                      <div className="absolute top-2 left-2 right-2 h-1 bg-gradient-to-r from-amber-700/40 via-amber-600/60 to-amber-700/40 rounded-full" />
+                      <div className="absolute bottom-2 left-2 right-2 h-1 bg-gradient-to-r from-amber-700/40 via-amber-600/60 to-amber-700/40 rounded-full" />
 
-                      {/* Основная карточка-артефакт */}
-                      <div className={cn(
-                        "relative backdrop-blur-xl rounded-[2rem] p-5 transition-all duration-500",
-                        "border-2 group-hover:border-opacity-60",
-                        isYandex ? "bg-gradient-to-br from-red-950/80 via-red-900/60 to-orange-950/80 border-red-500/30" :
-                        isVoice ? "bg-gradient-to-br from-emerald-950/80 via-emerald-900/60 to-teal-950/80 border-emerald-500/30" :
-                        "bg-gradient-to-br from-sky-950/80 via-blue-900/60 to-indigo-950/80 border-sky-500/30"
-                      )}>
-                        {/* Внутренний светящийся контур */}
-                        <div className={cn(
-                          "absolute inset-[2px] rounded-[1.9rem] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none",
-                          "bg-gradient-to-br from-white/5 via-transparent to-white/5"
-                        )} />
-
-                        {/* Заголовок с иконкой-печатью */}
-                        <div className="relative flex items-start justify-between mb-4">
+                      {/* Основной контент */}
+                      <div className="relative p-5">
+                        {/* Заголовок с пиратским значком */}
+                        <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            {/* Иконка-печать в стиле сургучной печати */}
+                            {/* Пиратский значок-череп */}
                             <div className={cn(
-                              "relative w-12 h-12 rounded-full flex items-center justify-center",
-                              "shadow-[0_0_20px_currentColor] animate-pulse",
-                              isYandex ? "bg-red-600 text-red-200 shadow-red-500/50" :
-                              isVoice ? "bg-emerald-600 text-emerald-200 shadow-emerald-500/50" :
-                              "bg-sky-600 text-sky-200 shadow-sky-500/50"
+                              "relative w-14 h-14 flex items-center justify-center",
+                              "bg-gradient-to-br from-amber-800 to-amber-900",
+                              "rounded-lg border-2 border-amber-600/50",
+                              "shadow-[0_0_15px_rgba(245,158,11,0.3)]"
                             )}>
-                              <div className="absolute inset-1 rounded-full border-2 border-white/30" />
-                              {isYandex ? <Music size={20} /> : isVoice ? <Mic size={20} /> : <Waves size={20} />}
+                              <div className="absolute inset-0 rounded-lg bg-[url('https://www.transparenttextures.com/patterns/papyrus.png')] opacity-30" />
+                              <div className="relative z-10">
+                                {isYandex ? <Skull size={24} className="text-amber-200" /> : 
+                                 isVoice ? <Anchor size={24} className="text-emerald-300" /> : 
+                                 <Waves size={24} className="text-sky-300" />}
+                              </div>
+                              {/* Заклепки по углам */}
+                              <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-amber-500 rounded-full" />
+                              <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-amber-500 rounded-full" />
+                              <div className="absolute bottom-1 left-1 w-1.5 h-1.5 bg-amber-500 rounded-full" />
+                              <div className="absolute bottom-1 right-1 w-1.5 h-1.5 bg-amber-500 rounded-full" />
                             </div>
                             <div>
-                              <h3 className="font-bold text-lg text-white leading-tight line-clamp-2 drop-shadow-lg">
+                              <h3 className="font-serif font-bold text-lg text-amber-100 leading-tight drop-shadow-md">
                                 {song.title}
                               </h3>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className={cn(
-                                  "text-[10px] font-bold uppercase tracking-wider",
-                                  isYandex ? "text-red-300/70" : isVoice ? "text-emerald-300/70" : "text-sky-300/70"
+                                  "text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded",
+                                  isYandex ? "bg-red-900/50 text-red-300 border border-red-700/50" :
+                                  isVoice ? "bg-emerald-900/50 text-emerald-300 border border-emerald-700/50" :
+                                  "bg-sky-900/50 text-sky-300 border border-sky-700/50"
                                 )}>
                                   {isYandex ? 'Яндекс' : isVoice ? 'Голос' : 'Фон'}
                                 </span>
-                                <span className="text-white/30 text-[8px]">•</span>
-                                <span className="text-white/50 text-[10px]">{song.sender}</span>
+                                <span className="text-amber-500/40 text-[8px]">⚓</span>
+                                <span className="text-amber-200/60 text-[10px] font-serif italic">{song.sender}</span>
                               </div>
                             </div>
                           </div>
                           <motion.button 
-                            whileHover={{ scale: 1.2, rotate: 90 }}
+                            whileHover={{ scale: 1.2, rotate: 15 }}
                             onClick={() => handleDelete(song.id)}
-                            className="p-2 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all"
+                            className="p-2 text-amber-500/30 hover:text-red-500 hover:bg-red-900/20 rounded-lg transition-all"
                           >
                             <Trash2 size={16} />
                           </motion.button>
                         </div>
 
-                        {/* Центральный элемент - "магический кристалл" с контентом */}
+                        {/* Пергамент-контейнер для плеера */}
                         <div className={cn(
-                          "relative rounded-[1.5rem] overflow-hidden mb-4",
-                          "border border-white/10",
-                          "shadow-[inset_0_0_30px_rgba(0,0,0,0.5)]",
+                          "relative rounded-lg overflow-hidden mb-4 border-2",
+                          isYandex ? "border-amber-800/50" : isVoice ? "border-emerald-800/50" : "border-sky-800/50",
                           isYandex && getYandexEmbed(song.url) ? "h-[180px]" : "min-h-[140px]"
                         )}>
-                          {/* Фоновый градиент внутри кристалла */}
-                          <div className={cn(
-                            "absolute inset-0 opacity-30",
-                            isYandex ? "bg-gradient-to-br from-red-500/20 to-orange-500/20" :
-                            isVoice ? "bg-gradient-to-br from-emerald-500/20 to-teal-500/20" :
-                            "bg-gradient-to-br from-sky-500/20 to-indigo-500/20"
-                          )} />
-
+                          {/* Эффект пергамента */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-[#f5e6c8] via-[#e8d5a8] to-[#d4c090]" />
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/papyrus.png')] opacity-50" />
+                          {/* Состаренные края */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-amber-900/10 via-transparent to-amber-900/20" />
+                          
                           {/* Контент */}
                           {isYandex && getYandexEmbed(song.url) ? (
-                            <iframe 
-                              frameBorder="0" 
-                              style={{ border: 'none', width: '100%', height: '180px' }} 
-                              src={getYandexEmbed(song.url)!}
-                              title={song.title}
-                              className="relative z-10"
-                            />
+                            <div className="relative z-10 w-full h-full">
+                              <iframe 
+                                frameBorder="0" 
+                                style={{ border: 'none', width: '100%', height: '180px' }} 
+                                src={getYandexEmbed(song.url)!}
+                                title={song.title}
+                              />
+                            </div>
                           ) : (
-                            <div className="relative z-10 h-full flex items-center justify-center p-4">
+                            <div className="relative z-10 h-full flex items-center justify-center p-3">
                               <AudioPlayer url={song.url} bgTrackId={song.bgTrackId} bgVolume={song.bgVolume} />
                             </div>
                           )}
                         </div>
 
-                        {/* Нижняя панель с деталями */}
+                        {/* Нижняя панель */}
                         <div className="flex items-center justify-between px-1">
-                          {/* Инфо о создателе */}
+                          {/* Инфо о пирате */}
                           <div className="flex items-center gap-3">
+                            {/* Аватар в стиле пиратского портрета */}
                             <div className={cn(
-                              "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg",
-                              "ring-2 ring-white/20",
-                              isYandex ? "bg-gradient-to-br from-red-500 to-orange-600" :
-                              isVoice ? "bg-gradient-to-br from-emerald-500 to-teal-600" :
-                              "bg-gradient-to-br from-sky-500 to-indigo-600"
+                              "w-10 h-10 flex items-center justify-center text-base font-bold",
+                              "bg-gradient-to-br from-amber-700 to-amber-900",
+                              "rounded border-2 border-amber-500/50",
+                              "text-amber-100 shadow-lg"
                             )}>
                               {song.sender[0]}
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-[8px] font-bold uppercase text-white/30 tracking-wider">Длительность</span>
-                              <span className="text-[11px] font-bold text-white/70">
+                              <span className="text-[8px] font-bold uppercase text-amber-500/50 tracking-wider">Время</span>
+                              <span className="text-[11px] font-serif font-bold text-amber-200">
                                 {song.duration || '—:—'}
                               </span>
                             </div>
                           </div>
 
-                          {/* Кнопка-ссылка */}
+                          {/* Кнопка-ссылка в стиле пиратской метки */}
                           <motion.a 
                             whileHover={{ scale: 1.05, x: 5 }}
                             whileTap={{ scale: 0.95 }}
@@ -635,28 +622,33 @@ export default function PirateMusicPage() {
                             target="_blank" 
                             rel="noopener noreferrer"
                             className={cn(
-                              "flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all",
-                              "backdrop-blur-sm border",
-                              isYandex ? "bg-red-500/10 text-red-300 border-red-500/30 hover:bg-red-500 hover:text-white" :
-                              isVoice ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500 hover:text-white" :
-                              "bg-sky-500/10 text-sky-300 border-sky-500/30 hover:bg-sky-500 hover:text-white"
+                              "flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-all",
+                              "border-2 rounded",
+                              isYandex ? "bg-red-900/30 text-red-300 border-red-700/50 hover:bg-red-800/50" :
+                              isVoice ? "bg-emerald-900/30 text-emerald-300 border-emerald-700/50 hover:bg-emerald-800/50" :
+                              "bg-sky-900/30 text-sky-300 border-sky-700/50 hover:bg-sky-800/50"
                             )}
                           >
-                            {isYandex ? "Слушать" : isVoice ? "Слушать" : "Слушать"}
-                            <ExternalLink size={12} />
+                            ☠ Слушать <ExternalLink size={12} />
                           </motion.a>
                         </div>
 
-                        {/* Доп. индикатор для голосовых с фоном */}
+                        {/* Индикатор фона для голосовых */}
                         {isVoice && song.bgVolume !== undefined && (
-                          <div className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                          <div className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-emerald-900/30 rounded border border-emerald-700/30">
                             <Volume2 size={10} className="text-emerald-400" />
-                            <span className="text-[8px] font-bold uppercase text-emerald-300/80 tracking-wider">
+                            <span className="text-[8px] font-bold uppercase text-emerald-300/70 tracking-wider">
                               Фон: {song.bgVolume}%
                             </span>
                           </div>
                         )}
                       </div>
+
+                      {/* Декоративные гвозди по углам */}
+                      <div className="absolute top-3 left-3 w-2 h-2 bg-gradient-to-br from-amber-400 to-amber-700 rounded-full shadow-inner" />
+                      <div className="absolute top-3 right-3 w-2 h-2 bg-gradient-to-br from-amber-400 to-amber-700 rounded-full shadow-inner" />
+                      <div className="absolute bottom-3 left-3 w-2 h-2 bg-gradient-to-br from-amber-400 to-amber-700 rounded-full shadow-inner" />
+                      <div className="absolute bottom-3 right-3 w-2 h-2 bg-gradient-to-br from-amber-400 to-amber-700 rounded-full shadow-inner" />
                     </div>
                   </motion.div>
                 );
