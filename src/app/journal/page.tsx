@@ -48,6 +48,9 @@ function JournalContent() {
   const [editContent, setEditContent] = useState("");
   const [editMood, setEditMood] = useState("");
   
+  // Delete Confirmation State
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  
   const searchParams = useSearchParams();
   
   // Scratch-off state
@@ -325,6 +328,7 @@ function JournalContent() {
       console.error('Error deleting note:', error);
     } else {
       setNotes(notes.filter(n => n.id !== id));
+      setDeleteConfirmId(null);
     }
   };
 
@@ -514,7 +518,7 @@ function JournalContent() {
                   currentUser={currentUser}
                   isEditing={editingId === note.id}
                   onEdit={() => startEditing(note)}
-                  onDelete={() => deleteNote(note.id)}
+                  onDelete={() => setDeleteConfirmId(note.id)}
                   onToggleLike={() => toggleLike(note.id)}
                   onToggleComments={() => setOpenCommentsId(openCommentsId === note.id ? null : note.id)}
                   isCommentsOpen={openCommentsId === note.id}
@@ -733,6 +737,51 @@ function JournalContent() {
                     Закрыть и сохранить в историю
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal - Palia Style */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeleteConfirmId(null)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-[#fdfaf3] rounded-[3rem] border-4 border-[#e6d5bc] shadow-2xl overflow-hidden p-8 md:p-10 text-center space-y-8"
+            >
+              <div className="mx-auto w-20 h-20 bg-[#f5e6d3] rounded-[2rem] flex items-center justify-center text-[#5c4a33] shadow-inner border-2 border-[#e6d5bc] rotate-12 group-hover:rotate-0 transition-transform">
+                <Trash2 size={40} />
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-3xl font-serif font-black text-[#5c4a33]">Вы уверены?</h3>
+                <p className="text-[#8b7355] italic text-lg leading-relaxed font-serif">
+                  Эта страница навсегда исчезнет из нашего дневника воспоминаний.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => deleteNote(deleteConfirmId)}
+                  className="w-full py-4 rounded-2xl bg-red-400 text-white font-black uppercase tracking-widest text-xs shadow-lg hover:bg-red-500 hover:scale-105 active:scale-95 transition-all border-2 border-red-500"
+                >
+                  Да, сжечь страницу
+                </button>
+                <button 
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="w-full py-4 rounded-2xl bg-[#f5e6d3] text-[#5c4a33] font-black uppercase tracking-widest text-xs hover:bg-[#e6d5bc] transition-all border-2 border-[#e6d5bc]"
+                >
+                  Оставить воспоминание
+                </button>
               </div>
             </motion.div>
           </div>
