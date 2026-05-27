@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { AuthGuard } from "@/components/AuthGuard";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -46,6 +47,7 @@ export default function RootLayout({
             <Navbar />
           </DataProvider>
         </AuthGuard>
+        <Analytics />
       </body>
     </html>
   );
