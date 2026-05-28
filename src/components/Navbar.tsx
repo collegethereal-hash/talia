@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useData } from '@/components/DataProvider';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const navItems = [
   { href: '/', icon: Heart, label: 'Talia' },
@@ -20,6 +20,12 @@ const navItems = [
 export const Navbar = () => {
   const pathname = usePathname();
   const { currentUser, moments, quests, notes, whispers } = useData();
+  const [seen, setSeen] = useState<{ gallery: number; journal: number; quests: number; we: number }>({
+    gallery: 0,
+    journal: 0,
+    quests: 0,
+    we: 0
+  });
 
   const badgeKeyPrefix = useMemo(() => {
     if (!currentUser) return null;
@@ -40,11 +46,34 @@ export const Navbar = () => {
 
   useEffect(() => {
     if (!currentUser) return;
+    setSeen({
+      gallery: getLastSeen('gallery'),
+      journal: getLastSeen('journal'),
+      quests: getLastSeen('quests'),
+      we: getLastSeen('we')
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser, badgeKeyPrefix]);
+
+  useEffect(() => {
+    if (!currentUser) return;
     const now = Date.now();
-    if (pathname === '/gallery') setLastSeen('gallery', now);
-    if (pathname === '/journal') setLastSeen('journal', now);
-    if (pathname === '/bucket-list') setLastSeen('quests', now);
-    if (pathname === '/profile') setLastSeen('we', now);
+    if (pathname === '/gallery') {
+      setLastSeen('gallery', now);
+      setSeen(prev => ({ ...prev, gallery: now }));
+    }
+    if (pathname === '/journal') {
+      setLastSeen('journal', now);
+      setSeen(prev => ({ ...prev, journal: now }));
+    }
+    if (pathname === '/bucket-list') {
+      setLastSeen('quests', now);
+      setSeen(prev => ({ ...prev, quests: now }));
+    }
+    if (pathname === '/profile') {
+      setLastSeen('we', now);
+      setSeen(prev => ({ ...prev, we: now }));
+    }
   }, [pathname, currentUser, badgeKeyPrefix]);
 
   const badgeCounts = useMemo(() => {
@@ -52,10 +81,10 @@ export const Navbar = () => {
       return { gallery: 0, journal: 0, quests: 0, we: 0 };
     }
 
-    const galleryLast = getLastSeen('gallery');
-    const journalLast = getLastSeen('journal');
-    const questsLast = getLastSeen('quests');
-    const weLast = getLastSeen('we');
+    const galleryLast = seen.gallery;
+    const journalLast = seen.journal;
+    const questsLast = seen.quests;
+    const weLast = seen.we;
 
     const gallery = (moments || []).filter((m: any) => {
       if (m?.author === currentUser) return false;
@@ -97,7 +126,7 @@ export const Navbar = () => {
 
     return { gallery, journal, quests: questsCount, we: weWhispers };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, moments, quests, notes, whispers]);
+  }, [currentUser, moments, quests, notes, whispers, seen]);
 
   const formatBadge = (n: number) => {
     if (n <= 0) return null;

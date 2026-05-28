@@ -313,6 +313,12 @@ export default function ProfilePage() {
     }
   };
 
+  const confirmDeleteWhisper = async () => {
+    if (!deleteWhisperConfirmId) return;
+    await deleteWhisper(String(deleteWhisperConfirmId));
+    setDeleteWhisperConfirmId(null);
+  };
+
   const sendHearts = () => {
     const id = Date.now();
     const x = Math.random() * 80 + 10;
@@ -324,6 +330,8 @@ export default function ProfilePage() {
 
   const [hasMail, setHasMail] = useState(false);
   const [isMailClaimed, setIsMailClaimed] = useState(false);
+  const [expandedWhisperIds, setExpandedWhisperIds] = useState<Set<number>>(() => new Set());
+  const [deleteWhisperConfirmId, setDeleteWhisperConfirmId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -785,7 +793,10 @@ export default function ProfilePage() {
                     
                     {whisper.sender === currentUser && (
                       <button 
-                        onClick={() => deleteWhisper(whisper.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteWhisperConfirmId(Number(whisper.id));
+                        }}
                         className="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                       >
                         <Trash2 size={16} />
@@ -794,9 +805,39 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="relative z-10 py-2">
-                    <p className="text-xl font-serif italic text-[#5c4a33] leading-relaxed pl-4 border-l-4 border-[#e6d5bc]/50">
-                      "{whisper.content}"
-                    </p>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        setExpandedWhisperIds(prev => {
+                          const next = new Set(prev);
+                          const id = Number(whisper.id);
+                          if (next.has(id)) next.delete(id);
+                          else next.add(id);
+                          return next;
+                        });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setExpandedWhisperIds(prev => {
+                            const next = new Set(prev);
+                            const id = Number(whisper.id);
+                            if (next.has(id)) next.delete(id);
+                            else next.add(id);
+                            return next;
+                          });
+                        }
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <p className="text-xl font-serif italic text-[#5c4a33] leading-relaxed pl-4 border-l-4 border-[#e6d5bc]/50 whitespace-pre-wrap">
+                        "{expandedWhisperIds.has(Number(whisper.id))
+                          ? whisper.content
+                          : (whisper.content.length > 100 ? `${whisper.content.slice(0, 100).trimEnd()}…` : whisper.content)
+                        }"
+                      </p>
+                    </div>
                   </div>
                   
                   <div className="absolute top-4 right-4 opacity-10 rotate-12">
@@ -810,6 +851,51 @@ export default function ProfilePage() {
 
         </div>
       </section>
+
+      {/* Delete Whisper Confirmation Modal - Palia Style */}
+      <AnimatePresence>
+        {deleteWhisperConfirmId && (
+          <div className="fixed inset-0 z-[210] flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeleteWhisperConfirmId(null)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-[#fdfaf3] rounded-[3rem] border-4 border-[#e6d5bc] shadow-2xl overflow-hidden p-8 md:p-10 text-center space-y-8"
+            >
+              <div className="mx-auto w-20 h-20 bg-[#f5e6d3] rounded-[2rem] flex items-center justify-center text-[#5c4a33] shadow-inner border-2 border-[#e6d5bc] rotate-6">
+                <Trash2 size={40} />
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-3xl font-serif font-black text-[#5c4a33]">Удалить письмо?</h3>
+                <p className="text-[#8b7355] italic text-lg leading-relaxed font-serif">
+                  Ты уверена, что хочешь стереть это послание из архива?
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={confirmDeleteWhisper}
+                  className="w-full py-4 rounded-2xl bg-red-400 text-white font-black uppercase tracking-widest text-xs shadow-lg hover:bg-red-500 hover:scale-105 active:scale-95 transition-all border-2 border-red-500"
+                >
+                  Да, удалить
+                </button>
+                <button 
+                  onClick={() => setDeleteWhisperConfirmId(null)}
+                  className="w-full py-4 rounded-2xl bg-[#f5e6d3] text-[#5c4a33] font-black uppercase tracking-widest text-xs hover:bg-[#e6d5bc] transition-all border-2 border-[#e6d5bc]"
+                >
+                  Отмена
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Time Capsule Modal - Palia Scroll Style */}
       <AnimatePresence>
