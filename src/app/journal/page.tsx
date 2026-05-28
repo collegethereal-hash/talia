@@ -262,7 +262,7 @@ function JournalContent() {
     if (!note) return;
 
     const now = new Date();
-    const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const replyText = replyTo?.text ? (replyTo.text.length > 90 ? `${replyTo.text.slice(0, 90).trimEnd()}…` : replyTo.text) : "";
     const newComment: Comment = {
       id: Date.now(),
@@ -295,7 +295,14 @@ function JournalContent() {
     if (!newNoteTitle.trim() || !newNoteContent.trim() || !currentUser) return;
     
     const now = new Date();
-    const dateStr = now.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+    const dateStr = now.toLocaleString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
     
     const newNote = {
       title: newNoteTitle,
