@@ -43,6 +43,9 @@ function JournalContent() {
   const [expandedNoteIds, setExpandedNoteIds] = useState<Set<string>>(() => new Set());
   const [commentText, setCommentText] = useState("");
   const [replyTo, setReplyTo] = useState<Comment['replyTo'] | null>(null);
+  const [editingComment, setEditingComment] = useState<{ noteId: string; commentId: number } | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [deleteCommentConfirm, setDeleteCommentConfirm] = useState<{ noteId: string; commentId: number } | null>(null);
   
   // New Note State
   const [newNoteTitle, setNewNoteTitle] = useState("");
@@ -291,6 +294,94 @@ function JournalContent() {
     setReplyTo(null);
   };
 
+  const startEditingComment = (noteId: string, comment: Comment) => {
+    setEditingComment({ noteId, commentId: comment.id });
+    setEditingCommentText(comment.text);
+  };
+
+  const cancelEditingComment = () => {
+    setEditingComment(null);
+    setEditingCommentText("");
+  };
+
+  const toggleExpandedNote = (noteId: string, anchorEl: HTMLElement | null) => {
+    const beforeTop = anchorEl?.getBoundingClientRect().top ?? null;
+    setExpandedNoteIds(prev => {
+      const next = new Set(prev);
+      if (next.has(noteId)) next.delete(noteId);
+      else next.add(noteId);
+      return next;
+    });
+
+    if (!anchorEl || beforeTop === null) return;
+
+    // Preserve viewport position when content height changes
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const afterTop = anchorEl.getBoundingClientRect().top;
+        const delta = afterTop - beforeTop;
+        if (delta !== 0) {
+          window.scrollBy({ top: delta, behavior: 'auto' });
+        }
+      });
+    });
+  };
+
+  const saveEditedComment = async () => {
+    if (!editingComment || !currentUser) return;
+    const { noteId, commentId } = editingComment;
+    const note = notes.find(n => n.id === noteId);
+    if (!note) return;
+
+    const nextComments = note.comments.map(c => {
+      if (c.id !== commentId) return c;
+      if (c.author !== currentUser) return c;
+      return { ...c, text: editingCommentText };
+    });
+
+    // Optimistic update
+    setNotes(notes.map(n => n.id === noteId ? { ...n, comments: nextComments } : n));
+
+    const { error } = await supabase
+      .from('journal_notes')
+      .update({ comments: nextComments })
+      .eq('id', noteId);
+
+    if (error) {
+      console.error('Error updating comment:', error);
+      refreshNotes();
+    } else {
+      cancelEditingComment();
+    }
+  };
+
+  const confirmDeleteComment = (noteId: string, commentId: number) => {
+    setDeleteCommentConfirm({ noteId, commentId });
+  };
+
+  const deleteComment = async () => {
+    if (!deleteCommentConfirm || !currentUser) return;
+    const { noteId, commentId } = deleteCommentConfirm;
+    const note = notes.find(n => n.id === noteId);
+    if (!note) return;
+
+    const nextComments = note.comments.filter(c => !(c.id === commentId && c.author === currentUser));
+
+    // Optimistic update
+    setNotes(notes.map(n => n.id === noteId ? { ...n, comments: nextComments } : n));
+
+    const { error } = await supabase
+      .from('journal_notes')
+      .update({ comments: nextComments })
+      .eq('id', noteId);
+
+    if (error) {
+      console.error('Error deleting comment:', error);
+      refreshNotes();
+    }
+    setDeleteCommentConfirm(null);
+  };
+
   const addNote = async () => {
     if (!newNoteTitle.trim() || !newNoteContent.trim() || !currentUser) return;
     
@@ -534,14 +625,7 @@ function JournalContent() {
                   note={note}
                   currentUser={currentUser}
                   isExpanded={expandedNoteIds.has(note.id)}
-                  onToggleExpanded={() => {
-                    setExpandedNoteIds(prev => {
-                      const next = new Set(prev);
-                      if (next.has(note.id)) next.delete(note.id);
-                      else next.add(note.id);
-                      return next;
-                    });
-                  }}
+                  onToggleExpanded={(anchorEl) => toggleExpandedNote(note.id, anchorEl)}
                   isEditing={editingId === note.id}
                   onEdit={() => startEditing(note)}
                   onDelete={() => setDeleteConfirmId(note.id)}
@@ -550,11 +634,6 @@ function JournalContent() {
                     const nextOpenId = openCommentsId === note.id ? null : note.id;
                     setOpenCommentsId(nextOpenId);
                     if (nextOpenId) {
-                      setExpandedNoteIds(prev => {
-                        const next = new Set(prev);
-                        next.add(note.id);
-                        return next;
-                      });
                       setReplyTo(null);
                     }
                   }}
@@ -564,6 +643,13 @@ function JournalContent() {
                   onAddComment={() => addComment(note.id)}
                   replyTo={replyTo}
                   onReplyToChange={setReplyTo}
+                  editingComment={editingComment?.noteId === note.id ? editingComment : null}
+                  editingCommentText={editingCommentText}
+                  onEditingCommentTextChange={setEditingCommentText}
+                  onStartEditingComment={(comment) => startEditingComment(note.id, comment)}
+                  onCancelEditingComment={cancelEditingComment}
+                  onSaveEditedComment={saveEditedComment}
+                  onConfirmDeleteComment={(commentId) => confirmDeleteComment(note.id, commentId)}
                   editState={{
                     title: editTitle,
                     setTitle: setEditTitle,
@@ -826,6 +912,51 @@ function JournalContent() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Delete Comment Confirmation Modal - Palia Style */}
+      <AnimatePresence>
+        {deleteCommentConfirm && (
+          <div className="fixed inset-0 z-[210] flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeleteCommentConfirm(null)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-[#fdfaf3] rounded-[3rem] border-4 border-[#e6d5bc] shadow-2xl overflow-hidden p-8 md:p-10 text-center space-y-8"
+            >
+              <div className="mx-auto w-20 h-20 bg-[#f5e6d3] rounded-[2rem] flex items-center justify-center text-[#5c4a33] shadow-inner border-2 border-[#e6d5bc] rotate-6">
+                <Trash2 size={40} />
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-3xl font-serif font-black text-[#5c4a33]">Удалить комментарий?</h3>
+                <p className="text-[#8b7355] italic text-lg leading-relaxed font-serif">
+                  Ты уверена, что хочешь сжечь эту весточку?
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={deleteComment}
+                  className="w-full py-4 rounded-2xl bg-red-400 text-white font-black uppercase tracking-widest text-xs shadow-lg hover:bg-red-500 hover:scale-105 active:scale-95 transition-all border-2 border-red-500"
+                >
+                  Да, удалить
+                </button>
+                <button 
+                  onClick={() => setDeleteCommentConfirm(null)}
+                  className="w-full py-4 rounded-2xl bg-[#f5e6d3] text-[#5c4a33] font-black uppercase tracking-widest text-xs hover:bg-[#e6d5bc] transition-all border-2 border-[#e6d5bc]"
+                >
+                  Оставить
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -846,12 +977,19 @@ function JournalNoteCard({
   onAddComment,
   replyTo,
   onReplyToChange,
+  editingComment,
+  editingCommentText,
+  onEditingCommentTextChange,
+  onStartEditingComment,
+  onCancelEditingComment,
+  onSaveEditedComment,
+  onConfirmDeleteComment,
   editState
 }: { 
   note: Note; 
   currentUser: 'Grinch' | 'Cindy' | null;
   isExpanded: boolean;
-  onToggleExpanded: () => void;
+  onToggleExpanded: (anchorEl: HTMLElement | null) => void;
   isEditing: boolean; 
   onEdit: () => void; 
   onDelete: () => void; 
@@ -863,6 +1001,13 @@ function JournalNoteCard({
   onAddComment: () => void;
   replyTo: Comment['replyTo'] | null;
   onReplyToChange: (val: Comment['replyTo'] | null) => void;
+  editingComment: { noteId: string; commentId: number } | null;
+  editingCommentText: string;
+  onEditingCommentTextChange: (val: string) => void;
+  onStartEditingComment: (comment: Comment) => void;
+  onCancelEditingComment: () => void;
+  onSaveEditedComment: () => void;
+  onConfirmDeleteComment: (commentId: number) => void;
   editState: {
     title: string;
     setTitle: (val: string) => void;
@@ -879,6 +1024,7 @@ function JournalNoteCard({
   const previewText = note.content.length > previewLimit
     ? `${note.content.slice(0, previewLimit).trimEnd()}…`
     : note.content;
+  const cardBodyRef = useRef<HTMLDivElement>(null);
 
   return (
     <motion.div
@@ -980,11 +1126,19 @@ function JournalNoteCard({
               </div>
 
               <div className="p-10 space-y-6">
-                <button
-                  type="button"
-                  onClick={onToggleExpanded}
-                  className="text-left w-full"
+                <div
+                  ref={cardBodyRef}
+                  onClick={() => onToggleExpanded(cardBodyRef.current)}
+                  className="text-left w-full cursor-pointer"
+                  role="button"
+                  tabIndex={0}
                   aria-expanded={isExpanded}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onToggleExpanded(cardBodyRef.current);
+                    }
+                  }}
                 >
                   <h4 className="text-3xl font-serif font-black text-[#5c4a33] leading-tight pr-16">{note.title}</h4>
                   <p className={cn(
@@ -993,12 +1147,7 @@ function JournalNoteCard({
                   )}>
                     "{isExpanded ? note.content : previewText}"
                   </p>
-                  {note.content.length > previewLimit && (
-                    <div className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#8b7355]/60">
-                      {isExpanded ? "Свернуть" : "Читать дальше"}
-                    </div>
-                  )}
-                </button>
+                </div>
                 
                 <div className="flex items-center justify-between pt-10 border-t-4 border-[#f5e6d3] mt-10">
                   <div className="flex items-center gap-8">
@@ -1073,20 +1222,85 @@ function JournalNoteCard({
                                   </div>
                                 </div>
                               )}
-                              {comment.text}
+                              {editingComment?.commentId === comment.id && comment.author === currentUser ? (
+                                <div className="space-y-3">
+                                  <input
+                                    value={editingCommentText}
+                                    onChange={(e) => onEditingCommentTextChange(e.target.value)}
+                                    className={cn(
+                                      "w-full bg-transparent border-2 rounded-2xl px-4 py-3 text-base font-serif italic focus:ring-0 outline-none",
+                                      comment.author === currentUser ? "border-white/20 text-white placeholder:text-white/40" : "border-[#e6d5bc] text-[#5c4a33]"
+                                    )}
+                                    placeholder="Исправь весточку..."
+                                  />
+                                  <div className="flex items-center justify-end gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={onCancelEditingComment}
+                                      className={cn(
+                                        "p-2.5 rounded-xl border-2 transition-all",
+                                        comment.author === currentUser ? "border-white/10 hover:bg-white/10 text-white" : "border-[#e6d5bc] hover:bg-[#f5e6d3] text-[#5c4a33]"
+                                      )}
+                                      aria-label="Отменить"
+                                    >
+                                      <X size={16} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={onSaveEditedComment}
+                                      disabled={!editingCommentText.trim()}
+                                      className={cn(
+                                        "p-2.5 rounded-xl border-2 transition-all disabled:opacity-50",
+                                        comment.author === currentUser ? "border-white/10 hover:bg-white/10 text-white" : "border-[#e6d5bc] hover:bg-[#f5e6d3] text-[#5c4a33]"
+                                      )}
+                                      aria-label="Сохранить"
+                                    >
+                                      <Save size={16} />
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                comment.text
+                              )}
                               <div className="flex items-center justify-between gap-4 mt-3">
                                 <div className="text-[9px] opacity-40 uppercase font-black tracking-[0.2em]">{comment.date}</div>
                                 {currentUser && (
-                                  <button
-                                    type="button"
-                                    onClick={() => onReplyToChange({ id: comment.id, author: comment.author, text: comment.text })}
-                                    className={cn(
-                                      "text-[9px] uppercase font-black tracking-[0.2em] opacity-60 hover:opacity-100 transition-opacity",
-                                      comment.author === currentUser ? "text-white" : "text-[#5c4a33]"
+                                  <div className="flex items-center gap-3">
+                                    <button
+                                      type="button"
+                                      onClick={() => onReplyToChange({ id: comment.id, author: comment.author, text: comment.text })}
+                                      className={cn(
+                                        "text-[9px] uppercase font-black tracking-[0.2em] opacity-60 hover:opacity-100 transition-opacity",
+                                        comment.author === currentUser ? "text-white" : "text-[#5c4a33]"
+                                      )}
+                                    >
+                                      Ответить
+                                    </button>
+                                    {comment.author === currentUser && (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => onStartEditingComment(comment)}
+                                          className={cn(
+                                            "text-[9px] uppercase font-black tracking-[0.2em] opacity-60 hover:opacity-100 transition-opacity",
+                                            comment.author === currentUser ? "text-white" : "text-[#5c4a33]"
+                                          )}
+                                        >
+                                          Править
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => onConfirmDeleteComment(comment.id)}
+                                          className={cn(
+                                            "text-[9px] uppercase font-black tracking-[0.2em] opacity-60 hover:opacity-100 transition-opacity",
+                                            comment.author === currentUser ? "text-white" : "text-[#5c4a33]"
+                                          )}
+                                        >
+                                          Удалить
+                                        </button>
+                                      </>
                                     )}
-                                  >
-                                    Ответить
-                                  </button>
+                                  </div>
                                 )}
                               </div>
                             </div>
