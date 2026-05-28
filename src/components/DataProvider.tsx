@@ -40,6 +40,12 @@ interface DataContextType {
   setGalleryCategories: React.Dispatch<React.SetStateAction<string[]>>;
   dailyFact: string;
   dailyCookie: string;
+  promocodes: Record<string, any>;
+  setPromocodes: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+  refreshPromocodes: () => Promise<void>;
+  unlockedRewards: Record<string, string[]>;
+  setUnlockedRewards: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
+  refreshUnlockedRewards: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -56,6 +62,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [galleryCategories, setGalleryCategories] = useState<string[]>(['Все', 'Свидания', 'Прогулки', 'Дом', 'Путешествия']);
   const [dailyFact, setDailyFact] = useState("");
   const [dailyCookie, setDailyCookie] = useState("");
+  const [promocodes, setPromocodes] = useState<Record<string, any>>({});
+  const [unlockedRewards, setUnlockedRewards] = useState<Record<string, string[]>>({ Grinch: [], Cindy: [] });
   const [isLoading, setIsLoading] = useState(true);
 
   // Initialize Auth
@@ -139,7 +147,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         approvedByPartner: q.approved_by_partner,
         deleteRequestedBy: q.delete_requested_by,
         location: q.location,
-        createdAt: q.created_at
+        createdAt: q.created_at,
+        completedAt: q.completed_at,
+        isSinglePlayer: q.is_single_player || false
       })));
     }
   }, []);
@@ -187,6 +197,32 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       .single();
     if (data && data.value) {
       setGalleryCategories(data.value as string[]);
+    }
+  }, []);
+
+  const refreshPromocodes = useCallback(async () => {
+    const { data } = await supabase
+      .from('global_state')
+      .select('value')
+      .eq('key', 'promocodes')
+      .single();
+    if (data && data.value) {
+      setPromocodes(data.value);
+    } else {
+      setPromocodes({});
+    }
+  }, []);
+
+  const refreshUnlockedRewards = useCallback(async () => {
+    const { data } = await supabase
+      .from('global_state')
+      .select('value')
+      .eq('key', 'unlocked_rewards')
+      .single();
+    if (data && data.value) {
+      setUnlockedRewards(data.value);
+    } else {
+      setUnlockedRewards({ Grinch: [], Cindy: [] });
     }
   }, []);
 
@@ -250,7 +286,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     refreshArchi();
     refreshGalleryCategories();
     refreshWhispers();
-  }, [refreshProfiles, refreshNotes, refreshMoments, refreshQuests, refreshCapsules, refreshArchi, refreshGalleryCategories, refreshWhispers]);
+    refreshPromocodes();
+    refreshUnlockedRewards();
+  }, [refreshProfiles, refreshNotes, refreshMoments, refreshQuests, refreshCapsules, refreshArchi, refreshGalleryCategories, refreshWhispers, refreshPromocodes, refreshUnlockedRewards]);
 
   useEffect(() => {
     refreshAll();
@@ -293,7 +331,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   return (
     <DataContext.Provider value={{ 
       currentUser, profiles, notes, moments, quests, archiState, capsules, whispers, isLoading,
-      galleryCategories, setGalleryCategories, dailyFact, dailyCookie,
+      galleryCategories, setGalleryCategories, dailyFact, dailyCookie, promocodes, setPromocodes, refreshPromocodes,
+      unlockedRewards, setUnlockedRewards, refreshUnlockedRewards,
       setNotes, setMoments, setQuests, setArchiState, setCapsules, setWhispers,
       refreshAll, refreshNotes, refreshMoments, refreshQuests, refreshArchi, refreshProfiles, refreshCapsules, refreshWhispers
     }}>

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from './Card';
-import { Cloud, Sun, MapPin, Clock, Plane, Navigation, Globe, Zap, Heart } from 'lucide-react';
+import { Sun, Plane } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 
 interface CityData {
   name: string;
@@ -21,8 +21,19 @@ const CITIES: CityData[] = [
 
 export const WeatherWidget = () => {
   const [times, setTimes] = useState<string[]>(['', '']);
-  const [distance, setDistance] = useState<number>(0);
   const [mode, setMode] = useState<'time' | 'distance'>('time');
+
+  const distance = useMemo(() => {
+    const R = 6371; // km
+    const dLat = (CITIES[1].lat - CITIES[0].lat) * (Math.PI / 180);
+    const dLon = (CITIES[1].lon - CITIES[0].lon) * (Math.PI / 180);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(CITIES[0].lat * (Math.PI / 180)) * Math.cos(CITIES[1].lat * (Math.PI / 180)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return Math.round(R * c);
+  }, []);
 
   useEffect(() => {
     const updateTimes = () => {
@@ -37,17 +48,6 @@ export const WeatherWidget = () => {
 
     updateTimes();
     const timer = setInterval(updateTimes, 60000);
-
-    // Calculate distance
-    const R = 6371; // km
-    const dLat = (CITIES[1].lat - CITIES[0].lat) * (Math.PI / 180);
-    const dLon = (CITIES[1].lon - CITIES[0].lon) * (Math.PI / 180);
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(CITIES[0].lat * (Math.PI / 180)) * Math.cos(CITIES[1].lat * (Math.PI / 180)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    setDistance(Math.round(R * c));
 
     return () => clearInterval(timer);
   }, []);
@@ -128,7 +128,7 @@ export const WeatherWidget = () => {
             <div className="text-center">
               <p className="text-[10px] uppercase tracking-[0.3em] text-[#8b7355] font-black mb-1">Расстояние между нами</p>
               <h3 className="text-4xl font-serif font-bold text-[#5c4a33]">{distance} км</h3>
-              <p className="text-xs italic text-[#8b7355] mt-2">"Любовь не знает границ"</p>
+              <p className="text-xs italic text-[#8b7355] mt-2">&quot;Любовь не знает границ&quot;</p>
             </div>
           </motion.div>
         )}

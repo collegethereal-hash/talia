@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { Card } from './Card';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dog, Heart, Zap, Utensils, Droplets, X, Star, Settings2, Flame, MessageCircle, Clock, Book, Quote, Info, Sparkles, User, ShieldCheck } from 'lucide-react';
+import { Dog, Heart, Zap, Utensils, Droplets, X, Star, Settings2, Flame, MessageCircle, Clock, Book, Quote, Info, Sparkles, User, ShieldCheck, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
+import { useData } from './DataProvider';
+import { sendTelegramNotification, BASE_URL } from '@/lib/telegram';
 
 import dynamic from 'next/dynamic';
 
@@ -73,6 +75,7 @@ const LEVEL_MILESTONES = [
 ];
 
 export const PetHub = () => {
+  const { currentUser: dataUser, archiState, refreshArchi } = useData();
   const [petType] = useState<PetType>('dog');
   const [activeTab, setActiveTab] = useState<'status' | 'history' | 'log' | 'progress'>('status');
   const [state, setState] = useState<PetState>({
@@ -90,15 +93,9 @@ export const PetHub = () => {
     careLog: []
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<'The Grinch' | 'Cindy Lou'>('The Grinch');
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Read current user from localStorage (same as DataProvider)
-  useEffect(() => {
-    const auth = localStorage.getItem('lumina_auth');
-    if (auth) {
-      setCurrentUser(auth === 'grinch' ? 'The Grinch' : 'Cindy Lou');
-    }
-  }, []);
+  const currentUser = dataUser === 'Grinch' ? 'The Grinch' : 'Cindy Lou';
 
   // Body scroll lock
   useEffect(() => {
@@ -114,63 +111,6 @@ export const PetHub = () => {
   const [currentThought, setCurrentThought] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
 
-  useEffect(() => {
-    fetchArchiState();
-  }, []);
-
-  const fetchArchiState = async () => {
-    const { data, error } = await supabase
-      .from('global_state')
-      .select('value')
-      .eq('key', 'archi_state')
-      .single();
-
-    if (data) {
-      const parsed = data.value as PetState;
-      const now = Date.now();
-      const today = new Date().toISOString().split('T')[0];
-      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-      const secondsPassed = Math.floor((now - parsed.lastInteraction) / 1000);
-
-      // Calculate offline decay
-      const hungerDecay = secondsPassed * 0.0023;
-      const thirstDecay = secondsPassed * 0.0034;
-      const happinessDecay = secondsPassed * 0.0011;
-
-      let newStreak = parsed.streak || 0;
-      if (parsed.lastVisitDay !== today && parsed.lastVisitDay !== yesterday) {
-        newStreak = 0;
-      }
-
-      setState({ 
-        ...parsed, 
-        hunger: Math.max(0, parsed.hunger - hungerDecay),
-        thirst: Math.max(0, parsed.thirst - thirstDecay),
-        happiness: Math.max(0, parsed.happiness - happinessDecay),
-        streak: newStreak,
-        lastInteraction: now,
-      });
-    } else {
-      // Initialize with default state if not found
-      const defaultState: PetState = {
-        hunger: 80,
-        happiness: 90,
-        thirst: 75,
-        level: 1,
-        xp: 0,
-        lastInteraction: Date.now(),
-        isFull: false,
-        isHappy: false,
-        isHydrated: false,
-        streak: 0,
-        lastVisitDay: new Date().toISOString().split('T')[0],
-        careLog: []
-      };
-      setState(defaultState);
-      saveArchiState(defaultState);
-    }
-  };
-
   const saveArchiState = async (newState: PetState) => {
     setIsSyncing(true);
     const { error } = await supabase
@@ -184,15 +124,82 @@ export const PetHub = () => {
     setIsSyncing(false);
   };
 
-  // Sync state to Supabase on changes (Debounced manually in the interaction handlers or here)
+  const fetchArchiState = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('global_state')
+        .select('value')
+        .eq('key', 'archi_state')
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching Archi state:', error);
+        return; // Don't reset if it's an error
+      }
+
+      if (data) {
+        const parsed = data.value as PetState;
+        const now = Date.now();
+        const today = new Date().toISOString().split('T')[0];
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        const secondsPassed = Math.floor((now - (parsed.lastInteraction || now)) / 1000);
+
+        // Calculate offline decay (slower decay)
+        const hungerDecay = secondsPassed * 0.001; // Was 0.0023
+        const thirstDecay = secondsPassed * 0.0015; // Was 0.0034
+        const happinessDecay = secondsPassed * 0.0005; // Was 0.0011
+
+        let newStreak = parsed.streak || 0;
+        if (parsed.lastVisitDay && parsed.lastVisitDay !== today && parsed.lastVisitDay !== yesterday) {
+          newStreak = 0;
+        }
+
+        setState({ 
+          ...parsed, 
+          hunger: Math.max(0, parsed.hunger - hungerDecay),
+          thirst: Math.max(0, parsed.thirst - thirstDecay),
+          happiness: Math.max(0, parsed.happiness - happinessDecay),
+          streak: newStreak,
+          lastInteraction: now,
+        });
+      } else {
+        // Initialize ONLY if not found (PGRST116)
+        const defaultState: PetState = {
+          hunger: 80,
+          happiness: 90,
+          thirst: 75,
+          level: 1,
+          xp: 0,
+          lastInteraction: Date.now(),
+          isFull: false,
+          isHappy: false,
+          isHydrated: false,
+          streak: 0,
+          lastVisitDay: new Date().toISOString().split('T')[0],
+          careLog: []
+        };
+        setState(defaultState);
+        saveArchiState(defaultState);
+      }
+      setIsInitialized(true);
+    } catch (err) {
+      console.error('Unexpected error in Archi fetch:', err);
+    }
+  };
+
   useEffect(() => {
-    if (state.lastVisitDay !== '') { // Avoid initial empty sync
+    fetchArchiState();
+  }, []);
+
+  // Sync state to Supabase on changes
+  useEffect(() => {
+    if (isInitialized && state.lastVisitDay !== '') { 
       const timer = setTimeout(() => {
         saveArchiState(state);
-      }, 2000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [state]);
+  }, [state, isInitialized]);
 
 
   // Update thoughts - less frequent
@@ -221,10 +228,27 @@ export const PetHub = () => {
     return () => clearInterval(timer);
   }, [state.hunger, state.thirst, state.happiness]);
   useEffect(() => {
-    const checkNeglect = () => {
+    const checkNeglect = async () => {
       const isNeglected = state.hunger === 0 || state.thirst === 0 || state.happiness === 0;
       if (isNeglected && state.streak > 0) {
         setState(prev => ({ ...prev, streak: 0 }));
+        
+        // Уведомление в Telegram о голодном Арчи
+        const phrases = [
+          "Алоо, вы про меня забыли?? Я тут голодаю! 🐾😭",
+          "Хьюстон, у нас проблемы! Арчи срочно нужны обнимашки и еда! 🍖",
+          "Кто-то забыл покормить звездного пса... Моя серия сбросилась! 💔",
+          "Гав-гав! (Это значит: 'Я очень хочу пить и есть!') 💧"
+        ];
+        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+        
+        await sendTelegramNotification(
+          `🐶 *Арчи грустит!*\n\n` +
+          `${randomPhrase}\n\n` +
+          `🔗 [Зайти к Арчи](${BASE_URL}/profile)`,
+          'Both'
+        );
+
         setCurrentThought("Я так ослаб... Кажется, огонек нашей связи гаснет 😢");
         setTimeout(() => setCurrentThought(""), 8000);
       }
@@ -266,7 +290,7 @@ export const PetHub = () => {
 
   const interact = (type: 'feed' | 'water' | 'pet') => {
     setState(prev => {
-      let newState = { ...prev };
+      const newState = { ...prev };
       
       // Streak logic on interaction
       const today = new Date().toISOString().split('T')[0];

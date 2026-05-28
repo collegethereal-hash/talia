@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';
 import { useData } from '@/components/DataProvider';
+import { sendTelegramNotification } from '@/lib/telegram';
 
 interface ProfileField {
   id: string;
@@ -274,6 +275,20 @@ export default function ProfilePage() {
       }
 
       await refreshCapsules();
+      
+      // Уведомление в Telegram (только для новых капсул)
+      if (!capsuleEditData.id) {
+        const myName = currentUser === 'Grinch' ? 'Гринч' : 'Синди Лу';
+        const partner = currentUser === 'Grinch' ? 'Cindy' : 'Grinch';
+        await sendTelegramNotification(
+          `🔒 *${myName} запечатал(а) новую капсулу времени!*\n\n` +
+          `📅 *Дата открытия:* ${capsuleData.unlock_date}\n` +
+          `📌 *Название:* ${capsuleData.title}\n\n` +
+          `Она будет ждать своего часа в будущем... ⏳`,
+          partner
+        );
+      }
+
       setIsCapsuleModalOpen(false);
       setIsEditingCapsule(false);
     } catch (err: any) {

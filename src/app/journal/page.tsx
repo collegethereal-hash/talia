@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useData } from '@/components/DataProvider';
+import { sendTelegramNotification, BASE_URL } from '@/lib/telegram';
 
 interface Comment {
   id: number;
@@ -207,11 +208,22 @@ function JournalContent() {
         value: { text: whisperText }
       });
 
-    if (activeError) {
+    if (error) {
       console.error('DEBUG Whisper: Send error', activeError);
       alert('Ошибка при отправке письма.');
     } else {
       console.log('DEBUG Whisper: Send SUCCESS');
+      
+      // Уведомление в Telegram
+      const myName = currentUser === 'Grinch' ? 'Гринч' : 'Синди Лу';
+      await sendTelegramNotification(
+        `✉️ *Тебе пришло новое секретное письмо! (Шепот)*\n\n` +
+        `👤 *От кого:* ${myName}\n\n` +
+        `Сотри защитный слой, чтобы прочитать его! 🤫\n\n` +
+        `🔗 [Открыть Шепоты](${BASE_URL}/journal?openWhisper=true)`,
+        targetName === 'Grinch' ? 'Grinch' : 'Cindy'
+      );
+
       // We no longer save to history here. It will be saved when read.
       setIsSent(true);
       setTimeout(() => {
@@ -289,6 +301,16 @@ function JournalContent() {
       console.error('Error adding comment:', error);
       // Revert on error
       refreshNotes();
+    } else {
+      // Уведомление о комментарии
+      const myName = currentUser === 'Grinch' ? 'Гринч' : 'Синди Лу';
+      const partner = currentUser === 'Grinch' ? 'Cindy' : 'Grinch';
+      await sendTelegramNotification(
+        `💬 *${myName} оставил(а) комментарий в Журнале!*\n\n` +
+        `Зайди посмотреть, что там написано! 😊\n\n` +
+        `🔗 [Открыть Журнал](${BASE_URL}/journal)`,
+        partner
+      );
     }
     setCommentText("");
     setReplyTo(null);
@@ -419,6 +441,17 @@ function JournalContent() {
         ...data,
         isLiked: (data.liked_by || []).includes(currentUser)
       };
+      
+      // Уведомление в Telegram
+      const myName = currentUser === 'Grinch' ? 'Гринч' : 'Синди Лу';
+      const partner = currentUser === 'Grinch' ? 'Cindy' : 'Grinch';
+      await sendTelegramNotification(
+        `📔 *Новая запись в Журнале от ${myName}!*\n\n` +
+        `Загляни в наш журнал, чтобы прочитать и оставить комментарий! ❤️\n\n` +
+        `🔗 [Открыть Журнал](${BASE_URL}/journal)`,
+        partner
+      );
+
       setNotes([mappedNote, ...notes]);
       setNewNoteTitle("");
       setNewNoteContent("");

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Heart, Camera, Book, CheckSquare, BarChart2, User, Send } from 'lucide-react';
+import { Heart, Camera, Book, CheckSquare, BarChart2, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,28 @@ const navItems = [
   { href: '/stats', icon: BarChart2, label: 'Архив' },
   { href: '/profile', icon: User, label: 'Мы' },
 ];
+
+interface Moment {
+  author: string;
+  created_at?: string;
+}
+
+interface Quest {
+  proposedBy: string;
+  createdAt?: string;
+  approvedByPartner?: boolean;
+}
+
+interface Note {
+  author: string;
+  created_at?: string;
+  comments?: any[];
+}
+
+interface Whisper {
+  receiver: string;
+  created_at?: string;
+}
 
 export const Navbar = () => {
   const pathname = usePathname();
@@ -45,35 +67,39 @@ export const Navbar = () => {
   };
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || !badgeKeyPrefix) return;
+    
+    const gallery = getLastSeen('gallery');
+    const journal = getLastSeen('journal');
+    const quests = getLastSeen('quests');
+    const we = getLastSeen('we');
+    
     setSeen({
-      gallery: getLastSeen('gallery'),
-      journal: getLastSeen('journal'),
-      quests: getLastSeen('quests'),
-      we: getLastSeen('we')
+      gallery,
+      journal,
+      quests,
+      we
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, badgeKeyPrefix]);
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || !badgeKeyPrefix) return;
     const now = Date.now();
     if (pathname === '/gallery') {
       setLastSeen('gallery', now);
       setSeen(prev => ({ ...prev, gallery: now }));
-    }
-    if (pathname === '/journal') {
+    } else if (pathname === '/journal') {
       setLastSeen('journal', now);
       setSeen(prev => ({ ...prev, journal: now }));
-    }
-    if (pathname === '/bucket-list') {
+    } else if (pathname === '/bucket-list') {
       setLastSeen('quests', now);
       setSeen(prev => ({ ...prev, quests: now }));
-    }
-    if (pathname === '/profile') {
+    } else if (pathname === '/profile') {
       setLastSeen('we', now);
       setSeen(prev => ({ ...prev, we: now }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, currentUser, badgeKeyPrefix]);
 
   const badgeCounts = useMemo(() => {
@@ -86,26 +112,26 @@ export const Navbar = () => {
     const questsLast = seen.quests;
     const weLast = seen.we;
 
-    const gallery = (moments || []).filter((m: any) => {
+    const gallery = (moments as Moment[] || []).filter((m) => {
       if (m?.author === currentUser) return false;
       const ts = m?.created_at ? new Date(m.created_at).getTime() : 0;
       return ts > galleryLast;
     }).length;
 
-    const questsCount = (quests || []).filter((q: any) => {
+    const questsCount = (quests as Quest[] || []).filter((q) => {
       if (q?.proposedBy === currentUser) return false;
       const ts = q?.createdAt ? new Date(q.createdAt).getTime() : 0;
       // Count anything new, and also keep unapproved partner proposals visible
       return ts > questsLast || q?.approvedByPartner === false;
     }).length;
 
-    const journalNotes = (notes || []).filter((n: any) => {
+    const journalNotes = (notes as Note[] || []).filter((n) => {
       if (n?.author === currentUser) return false;
       const ts = n?.created_at ? new Date(n.created_at).getTime() : 0;
       return ts > journalLast;
     }).length;
 
-    const journalComments = (notes || []).reduce((acc: number, n: any) => {
+    const journalComments = (notes as Note[] || []).reduce((acc: number, n) => {
       const cs = Array.isArray(n?.comments) ? n.comments : [];
       const newFromPartner = cs.filter((c: any) => {
         if (c?.author === currentUser) return false;
@@ -117,7 +143,7 @@ export const Navbar = () => {
 
     const journal = journalNotes + journalComments;
 
-    const weWhispers = (whispers || []).filter((w: any) => {
+    const weWhispers = (whispers as Whisper[] || []).filter((w) => {
       // Count whispers received since last visit
       if (w?.receiver !== currentUser) return false;
       const ts = w?.created_at ? new Date(w.created_at).getTime() : 0;

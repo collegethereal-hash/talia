@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { supabase } from '@/lib/supabase';
 import { useData } from '@/components/DataProvider';
+import { sendTelegramNotification, BASE_URL } from '@/lib/telegram';
 
 interface Moment {
   id: string;
@@ -191,6 +192,17 @@ export default function GalleryPage() {
       if (error) throw error;
 
       setMoments([{ ...data, src: data.image_url }, ...moments]);
+      
+      // Уведомление в Telegram
+      const myName = currentUser === 'Grinch' ? 'Гринч' : 'Синди Лу';
+      const partner = currentUser === 'Grinch' ? 'Cindy' : 'Grinch';
+      await sendTelegramNotification(
+        `📸 *${myName} добавил(а) новое фото в Галерею!*\n\n` +
+        `Зайди на сайт, чтобы посмотреть этот момент! ✨\n\n` +
+        `🔗 [Открыть Галерею](${BASE_URL}/gallery)`,
+        partner
+      );
+
       setNewMoment({ src: '', caption: '', category: galleryCategories[1] || 'Все' });
       setIsAddModalOpen(false);
     } catch (err: any) {
