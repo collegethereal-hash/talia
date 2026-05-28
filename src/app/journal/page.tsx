@@ -305,7 +305,7 @@ function JournalContent() {
   };
 
   const toggleExpandedNote = (noteId: string, anchorEl: HTMLElement | null) => {
-    const wasExpanded = expandedNoteIds.has(noteId);
+    const beforeTop = anchorEl?.getBoundingClientRect().top ?? null;
     setExpandedNoteIds(prev => {
       const next = new Set(prev);
       if (next.has(noteId)) next.delete(noteId);
@@ -313,16 +313,18 @@ function JournalContent() {
       return next;
     });
 
-    if (!anchorEl) return;
+    if (!anchorEl || beforeTop === null) return;
 
-    // When collapsing, scroll to the start of the entry
-    if (wasExpanded) {
+    // Preserve viewport position when content height changes
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          anchorEl.scrollIntoView({ block: 'start', behavior: 'auto' });
-        });
+        const afterTop = anchorEl.getBoundingClientRect().top;
+        const delta = afterTop - beforeTop;
+        if (delta !== 0) {
+          window.scrollBy({ top: delta, behavior: 'auto' });
+        }
       });
-    }
+    });
   };
 
   const saveEditedComment = async () => {
