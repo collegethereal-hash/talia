@@ -208,7 +208,7 @@ function JournalContent() {
         value: { text: whisperText }
       });
 
-    if (error) {
+    if (activeError) {
       console.error('DEBUG Whisper: Send error', activeError);
       alert('Ошибка при отправке письма.');
     } else {
@@ -355,7 +355,7 @@ function JournalContent() {
     const note = notes.find(n => n.id === noteId);
     if (!note) return;
 
-    const nextComments = note.comments.map(c => {
+    const nextComments = note.comments.map((c: Comment) => {
       if (c.id !== commentId) return c;
       if (c.author !== currentUser) return c;
       return { ...c, text: editingCommentText };
@@ -387,7 +387,7 @@ function JournalContent() {
     const note = notes.find(n => n.id === noteId);
     if (!note) return;
 
-    const nextComments = note.comments.filter(c => !(c.id === commentId && c.author === currentUser));
+    const nextComments = note.comments.filter((c: Comment) => !(c.id === commentId && c.author === currentUser));
 
     // Optimistic update
     setNotes(notes.map(n => n.id === noteId ? { ...n, comments: nextComments } : n));
