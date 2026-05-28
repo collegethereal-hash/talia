@@ -305,7 +305,7 @@ function JournalContent() {
   };
 
   const toggleExpandedNote = (noteId: string, anchorEl: HTMLElement | null) => {
-    const beforeTop = anchorEl?.getBoundingClientRect().top ?? null;
+    const wasExpanded = expandedNoteIds.has(noteId);
     setExpandedNoteIds(prev => {
       const next = new Set(prev);
       if (next.has(noteId)) next.delete(noteId);
@@ -313,18 +313,16 @@ function JournalContent() {
       return next;
     });
 
-    if (!anchorEl || beforeTop === null) return;
+    if (!anchorEl) return;
 
-    // Preserve viewport position when content height changes
-    requestAnimationFrame(() => {
+    // When collapsing, scroll to the start of the entry
+    if (wasExpanded) {
       requestAnimationFrame(() => {
-        const afterTop = anchorEl.getBoundingClientRect().top;
-        const delta = afterTop - beforeTop;
-        if (delta !== 0) {
-          window.scrollBy({ top: delta, behavior: 'auto' });
-        }
+        requestAnimationFrame(() => {
+          anchorEl.scrollIntoView({ block: 'start', behavior: 'auto' });
+        });
       });
-    });
+    }
   };
 
   const saveEditedComment = async () => {
@@ -1262,10 +1260,10 @@ function JournalNoteCard({
                               ) : (
                                 comment.text
                               )}
-                              <div className="flex items-center justify-between gap-4 mt-3">
+                              <div className="flex flex-col gap-3 mt-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="text-[9px] opacity-40 uppercase font-black tracking-[0.2em]">{comment.date}</div>
                                 {currentUser && (
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
                                     <button
                                       type="button"
                                       onClick={() => onReplyToChange({ id: comment.id, author: comment.author, text: comment.text })}
