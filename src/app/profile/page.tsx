@@ -383,6 +383,50 @@ export default function ProfilePage() {
         <p className="text-[#8b7355] font-serif italic text-xl">"Мы видим друг друга лучше, чем самих себя"</p>
       </header>
 
+      {/* Incoming Mail - moved to the top */}
+      <div className="flex flex-col items-center gap-6 relative z-10">
+        <button 
+          onClick={claimMail}
+          disabled={isMailClaimed || !hasMail}
+          className="group relative px-20 py-10 rounded-[3rem] bg-[#5c4a33] text-[#fdfaf3] font-serif font-black text-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all overflow-hidden border-8 border-[#e6d5bc] flex items-center gap-8 disabled:opacity-50 disabled:pointer-events-none"
+        >
+          <div className="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+          <AnimatePresence mode="wait">
+            {isMailClaimed ? (
+              <motion.div
+                key="claimed"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative flex items-center gap-6"
+              >
+                <Sparkles size={40} className="animate-spin-slow text-[#e6d5bc]" />
+                Забираю письмо...
+              </motion.div>
+            ) : !hasMail ? (
+              <motion.div
+                key="nomail"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="relative flex items-center gap-6 opacity-60"
+              >
+                <Mail size={40} className="text-[#e6d5bc]" />
+                Нет новых посланий
+              </motion.div>
+            ) : (
+              <motion.div
+                key="unclaimed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="relative flex items-center gap-6"
+              >
+                <Mail fill="currentColor" size={40} className="animate-bounce text-[#e6d5bc]" />
+                Послание прибыло!
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
         {Object.values(profiles).map((profile: any) => (
           <motion.div
@@ -929,48 +973,6 @@ export default function ProfilePage() {
         )}
       </AnimatePresence>
 
-      <div className="pt-16 flex flex-col items-center gap-6 relative z-10">
-        <button 
-          onClick={claimMail}
-          disabled={isMailClaimed || !hasMail}
-          className="group relative px-20 py-10 rounded-[3rem] bg-[#5c4a33] text-[#fdfaf3] font-serif font-black text-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all overflow-hidden border-8 border-[#e6d5bc] flex items-center gap-8 disabled:opacity-50 disabled:pointer-events-none"
-        >
-          <div className="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-          <AnimatePresence mode="wait">
-            {isMailClaimed ? (
-              <motion.div
-                key="claimed"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative flex items-center gap-6"
-              >
-                <Sparkles size={40} className="animate-spin-slow text-[#e6d5bc]" />
-                Забираю письмо...
-              </motion.div>
-            ) : !hasMail ? (
-              <motion.div
-                key="nomail"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="relative flex items-center gap-6 opacity-60"
-              >
-                <Mail size={40} className="text-[#e6d5bc]" />
-                Нет новых посланий
-              </motion.div>
-            ) : (
-              <motion.div
-                key="unclaimed"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="relative flex items-center gap-6"
-              >
-                <Mail fill="currentColor" size={40} className="animate-bounce text-[#e6d5bc]" />
-                Послание прибыло!
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </button>
-      </div>
     </div>
   );
 }

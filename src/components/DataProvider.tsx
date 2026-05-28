@@ -138,7 +138,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         proposedBy: q.proposed_by,
         approvedByPartner: q.approved_by_partner,
         deleteRequestedBy: q.delete_requested_by,
-        location: q.location
+        location: q.location,
+        createdAt: q.created_at
       })));
     }
   }, []);
