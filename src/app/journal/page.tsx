@@ -35,6 +35,7 @@ function JournalContent() {
   const { currentUser, notes, setNotes, refreshNotes, refreshWhispers } = useData();
   const [activeTab, setActiveTab] = useState<'all' | 'Grinch' | 'Cindy'>('all');
   const [openCommentsId, setOpenCommentsId] = useState<string | null>(null);
+  const [expandedNoteIds, setExpandedNoteIds] = useState<Set<string>>(() => new Set());
   const [commentText, setCommentText] = useState("");
   
   // New Note State
@@ -516,11 +517,30 @@ function JournalContent() {
                 <JournalNoteCard 
                   note={note}
                   currentUser={currentUser}
+                  isExpanded={expandedNoteIds.has(note.id)}
+                  onToggleExpanded={() => {
+                    setExpandedNoteIds(prev => {
+                      const next = new Set(prev);
+                      if (next.has(note.id)) next.delete(note.id);
+                      else next.add(note.id);
+                      return next;
+                    });
+                  }}
                   isEditing={editingId === note.id}
                   onEdit={() => startEditing(note)}
                   onDelete={() => setDeleteConfirmId(note.id)}
                   onToggleLike={() => toggleLike(note.id)}
-                  onToggleComments={() => setOpenCommentsId(openCommentsId === note.id ? null : note.id)}
+                  onToggleComments={() => {
+                    const nextOpenId = openCommentsId === note.id ? null : note.id;
+                    setOpenCommentsId(nextOpenId);
+                    if (nextOpenId) {
+                      setExpandedNoteIds(prev => {
+                        const next = new Set(prev);
+                        next.add(note.id);
+                        return next;
+                      });
+                    }
+                  }}
                   isCommentsOpen={openCommentsId === note.id}
                   commentText={commentText}
                   onCommentChange={setCommentText}
@@ -794,6 +814,8 @@ function JournalContent() {
 function JournalNoteCard({ 
   note, 
   currentUser,
+  isExpanded,
+  onToggleExpanded,
   isEditing, 
   onEdit, 
   onDelete, 
@@ -807,6 +829,8 @@ function JournalNoteCard({
 }: { 
   note: Note; 
   currentUser: 'Grinch' | 'Cindy' | null;
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
   isEditing: boolean; 
   onEdit: () => void; 
   onDelete: () => void; 
@@ -828,6 +852,10 @@ function JournalNoteCard({
   };
 }) {
   const isMe = note.author === currentUser;
+  const previewLimit = 200;
+  const previewText = note.content.length > previewLimit
+    ? `${note.content.slice(0, previewLimit).trimEnd()}…`
+    : note.content;
 
   return (
     <motion.div
@@ -929,10 +957,25 @@ function JournalNoteCard({
               </div>
 
               <div className="p-10 space-y-6">
-                <h4 className="text-3xl font-serif font-black text-[#5c4a33] leading-tight pr-16">{note.title}</h4>
-                <p className="text-[#8b7355] leading-relaxed whitespace-pre-wrap font-serif font-medium text-xl italic border-l-4 border-[#e6d5bc]/30 pl-8">
-                  "{note.content}"
-                </p>
+                <button
+                  type="button"
+                  onClick={onToggleExpanded}
+                  className="text-left w-full"
+                  aria-expanded={isExpanded}
+                >
+                  <h4 className="text-3xl font-serif font-black text-[#5c4a33] leading-tight pr-16">{note.title}</h4>
+                  <p className={cn(
+                    "text-[#8b7355] leading-relaxed whitespace-pre-wrap font-serif font-medium text-xl italic border-l-4 border-[#e6d5bc]/30 pl-8 mt-6 transition-all",
+                    !isExpanded && "line-clamp-4"
+                  )}>
+                    "{isExpanded ? note.content : previewText}"
+                  </p>
+                  {note.content.length > previewLimit && (
+                    <div className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#8b7355]/60">
+                      {isExpanded ? "Свернуть" : "Читать дальше"}
+                    </div>
+                  )}
+                </button>
                 
                 <div className="flex items-center justify-between pt-10 border-t-4 border-[#f5e6d3] mt-10">
                   <div className="flex items-center gap-8">
