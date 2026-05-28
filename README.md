@@ -4,6 +4,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 First, run the development server:
 
+Local dev: you can pass a custom port, e.g. `npm run dev -- -p 3001`.
+
 ```bash
 npm run dev
 # or
