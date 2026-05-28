@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from './Card';
-import { Sun, Plane } from 'lucide-react';
+import { Sun, Plane, Cloud, CloudRain, CloudSnow, CloudLightning, Wind } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMemo } from 'react';
 
@@ -21,7 +21,19 @@ const CITIES: CityData[] = [
 
 export const WeatherWidget = () => {
   const [times, setTimes] = useState<string[]>(['', '']);
+  const [weather, setWeather] = useState<{ temp: number; code: number }[]>([{ temp: 24, code: 0 }, { temp: 24, code: 0 }]);
   const [mode, setMode] = useState<'time' | 'distance'>('time');
+
+  const getWeatherIcon = (code: number) => {
+    if (code === 0) return <Sun size={12} className="text-amber-500" />;
+    if (code <= 3) return <Cloud size={12} className="text-gray-400" />;
+    if (code <= 48) return <Wind size={12} className="text-gray-300" />;
+    if (code <= 67) return <CloudRain size={12} className="text-blue-400" />;
+    if (code <= 77) return <CloudSnow size={12} className="text-blue-200" />;
+    if (code <= 82) return <CloudRain size={12} className="text-blue-500" />;
+    if (code <= 99) return <CloudLightning size={12} className="text-purple-500" />;
+    return <Sun size={12} className="text-amber-500" />;
+  };
 
   const distance = useMemo(() => {
     const R = 6371; // km
@@ -36,6 +48,24 @@ export const WeatherWidget = () => {
   }, []);
 
   useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const responses = await Promise.all(CITIES.map(city => 
+          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current_weather=true`)
+            .then(res => res.json())
+        ));
+        
+        const weatherData = responses.map(data => ({
+          temp: Math.round(data.current_weather.temperature),
+          code: data.current_weather.weathercode
+        }));
+        
+        setWeather(weatherData);
+      } catch (error) {
+        console.error('Error fetching weather:', error);
+      }
+    };
+
     const updateTimes = () => {
       const newTimes = CITIES.map(city => 
         new Intl.DateTimeFormat('ru-RU', {
@@ -47,9 +77,15 @@ export const WeatherWidget = () => {
     };
 
     updateTimes();
-    const timer = setInterval(updateTimes, 60000);
+    fetchWeather();
+    
+    const timeTimer = setInterval(updateTimes, 60000);
+    const weatherTimer = setInterval(fetchWeather, 900000); // 15 mins
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timeTimer);
+      clearInterval(weatherTimer);
+    };
   }, []);
 
   const toggleMode = (e: React.MouseEvent) => {
@@ -83,8 +119,8 @@ export const WeatherWidget = () => {
                   <span className="text-4xl font-serif font-bold text-[#5c4a33]">{times[idx]}</span>
                 </div>
                 <div className="flex items-center gap-1 text-[#8b7355]/60 font-bold text-[10px] uppercase">
-                  <Sun size={12} className="text-amber-500" />
-                  <span>+24°C</span>
+                  {getWeatherIcon(weather[idx].code)}
+                  <span>{weather[idx].temp > 0 ? `+${weather[idx].temp}` : weather[idx].temp}°C</span>
                 </div>
               </div>
             ))}

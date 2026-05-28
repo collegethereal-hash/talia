@@ -6,7 +6,7 @@ import {
   CheckSquare, Star, Trophy, Target, Plus, X, Edit3, Save, Trash2, Gift, 
   Sparkles, ChevronRight, MapPin, Calendar, ListChecks, ShieldCheck, 
   Heart, User, Clock, CheckCircle2, Coins, Trees, Moon, Camera, Film, Mic,
-  RefreshCw, Send, Tv, CupSoda, Smartphone, Candy, Clapperboard
+  RefreshCw, Send, Tv, CupSoda, Smartphone, Candy, Clapperboard, HelpCircle, Settings2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -74,6 +74,9 @@ export default function BucketListPage() {
     unlockedRewards, setUnlockedRewards, refreshUnlockedRewards 
   } = useData();
   const [rewards, setRewards] = useState<Reward[]>(INITIAL_REWARDS);
+  const [customReward, setCustomReward] = useState<Reward | null>(null);
+  const [isEditingCustom, setIsEditingCustom] = useState(false);
+  const [customRewardEdit, setCustomRewardEdit] = useState({ title: '', cost: 1000 });
   const [selectedQuest, setSelectedQuest] = useState<Quest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -89,7 +92,33 @@ export default function BucketListPage() {
 
   useEffect(() => {
     fetchRewards();
+    fetchCustomReward();
   }, [currentUser, unlockedRewards]);
+
+  const fetchCustomReward = async () => {
+    const { data } = await supabase.from('global_state').select('value').eq('key', 'custom_reward').single();
+    if (data && data.value) {
+      setCustomReward(data.value);
+      setCustomRewardEdit({ title: data.value.title, cost: data.value.cost });
+    }
+  };
+
+  const saveCustomReward = async () => {
+    const newCustom = {
+      id: 'custom_reward_id',
+      title: customRewardEdit.title || 'Ваша награда',
+      cost: customRewardEdit.cost,
+      icon: '❓',
+      target: 'Both' as const,
+      unlocked: (unlockedRewards[currentUser || ''] || []).includes('custom_reward_id')
+    };
+    
+    const { error } = await supabase.from('global_state').upsert({ key: 'custom_reward', value: newCustom });
+    if (!error) {
+      setCustomReward(newCustom);
+      setIsEditingCustom(false);
+    }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -211,7 +240,7 @@ export default function BucketListPage() {
     const questData = {
       title: editData.title || 'Новый квест',
       description: editData.description || '',
-      points: editData.points || 500,
+      points: Math.min(100000, Math.max(0, editData.points || 500)),
       category: editData.category || 'Общее',
       category_color: editData.categoryColor || CATEGORY_COLORS[0],
       proposed_by: currentUser,
@@ -421,7 +450,7 @@ export default function BucketListPage() {
             type="text"
             value={promoInput}
             onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-            placeholder="Введите промокод (напр. LG31)"
+            placeholder="Введите промокод"
             className="flex-1 bg-transparent border-none text-[#5c4a33] font-black uppercase tracking-widest px-4 outline-none placeholder:text-[#8b7355]/50"
             maxLength={4}
           />
@@ -861,59 +890,154 @@ export default function BucketListPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            {rewards.filter(r => r.target === 'Both' || r.target === rewardTab).map((reward) => (
-              <motion.div 
-                key={reward.id}
-                whileHover={!reward.unlocked && currentXP >= reward.cost && (reward.target === 'Both' || reward.target === currentUser) ? { y: -5 } : {}}
-              >
-                <div className={cn(
-                  "relative p-1 bg-[#e6d5bc] rounded-[2rem] shadow-lg h-full transition-all",
-                  reward.unlocked && "opacity-50 grayscale-[0.5]"
-                )}>
-                  <div className="bg-[#fdfaf3] p-4 sm:p-5 rounded-[1.8rem] border-2 border-[#e6d5bc] space-y-4 h-full flex flex-col items-center text-center bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-[#e6d5bc]/40 to-transparent rounded-bl-full pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-[#e6d5bc]/40 to-transparent rounded-tr-full pointer-events-none" />
-                    
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 max-w-full mx-auto">
+            {(() => {
+              const displayRewards = rewards.filter(r => r.target === 'Both' || r.target === rewardTab);
+              const middleIndex = Math.floor(displayRewards.length / 2);
+              
+              const allCards = [...displayRewards];
+              // We'll use a special marker to know where to render the custom card
+              allCards.splice(middleIndex, 0, { id: 'custom_marker' } as any);
+              
+              return allCards.map((reward, idx) => {
+                if (reward.id === 'custom_marker') {
+                  return (
+                    <motion.div
+                      key="custom_reward_card"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="relative group"
+                    >
+                      <div className={cn(
+                        "relative p-1 bg-purple-200 rounded-[2rem] shadow-lg h-full transition-all hover:scale-105",
+                        (unlockedRewards[currentUser || ''] || []).includes('custom_reward_id') && "opacity-50 grayscale-[0.5]"
+                      )}>
+                        <div className="bg-[#fdfaf3] p-4 sm:p-5 rounded-[1.8rem] border-2 border-purple-200 space-y-4 h-full flex flex-col items-center text-center bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] relative overflow-hidden">
+                          
+                          {/* Settings Button */}
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setIsEditingCustom(true); }}
+                            className="absolute top-2 right-2 p-2 rounded-full bg-white border-2 border-purple-200 text-purple-400 hover:text-purple-600 z-30 transition-colors"
+                          >
+                            <Settings2 size={16} />
+                          </button>
+
+                          <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner border-2 bg-white border-purple-200 text-purple-600 relative z-10">
+                            <HelpCircle size={32} />
+                          </div>
+                          
+                          <div className="flex-1 space-y-2 relative z-10 w-full">
+                            {isEditingCustom ? (
+                              <div className="space-y-2">
+                                <input 
+                                  value={customRewardEdit.title}
+                                  onChange={e => setCustomRewardEdit({ ...customRewardEdit, title: e.target.value })}
+                                  className="w-full bg-white border-2 border-purple-200 rounded-lg px-2 py-1 text-xs font-serif text-[#5c4a33] focus:outline-none"
+                                  placeholder="Название..."
+                                  autoFocus
+                                />
+                                <div className="flex items-center gap-2">
+                                  <Coins size={10} className="text-amber-500" />
+                                  <input 
+                                    type="number"
+                                    value={customRewardEdit.cost}
+                                    onChange={e => setCustomRewardEdit({ ...customRewardEdit, cost: parseInt(e.target.value) || 0 })}
+                                    className="w-full bg-white border-2 border-purple-200 rounded-lg px-2 py-1 text-[10px] font-black text-[#5c4a33] focus:outline-none"
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <button onClick={saveCustomReward} className="flex-1 py-1 bg-emerald-500 text-white text-[8px] font-black uppercase rounded-md">Ок</button>
+                                  <button onClick={() => setIsEditingCustom(false)} className="flex-1 py-1 bg-gray-400 text-white text-[8px] font-black uppercase rounded-md">X</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <h4 className="font-serif font-black text-sm text-[#5c4a33] leading-tight px-1">
+                                  {customReward?.title || 'Сюрприз'}
+                                </h4>
+                                <div className="flex items-center justify-center gap-1 text-amber-600">
+                                  <Coins size={12} fill="currentColor" className="opacity-40" />
+                                  <span className="text-[10px] font-black uppercase tracking-widest">{customReward?.cost || 1000}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {!isEditingCustom && (
+                            <button 
+                              onClick={() => unlockReward(customReward || { id: 'custom_reward_id', title: 'Сюрприз', cost: 1000, icon: '❓', target: 'Both', unlocked: false })}
+                              disabled={currentXP < (customReward?.cost || 1000)}
+                              className={cn(
+                                "w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-md border-2 relative z-20",
+                                currentXP >= (customReward?.cost || 1000)
+                                  ? "bg-purple-600 border-purple-600 text-white hover:bg-purple-700 hover:scale-105 active:scale-95 cursor-pointer" 
+                                  : "bg-purple-100 border-purple-200 text-purple-300 cursor-not-allowed"
+                              )}
+                            >
+                              {currentXP >= (customReward?.cost || 1000) ? 'Купить' : 'Мало монет'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                }
+
+                return (
+                  <motion.div 
+                    key={reward.id}
+                    whileHover={!reward.unlocked && currentXP >= reward.cost && (reward.target === 'Both' || reward.target === currentUser) ? { y: -5 } : {}}
+                  >
                     <div className={cn(
-                      "w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner border-2 relative z-10",
-                      reward.unlocked ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-white border-[#e6d5bc] text-[#5c4a33]"
+                      "relative p-1 bg-[#e6d5bc] rounded-[2rem] shadow-lg h-full transition-all",
+                      reward.unlocked && "opacity-50 grayscale-[0.5]"
                     )}>
-                      {reward.icon === 'tv' && <Tv size={32} />}
-                      {reward.icon === 'send' && <Send size={32} />}
-                      {reward.icon === 'cupsoda' && <CupSoda size={32} />}
-                      {reward.icon === 'smartphone' && <Smartphone size={32} />}
-                      {reward.icon === 'candy' && <Candy size={32} />}
-                      {reward.icon === 'clapperboard' && <Clapperboard size={32} />}
-                      {reward.icon === 'sparkles' && <Sparkles size={32} />}
-                    </div>
-                    <div className="flex-1 space-y-2 relative z-10 w-full">
-                      <h4 className="font-serif font-black text-sm text-[#5c4a33] leading-tight px-1">
-                        {reward.title}
-                      </h4>
-                      <div className="flex items-center justify-center gap-1 text-amber-600">
-                        <Coins size={12} fill="currentColor" className="opacity-40" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{reward.cost}</span>
+                      <div className="bg-[#fdfaf3] p-4 sm:p-5 rounded-[1.8rem] border-2 border-[#e6d5bc] space-y-4 h-full flex flex-col items-center text-center bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-[#e6d5bc]/40 to-transparent rounded-bl-full pointer-events-none" />
+                        <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-[#e6d5bc]/40 to-transparent rounded-tr-full pointer-events-none" />
+                        
+                        <div className={cn(
+                          "w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner border-2 relative z-10",
+                          reward.unlocked ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-white border-[#e6d5bc] text-[#5c4a33]"
+                        )}>
+                          {reward.icon === 'tv' && <Tv size={32} />}
+                          {reward.icon === 'send' && <Send size={32} />}
+                          {reward.icon === 'cupsoda' && <CupSoda size={32} />}
+                          {reward.icon === 'smartphone' && <Smartphone size={32} />}
+                          {reward.icon === 'candy' && <Candy size={32} />}
+                          {reward.icon === 'clapperboard' && <Clapperboard size={32} />}
+                          {reward.icon === 'sparkles' && <Sparkles size={32} />}
+                          {reward.icon === '❓' && <HelpCircle size={32} />}
+                        </div>
+                        <div className="flex-1 space-y-2 relative z-10 w-full">
+                          <h4 className="font-serif font-black text-sm text-[#5c4a33] leading-tight px-1">
+                            {reward.title}
+                          </h4>
+                          <div className="flex items-center justify-center gap-1 text-amber-600">
+                            <Coins size={12} fill="currentColor" className="opacity-40" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">{reward.cost}</span>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => unlockReward(reward)}
+                          disabled={currentXP < reward.cost || (reward.target !== 'Both' && reward.target !== currentUser)}
+                          className={cn(
+                            "w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-md border-2 relative z-20",
+                            (reward.target !== 'Both' && reward.target !== currentUser) 
+                                ? "bg-gray-200 border-gray-300 text-gray-500 cursor-not-allowed" 
+                                : (currentXP >= reward.cost 
+                                    ? "bg-[#5c4a33] border-[#5c4a33] text-[#fdfaf3] hover:bg-[#4a3b29] hover:scale-105 active:scale-95 cursor-pointer" 
+                                    : "bg-[#e6d5bc]/30 border-[#e6d5bc] text-[#8b7355]/40 cursor-not-allowed")
+                          )}
+                        >
+                          {(reward.target !== 'Both' && reward.target !== currentUser) ? 'Не для вас' : (currentXP >= reward.cost ? 'Купить' : 'Мало монет')}
+                        </button>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => unlockReward(reward)}
-                      disabled={currentXP < reward.cost || (reward.target !== 'Both' && reward.target !== currentUser)}
-                      className={cn(
-                        "w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-md border-2 relative z-20",
-                        (reward.target !== 'Both' && reward.target !== currentUser) 
-                            ? "bg-gray-200 border-gray-300 text-gray-500 cursor-not-allowed" 
-                            : (currentXP >= reward.cost 
-                                ? "bg-[#5c4a33] border-[#5c4a33] text-[#fdfaf3] hover:bg-[#4a3b29] hover:scale-105 active:scale-95 cursor-pointer" 
-                                : "bg-[#e6d5bc]/30 border-[#e6d5bc] text-[#8b7355]/40 cursor-not-allowed")
-                      )}
-                    >
-                      {(reward.target !== 'Both' && reward.target !== currentUser) ? 'Не для вас' : (currentXP >= reward.cost ? 'Купить' : 'Мало монет')}
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                  </motion.div>
+                );
+              });
+            })()}
           </div>
         </section>
       </div>
@@ -970,17 +1094,17 @@ export default function BucketListPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-black text-[#8b7355] px-4">Награда (Эликсир)</label>
-                        <select 
+                        <label className="text-[10px] uppercase font-black text-[#8b7355] px-4">Награда (Монеты)</label>
+                        <input 
+                          type="number"
                           value={editData.points}
-                          onChange={e => setEditData({...editData, points: Number(e.target.value)})}
-                          className="w-full bg-white border-4 border-[#e6d5bc] rounded-xl px-4 py-4 focus:ring-0 focus:border-[#5c4a33] transition-all font-black text-[#5c4a33] uppercase text-[10px] tracking-widest"
-                        >
-                          <option value={300}>300 (Пустяк)</option>
-                          <option value={500}>500 (Обычное)</option>
-                          <option value={1000}>1000 (Важное)</option>
-                          <option value={5000}>5000 (Легендарное)</option>
-                        </select>
+                          onChange={e => {
+                            const val = Math.min(100000, Math.max(0, parseInt(e.target.value) || 0));
+                            setEditData({...editData, points: val});
+                          }}
+                          className="w-full bg-white border-4 border-[#e6d5bc] rounded-xl px-4 py-4 focus:ring-0 focus:border-[#5c4a33] transition-all font-black text-[#5c4a33] text-sm tracking-widest"
+                          placeholder="До 100 000"
+                        />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase font-black text-[#8b7355] px-4">Тип Дела</label>
