@@ -14,6 +14,11 @@ interface Comment {
   author: 'Grinch' | 'Cindy';
   text: string;
   date: string;
+  replyTo?: {
+    id: number;
+    author: 'Grinch' | 'Cindy';
+    text: string;
+  };
 }
 
 interface Note {
@@ -37,6 +42,7 @@ function JournalContent() {
   const [openCommentsId, setOpenCommentsId] = useState<string | null>(null);
   const [expandedNoteIds, setExpandedNoteIds] = useState<Set<string>>(() => new Set());
   const [commentText, setCommentText] = useState("");
+  const [replyTo, setReplyTo] = useState<Comment['replyTo'] | null>(null);
   
   // New Note State
   const [newNoteTitle, setNewNoteTitle] = useState("");
@@ -257,11 +263,13 @@ function JournalContent() {
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    const replyText = replyTo?.text ? (replyTo.text.length > 90 ? `${replyTo.text.slice(0, 90).trimEnd()}…` : replyTo.text) : "";
     const newComment: Comment = {
       id: Date.now(),
       author: currentUser,
       text: commentText,
-      date: `${timeStr}`
+      date: `${timeStr}`,
+      ...(replyTo ? { replyTo: { ...replyTo, text: replyText } } : {})
     };
 
     const newComments = [...note.comments, newComment];
@@ -280,6 +288,7 @@ function JournalContent() {
       refreshNotes();
     }
     setCommentText("");
+    setReplyTo(null);
   };
 
   const addNote = async () => {
@@ -539,12 +548,15 @@ function JournalContent() {
                         next.add(note.id);
                         return next;
                       });
+                      setReplyTo(null);
                     }
                   }}
                   isCommentsOpen={openCommentsId === note.id}
                   commentText={commentText}
                   onCommentChange={setCommentText}
                   onAddComment={() => addComment(note.id)}
+                  replyTo={replyTo}
+                  onReplyToChange={setReplyTo}
                   editState={{
                     title: editTitle,
                     setTitle: setEditTitle,
@@ -825,6 +837,8 @@ function JournalNoteCard({
   commentText, 
   onCommentChange, 
   onAddComment,
+  replyTo,
+  onReplyToChange,
   editState
 }: { 
   note: Note; 
@@ -840,6 +854,8 @@ function JournalNoteCard({
   commentText: string; 
   onCommentChange: (val: string) => void; 
   onAddComment: () => void;
+  replyTo: Comment['replyTo'] | null;
+  onReplyToChange: (val: Comment['replyTo'] | null) => void;
   editState: {
     title: string;
     setTitle: (val: string) => void;
@@ -980,7 +996,7 @@ function JournalNoteCard({
                 <div className="flex items-center justify-between pt-10 border-t-4 border-[#f5e6d3] mt-10">
                   <div className="flex items-center gap-8">
                     <button 
-                      onClick={onToggleLike}
+                      onClick={(e) => { e.stopPropagation(); onToggleLike(); }}
                       className={cn(
                         "flex items-center gap-3 transition-all active:scale-90 group/heart",
                         note.isLiked ? "text-red-500" : "text-[#8b7355]/30 hover:text-red-400"
@@ -990,7 +1006,7 @@ function JournalNoteCard({
                       <span className="text-sm font-black tracking-[0.2em]">{note.likes}</span>
                     </button>
                     <button 
-                      onClick={onToggleComments}
+                      onClick={(e) => { e.stopPropagation(); onToggleComments(); }}
                       className={cn(
                         "flex items-center gap-3 transition-all group/comment",
                         isCommentsOpen ? "text-[#5c4a33]" : "text-[#8b7355]/30 hover:text-[#5c4a33]"
@@ -1035,15 +1051,65 @@ function JournalNoteCard({
                               "p-5 rounded-[2rem] text-lg font-serif italic max-w-[85%] shadow-xl border-2 border-[#e6d5bc]",
                               comment.author === currentUser ? "bg-[#5c4a33] text-[#fdfaf3]" : "bg-white text-[#8b7355]"
                             )}>
+                              {comment.replyTo && (
+                                <div className={cn(
+                                  "mb-3 rounded-2xl px-4 py-3 border-2 text-sm not-italic font-serif",
+                                  comment.author === currentUser
+                                    ? "bg-white/10 border-white/10 text-white/70"
+                                    : "bg-[#fdfaf3] border-[#e6d5bc] text-[#5c4a33]/70"
+                                )}>
+                                  <div className="text-[9px] uppercase font-black tracking-[0.2em] opacity-60 mb-1">
+                                    В ответ на {comment.replyTo.author === 'Grinch' ? 'Гринч' : 'Синди Лу'}
+                                  </div>
+                                  <div className="line-clamp-2">
+                                    {comment.replyTo.text}
+                                  </div>
+                                </div>
+                              )}
                               {comment.text}
-                              <div className="text-[9px] opacity-40 mt-2 uppercase font-black tracking-[0.2em]">{comment.date}</div>
+                              <div className="flex items-center justify-between gap-4 mt-3">
+                                <div className="text-[9px] opacity-40 uppercase font-black tracking-[0.2em]">{comment.date}</div>
+                                {currentUser && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onReplyToChange({ id: comment.id, author: comment.author, text: comment.text })}
+                                    className={cn(
+                                      "text-[9px] uppercase font-black tracking-[0.2em] opacity-60 hover:opacity-100 transition-opacity",
+                                      comment.author === currentUser ? "text-white" : "text-[#5c4a33]"
+                                    )}
+                                  >
+                                    Ответить
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
 
                       {currentUser && (
-                        <div className="relative flex gap-4 items-center bg-white p-4 rounded-[2rem] border-4 border-[#e6d5bc] shadow-inner mt-6">
+                        <div className="relative flex flex-col gap-3 bg-white p-4 rounded-[2rem] border-4 border-[#e6d5bc] shadow-inner mt-6">
+                          {replyTo && (
+                            <div className="flex items-start justify-between gap-4 bg-[#fdfaf3] border-2 border-[#e6d5bc] rounded-2xl px-4 py-3">
+                              <div className="min-w-0">
+                                <div className="text-[9px] uppercase font-black tracking-[0.2em] text-[#8b7355]/70">
+                                  Ответ на {replyTo.author === 'Grinch' ? 'Гринч' : 'Синди Лу'}
+                                </div>
+                                <div className="text-sm text-[#5c4a33]/70 font-serif italic line-clamp-2">
+                                  {replyTo.text}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => onReplyToChange(null)}
+                                className="p-2 rounded-xl hover:bg-[#f5e6d3] transition-all text-[#8b7355]"
+                                aria-label="Отменить ответ"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          )}
+                          <div className="flex gap-4 items-center">
                           <div className={cn(
                             "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
                             currentUser === 'Grinch' ? "bg-emerald-50 text-emerald-600" : "bg-pink-50 text-pink-600"
@@ -1053,7 +1119,7 @@ function JournalNoteCard({
                           <input 
                             value={commentText}
                             onChange={(e) => onCommentChange(e.target.value)}
-                            placeholder="Оставь весточку..."
+                            placeholder={replyTo ? "Ответь на весточку..." : "Оставь весточку..."}
                             className="flex-1 bg-transparent border-none py-2 text-base focus:ring-0 outline-none transition-all placeholder:text-[#8b7355]/30 font-serif italic text-[#5c4a33]"
                             onKeyDown={(e) => e.key === 'Enter' && onAddComment()}
                           />
@@ -1064,6 +1130,7 @@ function JournalNoteCard({
                           >
                             <Send size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                           </button>
+                          </div>
                         </div>
                       )}
                     </motion.div>
