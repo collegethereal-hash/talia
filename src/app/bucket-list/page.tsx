@@ -88,6 +88,7 @@ export default function BucketListPage() {
   const [promoModal, setPromoModal] = useState<{isOpen: boolean, promo: string | null, rewardTitle: string | null}>({isOpen: false, promo: null, rewardTitle: null});
   const [promoSuccess, setPromoSuccess] = useState<string | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [showSingleQuestAlert, setShowSingleQuestAlert] = useState(false);
   const [, setForceRender] = useState({});
 
   useEffect(() => {
@@ -149,6 +150,11 @@ export default function BucketListPage() {
     const updated = { ...quest };
 
     if (updated.isSinglePlayer) {
+      // Только автор может завершить свой одиночный квест
+      if (quest.proposedBy !== currentUser) {
+        setShowSingleQuestAlert(true);
+        return;
+      }
       updated.completed = !updated.completed;
       if (currentUser === 'Grinch') updated.completedByGrinch = updated.completed;
       if (currentUser === 'Cindy') updated.completedByCindy = updated.completed;
@@ -380,7 +386,7 @@ export default function BucketListPage() {
            return result;
         };
         const code = generateCode();
-        const newPromocodes = { ...promocodes, [code]: { rewardId: reward.id, title: reward.title, owner: currentUser } };
+        const newPromocodes = { ...promocodes, [code]: { rewardId: reward.id, title: reward.title, owner: currentUser, date: new Date().toISOString() } };
         
         const { error: promoError } = await supabase.from('global_state').upsert({ key: 'promocodes', value: newPromocodes });
         if (promoError) {
@@ -460,6 +466,17 @@ export default function BucketListPage() {
                 const promo = promocodes[promoInput.trim().toUpperCase()];
                 setPromoSuccess(promo.title);
                 
+                // Уведомление в Telegram об активации
+                const myName = currentUser === 'Grinch' ? 'Гринч' : 'Синди Лу';
+                const partner = currentUser === 'Grinch' ? 'Cindy' : 'Grinch';
+                await sendTelegramNotification(
+                  `✨ *Промокод активирован!*\n\n` +
+                  `👤 *${myName}* использовал(а) промокод на награду:\n` +
+                  `🎁 *${promo.title}*\n\n` +
+                  `Пора выполнять обещание! 😉`,
+                  partner
+                );
+
                 const newPromocodes = { ...promocodes };
                 delete newPromocodes[promoInput.trim().toUpperCase()];
                 await supabase.from('global_state').upsert({ key: 'promocodes', value: newPromocodes });
@@ -492,6 +509,92 @@ export default function BucketListPage() {
               </div>
               <button onClick={() => setPromoSuccess(null)} className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:bg-emerald-600 transition-colors">
                 Супер!
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Promocodes Archive Section */}
+      <section className="relative z-10 pt-16 border-t-8 border-[#e6d5bc]/30">
+        <div className="flex items-center gap-6 mb-12">
+          <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-500 text-white flex items-center justify-center shadow-2xl border-4 border-emerald-200">
+            <Gift size={32} />
+          </div>
+          <div>
+            <h2 className="text-3xl font-serif font-black text-[#5c4a33]">Мои Промокоды</h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">Твои честно заработанные награды</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {Object.entries(promocodes)
+            .filter(([_, data]: [string, any]) => data.owner === currentUser)
+            .map(([code, data]: [string, any]) => (
+              <motion.div
+                key={code}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                className="bg-[#fdfaf3] p-8 rounded-[3rem] border-4 border-[#e6d5bc] shadow-xl relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full pointer-events-none -mr-4 -mt-4 transition-all group-hover:scale-110" />
+                <div className="relative z-10 space-y-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600 px-2 py-1 bg-emerald-50 rounded-md">Активен</span>
+                      <h4 className="text-xl font-serif font-black text-[#5c4a33]">{data.title}</h4>
+                    </div>
+                    <div className="text-emerald-500">
+                      <Trophy size={24} />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white border-4 border-dashed border-[#e6d5bc] rounded-2xl p-6 text-center group-hover:border-emerald-300 transition-colors">
+                    <span className="text-3xl font-mono font-black text-[#5c4a33] tracking-[0.3em]">{code}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#8b7355]/40">
+                    <span>{data.date ? new Date(data.date).toLocaleDateString('ru-RU') : 'Недавно'}</span>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(code);
+                        alert('Промокод скопирован!');
+                      }}
+                      className="text-emerald-600 hover:text-emerald-700 transition-colors"
+                    >
+                      Копировать
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          
+          {Object.entries(promocodes).filter(([_, data]: [string, any]) => data.owner === currentUser).length === 0 && (
+            <div className="col-span-full py-20 text-center bg-white/30 rounded-[3rem] border-4 border-dashed border-[#e6d5bc]">
+              <div className="w-20 h-20 bg-[#e6d5bc]/20 text-[#8b7355]/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Gift size={40} />
+              </div>
+              <p className="text-[#8b7355] font-serif italic text-xl">У тебя пока нет активных промокодов... Пора за покупками! 😉</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Single Player Quest Warning Popup */}
+      <AnimatePresence>
+        {showSingleQuestAlert && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowSingleQuestAlert(false)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} className="relative bg-[#fdfaf3] p-8 rounded-[3rem] border-8 border-amber-200 shadow-2xl max-w-sm text-center space-y-6">
+              <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                <ShieldCheck size={40} />
+              </div>
+              <div>
+                <h3 className="text-2xl font-serif font-black text-[#5c4a33]">Одиночный квест</h3>
+                <p className="text-[#8b7355] mt-2 font-medium">Это задание предназначено только для автора. Его нельзя выполнить за другого! ✨</p>
+              </div>
+              <button onClick={() => setShowSingleQuestAlert(false)} className="w-full py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:bg-amber-600 transition-colors">
+                Понятно
               </button>
             </motion.div>
           </div>
@@ -876,7 +979,7 @@ export default function BucketListPage() {
                   onClick={() => setRewardTab('Cindy')}
                   className={cn(
                     "px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                    rewardTab === 'Cindy' ? "bg-rose-400 text-white shadow-lg" : "text-[#8b7355] hover:bg-rose-50"
+                    rewardTab === 'Cindy' ? "bg-purple-500 text-white shadow-lg" : "text-[#8b7355] hover:bg-purple-50"
                   )}
                 >
                   Для Синди
@@ -1188,9 +1291,11 @@ export default function BucketListPage() {
                     const isCompletedAndLocked = selectedQuest.completed && selectedQuest.completedAt && 
                       (new Date().getTime() - new Date(selectedQuest.completedAt).getTime()) >= 30 * 60 * 1000;
                     const canInstantDelete = selectedQuest.isSinglePlayer || selectedQuest.proposedBy === currentUser;
+                    const isAuthor = selectedQuest.proposedBy === currentUser;
+                    
                     return (
                     <>
-                      {!isCompletedAndLocked && (
+                      {!isCompletedAndLocked && (isAuthor || !selectedQuest.isSinglePlayer) && (
                         <button 
                           onClick={() => deleteQuest(selectedQuest.id)} 
                           className={cn(
@@ -1207,7 +1312,7 @@ export default function BucketListPage() {
                           </span>
                         </button>
                       )}
-                      {!isCompletedAndLocked && (
+                      {!isCompletedAndLocked && isAuthor && (
                         <div className="flex-1 flex gap-4">
                           <button onClick={() => setIsEditing(true)} className="flex-1 py-4 bg-white border-4 border-[#e6d5bc] text-[#5c4a33] font-black uppercase tracking-widest text-[10px] rounded-2xl hover:border-[#5c4a33] transition-all flex items-center justify-center gap-3">
                             <Edit3 size={20} /> Править

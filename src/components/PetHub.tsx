@@ -144,21 +144,28 @@ export const PetHub = () => {
         const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
         const secondsPassed = Math.floor((now - (parsed.lastInteraction || now)) / 1000);
 
-        // Calculate offline decay (slower decay)
-        const hungerDecay = secondsPassed * 0.001; // Was 0.0023
-        const thirstDecay = secondsPassed * 0.0015; // Was 0.0034
-        const happinessDecay = secondsPassed * 0.0005; // Was 0.0011
+        // Calculate offline decay (faster decay)
+        const hungerDecay = secondsPassed * 0.0035; 
+        const thirstDecay = secondsPassed * 0.0045; 
+        const happinessDecay = secondsPassed * 0.0025; 
 
         let newStreak = parsed.streak || 0;
         if (parsed.lastVisitDay && parsed.lastVisitDay !== today && parsed.lastVisitDay !== yesterday) {
           newStreak = 0;
         }
 
+        const newHunger = Math.max(0, parsed.hunger - hungerDecay);
+        const newThirst = Math.max(0, parsed.thirst - thirstDecay);
+        const newHappiness = Math.max(0, parsed.happiness - happinessDecay);
+
         setState({ 
           ...parsed, 
-          hunger: Math.max(0, parsed.hunger - hungerDecay),
-          thirst: Math.max(0, parsed.thirst - thirstDecay),
-          happiness: Math.max(0, parsed.happiness - happinessDecay),
+          hunger: newHunger,
+          thirst: newThirst,
+          happiness: newHappiness,
+          isFull: newHunger > 90,
+          isHydrated: newThirst > 90,
+          isHappy: newHappiness > 90,
           streak: newStreak,
           lastInteraction: now,
         });
@@ -288,7 +295,7 @@ export const PetHub = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const interact = (type: 'feed' | 'water' | 'pet') => {
+  const interact = async (type: 'feed' | 'water' | 'pet') => {
     setState(prev => {
       const newState = { ...prev };
       
@@ -332,6 +339,9 @@ export const PetHub = () => {
         newState.level += 1;
         newState.xp = 0;
       }
+      
+      // Immediately save state on interaction to prevent "static" behavior
+      saveArchiState(newState);
       
       return newState;
     });

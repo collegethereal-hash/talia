@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { Card } from "@/components/Card";
-import { BookOpen, PenTool, Calendar, Heart, MessageCircle, Send, User, Mail, Eraser, Trash2, Edit3, Save, X, Sparkles, Trees, Moon, Flower } from "lucide-react";
+import { BookOpen, PenTool, Calendar, Heart, MessageCircle, Send, User, Mail, Eraser, Trash2, Edit3, Save, X, Sparkles, Trees, Moon, Flower, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from 'next/navigation';
@@ -38,7 +38,7 @@ interface Note {
 const INITIAL_NOTES: Note[] = [];
 
 function JournalContent() {
-  const { currentUser, notes, setNotes, refreshNotes, refreshWhispers } = useData();
+  const { currentUser, notes, setNotes, refreshNotes, whispers, refreshWhispers } = useData();
   const [activeTab, setActiveTab] = useState<'all' | 'Grinch' | 'Cindy'>('all');
   const [openCommentsId, setOpenCommentsId] = useState<string | null>(null);
   const [expandedNoteIds, setExpandedNoteIds] = useState<Set<string>>(() => new Set());
@@ -47,6 +47,7 @@ function JournalContent() {
   const [editingComment, setEditingComment] = useState<{ noteId: string; commentId: number } | null>(null);
   const [editingCommentText, setEditingCommentText] = useState("");
   const [deleteCommentConfirm, setDeleteCommentConfirm] = useState<{ noteId: string; commentId: number } | null>(null);
+  const [openedWhisper, setOpenedWhisper] = useState<any>(null);
   
   // New Note State
   const [newNoteTitle, setNewNoteTitle] = useState("");
@@ -90,6 +91,12 @@ function JournalContent() {
       fetchIncomingWhisper();
     }
   }, [searchParams, currentUser]);
+
+  useEffect(() => {
+    if (openedWhisper) {
+      setReceivedWhisper(openedWhisper.content);
+    }
+  }, [openedWhisper]);
 
   const fetchIncomingWhisper = async () => {
     if (!currentUser) return;
@@ -217,10 +224,10 @@ function JournalContent() {
       // Уведомление в Telegram
       const myName = currentUser === 'Grinch' ? 'Гринч' : 'Синди Лу';
       await sendTelegramNotification(
-        `✉️ *Тебе пришло новое секретное письмо! (Шепот)*\n\n` +
+        `✉️ *Тебе пришло новое секретное письмо!*\n\n` +
         `👤 *От кого:* ${myName}\n\n` +
         `Сотри защитный слой, чтобы прочитать его! 🤫\n\n` +
-        `🔗 [Открыть Шепоты](${BASE_URL}/journal?openWhisper=true)`,
+        `🔗 [Открыть Письма](${BASE_URL}/journal?openWhisper=true)`,
         targetName === 'Grinch' ? 'Grinch' : 'Cindy'
       );
 
@@ -550,6 +557,27 @@ function JournalContent() {
           <span>Каждая страница — это шаг нашей общей истории</span>
           <Flower size={18} />
         </div>
+        
+        <div className="flex justify-center gap-4 pt-4">
+          <button 
+            onClick={() => {
+              // Scroll to editor
+              document.querySelector('textarea')?.focus();
+              document.querySelector('textarea')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            className="bg-[#5c4a33] text-[#fdfaf3] px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+          >
+            <Plus size={18} />
+            Новая запись
+          </button>
+          <button 
+            onClick={scrollToWhisper}
+            className="bg-white border-4 border-[#e6d5bc] text-[#5c4a33] px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+          >
+            <Mail size={18} />
+            Отправить письмо
+          </button>
+        </div>
       </header>
 
       {/* Editor, Tabs & Timeline */}
@@ -785,21 +813,6 @@ function JournalContent() {
         </div>
       </motion.div>
 
-      {/* Floating Action Button for quick scroll to Whisper */}
-      <motion.button
-        initial={{ opacity: 0, scale: 0.5 }}
-        animate={{ opacity: 1, scale: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={scrollToWhisper}
-        className="fixed bottom-36 right-6 z-[100] md:bottom-44 md:right-12 w-16 h-16 rounded-full bg-[#5c4a33] text-white shadow-2xl flex items-center justify-center group"
-      >
-        <Mail size={24} className="group-hover:rotate-12 transition-transform" />
-        <span className="absolute right-full mr-4 px-4 py-2 bg-[#5c4a33] text-white rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-          Написать письмо
-        </span>
-      </motion.button>
-
       {/* Scratch-off Modal */}
       <AnimatePresence>
         {isWhisperModalOpen && (
@@ -991,6 +1004,27 @@ function JournalContent() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+function WhisperCard({ whisper, onOpen }: { whisper: any; onOpen: () => void }) {
+  return (
+    <motion.div
+      whileHover={{ y: -5 }}
+      onClick={onOpen}
+      className="bg-white p-6 rounded-[2rem] border-4 border-purple-200 shadow-xl cursor-pointer relative overflow-hidden group"
+    >
+      <div className="absolute top-0 right-0 w-16 h-16 bg-purple-50 rounded-bl-full pointer-events-none" />
+      <div className="flex items-center gap-4 relative z-10">
+        <div className="w-12 h-12 rounded-2xl bg-purple-500 text-white flex items-center justify-center shadow-lg border-2 border-purple-200 group-hover:rotate-6 transition-transform">
+          <Mail size={24} />
+        </div>
+        <div>
+          <h4 className="font-serif font-black text-[#5c4a33]">Тайное Письмо</h4>
+          <p className="text-[9px] font-black uppercase tracking-widest text-purple-400">Нажми, чтобы открыть</p>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
