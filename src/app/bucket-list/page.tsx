@@ -6,7 +6,7 @@ import {
   CheckSquare, Star, Trophy, Target, Plus, X, Edit3, Save, Trash2, Gift, 
   Sparkles, ChevronRight, MapPin, Calendar, ListChecks, ShieldCheck, 
   Heart, User, Clock, CheckCircle2, Coins, Trees, Moon, Camera, Film, Mic,
-  RefreshCw, Send, Tv, CupSoda, Smartphone, Candy, Clapperboard, HelpCircle, Settings2
+  RefreshCw, Send, Tv, CupSoda, Smartphone, Candy, Clapperboard, HelpCircle, Settings2, Lock
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -67,6 +67,23 @@ const INITIAL_REWARDS: Reward[] = [
   { id: 'rb1', title: 'Посмотреть совместно фильм', cost: 3000, unlocked: false, icon: 'clapperboard', target: 'Both' },
 ];
 
+function getRewardCostById(rewardId: string, customReward?: Reward | null): number {
+  if (rewardId === 'custom_reward_id') {
+    return customReward?.cost ?? 1000;
+  }
+  const reward = INITIAL_REWARDS.find(r => r.id === rewardId);
+  return reward?.cost ?? 0;
+}
+
+function calculateSpentPoints(unlockedIds: string[], customReward?: Reward | null): number {
+  return unlockedIds.reduce((acc, id) => acc + getRewardCostById(id, customReward), 0);
+}
+
+const OWNER_LABELS: Record<'Grinch' | 'Cindy', string> = {
+  Grinch: 'Гринча',
+  Cindy: 'Синди Лу',
+};
+
 export default function BucketListPage() {
   const { 
     currentUser, quests, setQuests, refreshQuests, profiles, 
@@ -88,6 +105,7 @@ export default function BucketListPage() {
   const [promoModal, setPromoModal] = useState<{isOpen: boolean, promo: string | null, rewardTitle: string | null}>({isOpen: false, promo: null, rewardTitle: null});
   const [promoSuccess, setPromoSuccess] = useState<string | null>(null);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [partnerPromoModal, setPartnerPromoModal] = useState<'Grinch' | 'Cindy' | null>(null);
   const [showSingleQuestAlert, setShowSingleQuestAlert] = useState(false);
   const [, setForceRender] = useState({});
 
@@ -342,14 +360,7 @@ export default function BucketListPage() {
 
     const totalPoints = quests.filter(q => q.completed).reduce((acc, q) => acc + (q.points || 0), 0);
     const unlockedIds = unlockedRewards[currentUser] || [];
-    
-    const spentPoints = INITIAL_REWARDS
-      .filter(r => {
-        // Проверяем все купленные награды текущего пользователя
-        return unlockedIds.includes(r.id);
-      })
-      .reduce((acc, r) => acc + r.cost, 0);
-    
+    const spentPoints = calculateSpentPoints(unlockedIds, customReward);
     const realXP = totalPoints - spentPoints;
 
     if (realXP >= reward.cost) {
@@ -397,12 +408,50 @@ export default function BucketListPage() {
         setPromoModal({ isOpen: true, promo: code, rewardTitle: reward.title });
       }
     } else {
-      setPromoError(unlockedIds.includes(reward.id) ? 'Эта награда уже куплена!' : `Недостаточно монет! У вас ${realXP}, нужно ${reward.cost}.`);
+      setPromoError(`Недостаточно монет! У вас ${realXP}, нужно ${reward.cost}.`);
     }
   };
 
+  const applyPromocode = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (code.length === 0) {
+      setPromoError('Промокод не может быть пустым!');
+      return;
+    }
+
+    const promo = promocodes[code];
+    if (!promo) {
+      setPromoError('Неверный промокод или он уже использован!');
+      return;
+    }
+
+    if (promo.owner !== currentUser) {
+      setPartnerPromoModal(promo.owner);
+      return;
+    }
+
+    setPromoSuccess(promo.title);
+
+    const myName = currentUser === 'Grinch' ? 'Гринч' : 'Синди Лу';
+    const partner = currentUser === 'Grinch' ? 'Cindy' : 'Grinch';
+    await sendTelegramNotification(
+      `✨ *Промокод активирован!*\n\n` +
+      `👤 *${myName}* использовал(а) промокод на награду:\n` +
+      `🎁 *${promo.title}*\n\n` +
+      `Пора выполнять обещание! 😉`,
+      partner
+    );
+
+    const newPromocodes = { ...promocodes };
+    delete newPromocodes[code];
+    await supabase.from('global_state').upsert({ key: 'promocodes', value: newPromocodes });
+    setPromocodes(newPromocodes);
+    setPromoInput('');
+  };
+
   const totalPoints = quests.filter(q => q.completed).reduce((acc, q) => acc + q.points, 0);
-  const spentPoints = rewards.filter(r => r.unlocked).reduce((acc, r) => acc + r.cost, 0);
+  const userUnlockedIds = unlockedRewards[currentUser || ''] || [];
+  const spentPoints = calculateSpentPoints(userUnlockedIds, customReward);
   const currentXP = totalPoints - spentPoints;
   const level = Math.floor(totalPoints / 1000) + 1;
 
@@ -449,50 +498,6 @@ export default function BucketListPage() {
         </p>
       </header>
 
-      {/* Promocode section */}
-      <section className="relative z-10 flex justify-center mt-8">
-        <div className="bg-[#fdfaf3] p-4 rounded-3xl border-4 border-[#e6d5bc] flex items-center gap-4 shadow-xl max-w-md w-full">
-          <input
-            type="text"
-            value={promoInput}
-            onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-            placeholder="Введите промокод"
-            className="flex-1 bg-transparent border-none text-[#5c4a33] font-black uppercase tracking-widest px-4 outline-none placeholder:text-[#8b7355]/50"
-            maxLength={4}
-          />
-          <button 
-            onClick={async () => {
-              if (promoInput.trim().length > 0 && promocodes[promoInput.trim().toUpperCase()]) {
-                const promo = promocodes[promoInput.trim().toUpperCase()];
-                setPromoSuccess(promo.title);
-                
-                // Уведомление в Telegram об активации
-                const myName = currentUser === 'Grinch' ? 'Гринч' : 'Синди Лу';
-                const partner = currentUser === 'Grinch' ? 'Cindy' : 'Grinch';
-                await sendTelegramNotification(
-                  `✨ *Промокод активирован!*\n\n` +
-                  `👤 *${myName}* использовал(а) промокод на награду:\n` +
-                  `🎁 *${promo.title}*\n\n` +
-                  `Пора выполнять обещание! 😉`,
-                  partner
-                );
-
-                const newPromocodes = { ...promocodes };
-                delete newPromocodes[promoInput.trim().toUpperCase()];
-                await supabase.from('global_state').upsert({ key: 'promocodes', value: newPromocodes });
-                setPromocodes(newPromocodes);
-                setPromoInput('');
-              } else {
-                setPromoError(promoInput.trim() === '' ? 'Промокод не может быть пустым!' : 'Неверный промокод или он уже использован!');
-              }
-            }}
-            className="bg-[#5c4a33] text-[#fdfaf3] px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-md"
-          >
-            Применить
-          </button>
-        </div>
-      </section>
-
       {/* Promo Success Popup */}
       <AnimatePresence>
         {promoSuccess && (
@@ -515,70 +520,28 @@ export default function BucketListPage() {
         )}
       </AnimatePresence>
 
-      {/* Promocodes Archive Section */}
-      <section className="relative z-10 pt-16 border-t-8 border-[#e6d5bc]/30">
-        <div className="flex items-center gap-6 mb-12">
-          <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-500 text-white flex items-center justify-center shadow-2xl border-4 border-emerald-200">
-            <Gift size={32} />
-          </div>
-          <div>
-            <h2 className="text-3xl font-serif font-black text-[#5c4a33]">Мои Промокоды</h2>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">Твои честно заработанные награды</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {Object.entries(promocodes)
-            .filter(([_, data]: [string, any]) => data.owner === currentUser)
-            .map(([code, data]: [string, any]) => (
-              <motion.div
-                key={code}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                className="bg-[#fdfaf3] p-8 rounded-[3rem] border-4 border-[#e6d5bc] shadow-xl relative overflow-hidden group"
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full pointer-events-none -mr-4 -mt-4 transition-all group-hover:scale-110" />
-                <div className="relative z-10 space-y-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600 px-2 py-1 bg-emerald-50 rounded-md">Активен</span>
-                      <h4 className="text-xl font-serif font-black text-[#5c4a33]">{data.title}</h4>
-                    </div>
-                    <div className="text-emerald-500">
-                      <Trophy size={24} />
-                    </div>
-                  </div>
-                  
-                  <div className="bg-white border-4 border-dashed border-[#e6d5bc] rounded-2xl p-6 text-center group-hover:border-emerald-300 transition-colors">
-                    <span className="text-3xl font-mono font-black text-[#5c4a33] tracking-[0.3em]">{code}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#8b7355]/40">
-                    <span>{data.date ? new Date(data.date).toLocaleDateString('ru-RU') : 'Недавно'}</span>
-                    <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText(code);
-                        alert('Промокод скопирован!');
-                      }}
-                      className="text-emerald-600 hover:text-emerald-700 transition-colors"
-                    >
-                      Копировать
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          
-          {Object.entries(promocodes).filter(([_, data]: [string, any]) => data.owner === currentUser).length === 0 && (
-            <div className="col-span-full py-20 text-center bg-white/30 rounded-[3rem] border-4 border-dashed border-[#e6d5bc]">
-              <div className="w-20 h-20 bg-[#e6d5bc]/20 text-[#8b7355]/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Gift size={40} />
+      {/* Partner promo blocked popup */}
+      <AnimatePresence>
+        {partnerPromoModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setPartnerPromoModal(null)} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} className="relative bg-[#fdfaf3] p-8 rounded-[3rem] border-8 border-amber-200 shadow-2xl max-w-sm text-center space-y-6">
+              <div className="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                <Lock size={40} />
               </div>
-              <p className="text-[#8b7355] font-serif italic text-xl">У тебя пока нет активных промокодов... Пора за покупками! 😉</p>
-            </div>
-          )}
-        </div>
-      </section>
+              <div>
+                <h3 className="text-2xl font-serif font-black text-[#5c4a33]">Чужой промокод</h3>
+                <p className="text-[#8b7355] mt-2 font-medium">
+                  Этот промокод принадлежит <span className="font-bold text-[#5c4a33]">{OWNER_LABELS[partnerPromoModal]}</span>. Только владелец может его активировать!
+                </p>
+              </div>
+              <button onClick={() => setPartnerPromoModal(null)} className="w-full py-4 bg-amber-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:bg-amber-600 transition-colors">
+                Понятно
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Single Player Quest Warning Popup */}
       <AnimatePresence>
@@ -1011,9 +974,8 @@ export default function BucketListPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       className="relative group"
                     >
-                      <div className={cn(
-                        "relative p-1 bg-purple-200 rounded-[2rem] shadow-lg h-full transition-all hover:scale-105",
-                        (unlockedRewards[currentUser || ''] || []).includes('custom_reward_id') && "opacity-50 grayscale-[0.5]"
+                      <div                       className={cn(
+                        "relative p-1 bg-purple-200 rounded-[2rem] shadow-lg h-full transition-all hover:scale-105"
                       )}>
                         <div className="bg-[#fdfaf3] p-4 sm:p-5 rounded-[1.8rem] border-2 border-purple-200 space-y-4 h-full flex flex-col items-center text-center bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] relative overflow-hidden">
                           
@@ -1091,17 +1053,14 @@ export default function BucketListPage() {
                     key={reward.id}
                     whileHover={!reward.unlocked && currentXP >= reward.cost && (reward.target === 'Both' || reward.target === currentUser) ? { y: -5 } : {}}
                   >
-                    <div className={cn(
-                      "relative p-1 bg-[#e6d5bc] rounded-[2rem] shadow-lg h-full transition-all",
-                      reward.unlocked && "opacity-50 grayscale-[0.5]"
-                    )}>
+                    <div className="relative p-1 bg-[#e6d5bc] rounded-[2rem] shadow-lg h-full transition-all">
                       <div className="bg-[#fdfaf3] p-4 sm:p-5 rounded-[1.8rem] border-2 border-[#e6d5bc] space-y-4 h-full flex flex-col items-center text-center bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-[#e6d5bc]/40 to-transparent rounded-bl-full pointer-events-none" />
                         <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-[#e6d5bc]/40 to-transparent rounded-tr-full pointer-events-none" />
                         
                         <div className={cn(
                           "w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner border-2 relative z-10",
-                          reward.unlocked ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-white border-[#e6d5bc] text-[#5c4a33]"
+                          "bg-white border-[#e6d5bc] text-[#5c4a33]"
                         )}>
                           {reward.icon === 'tv' && <Tv size={32} />}
                           {reward.icon === 'send' && <Send size={32} />}
@@ -1141,6 +1100,131 @@ export default function BucketListPage() {
                 );
               });
             })()}
+          </div>
+        </section>
+
+        {/* Promocode input — below rewards */}
+        <section className="relative z-10 flex justify-center pt-8">
+          <div className="bg-[#fdfaf3] p-4 rounded-3xl border-4 border-[#e6d5bc] flex items-center gap-4 shadow-xl max-w-md w-full">
+            <input
+              type="text"
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+              placeholder="Введите промокод"
+              className="flex-1 bg-transparent border-none text-[#5c4a33] font-black uppercase tracking-widest px-4 outline-none placeholder:text-[#8b7355]/50"
+              maxLength={4}
+            />
+            <button
+              onClick={applyPromocode}
+              className="bg-[#5c4a33] text-[#fdfaf3] px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-md"
+            >
+              Применить
+            </button>
+          </div>
+        </section>
+
+        {/* Promocodes list — own + partner's */}
+        <section className="relative z-10 pt-8 border-t-8 border-[#e6d5bc]/30">
+          <div className="flex items-center gap-6 mb-12">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-500 text-white flex items-center justify-center shadow-2xl border-4 border-emerald-200">
+              <Gift size={32} />
+            </div>
+            <div>
+              <h2 className="text-3xl font-serif font-black text-[#5c4a33]">Промокоды</h2>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">Твои награды и промокоды партнёра</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Object.entries(promocodes)
+              .sort(([_, a]: [string, any], [__, b]: [string, any]) => {
+                const aOwn = a.owner === currentUser ? 0 : 1;
+                const bOwn = b.owner === currentUser ? 0 : 1;
+                return aOwn - bOwn;
+              })
+              .map(([code, data]: [string, any]) => {
+                const isOwn = data.owner === currentUser;
+                const ownerLabel = OWNER_LABELS[data.owner as 'Grinch' | 'Cindy'] || data.owner;
+
+                return (
+                  <motion.div
+                    key={code}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    className={cn(
+                      "p-8 rounded-[3rem] border-4 shadow-xl relative overflow-hidden group",
+                      isOwn
+                        ? "bg-[#fdfaf3] border-[#e6d5bc]"
+                        : data.owner === 'Cindy'
+                          ? "bg-pink-50/80 border-pink-200 border-dashed opacity-90"
+                          : "bg-emerald-50/80 border-emerald-200 border-dashed opacity-90"
+                    )}
+                  >
+                    <div className={cn(
+                      "absolute top-0 right-0 w-24 h-24 rounded-bl-full pointer-events-none -mr-4 -mt-4 transition-all group-hover:scale-110",
+                      isOwn ? "bg-emerald-50" : data.owner === 'Cindy' ? "bg-pink-100/50" : "bg-emerald-100/50"
+                    )} />
+                    <div className="relative z-10 space-y-6">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <span className={cn(
+                            "text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-md",
+                            isOwn
+                              ? "text-emerald-600 bg-emerald-50"
+                              : data.owner === 'Cindy'
+                                ? "text-pink-600 bg-pink-100"
+                                : "text-emerald-700 bg-emerald-100"
+                          )}>
+                            {isOwn ? 'Твой' : `Промокод ${ownerLabel}`}
+                          </span>
+                          <h4 className="text-xl font-serif font-black text-[#5c4a33]">{data.title}</h4>
+                        </div>
+                        <div className={isOwn ? "text-emerald-500" : "text-[#8b7355]/50"}>
+                          {isOwn ? <Trophy size={24} /> : <Lock size={24} />}
+                        </div>
+                      </div>
+
+                      <div className={cn(
+                        "bg-white border-4 rounded-2xl p-6 text-center transition-colors",
+                        isOwn
+                          ? "border-dashed border-[#e6d5bc] group-hover:border-emerald-300"
+                          : "border-dotted border-[#e6d5bc]/60"
+                      )}>
+                        <span className={cn(
+                          "text-3xl font-mono font-black tracking-[0.3em]",
+                          isOwn ? "text-[#5c4a33]" : "text-[#8b7355]/70"
+                        )}>{code}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[#8b7355]/40">
+                        <span>{data.date ? new Date(data.date).toLocaleDateString('ru-RU') : 'Недавно'}</span>
+                        {isOwn ? (
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(code);
+                              alert('Промокод скопирован!');
+                            }}
+                            className="text-emerald-600 hover:text-emerald-700 transition-colors"
+                          >
+                            Копировать
+                          </button>
+                        ) : (
+                          <span className="text-[#8b7355]/50 italic normal-case tracking-normal text-[11px]">Только для {ownerLabel}</span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+
+            {Object.entries(promocodes).length === 0 && (
+              <div className="col-span-full py-20 text-center bg-white/30 rounded-[3rem] border-4 border-dashed border-[#e6d5bc]">
+                <div className="w-20 h-20 bg-[#e6d5bc]/20 text-[#8b7355]/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Gift size={40} />
+                </div>
+                <p className="text-[#8b7355] font-serif italic text-xl">Промокодов пока нет... Пора за покупками! 😉</p>
+              </div>
+            )}
           </div>
         </section>
       </div>

@@ -485,6 +485,9 @@ function JournalContent() {
     setEditTitle(note.title);
     setEditContent(note.content);
     setEditMood(note.mood || (note.author === 'Grinch' ? "🌿" : "🌸"));
+    setTimeout(() => {
+      document.getElementById(`journal-note-${note.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
   };
 
   const cancelEditing = () => {
@@ -603,8 +606,11 @@ function JournalContent() {
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="columns-1 md:columns-2 gap-10 space-y-10 relative">
+        {/* Main Content Grid — single column while editing (wider fields on tablet) */}
+        <div className={cn(
+          "columns-1 gap-10 space-y-10 relative",
+          !editingId && "md:columns-2"
+        )}>
           {/* New Note Editor - Writing Desk Style */}
           <div className="break-inside-avoid mb-10">
             <motion.div 
@@ -1093,8 +1099,17 @@ function JournalNoteCard({
     : note.content;
   const cardBodyRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!isEditing) return;
+    const timer = setTimeout(() => {
+      document.getElementById(`journal-note-${note.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [isEditing, note.id]);
+
   return (
     <motion.div
+      id={`journal-note-${note.id}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
@@ -1103,7 +1118,7 @@ function JournalNoteCard({
       <div className="group relative">
         {/* Date & Author Header - Wax Seal Style */}
         <div className={cn(
-          "flex items-center gap-4 mb-4 px-6",
+          "flex items-center gap-3 sm:gap-4 mb-4 px-3 sm:px-6",
           isMe ? "flex-row" : "flex-row-reverse"
         )}>
           <div className={cn(
@@ -1128,11 +1143,11 @@ function JournalNoteCard({
             </div>
           </div>
           {isMe && !isEditing && (
-            <div className="flex gap-2 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={onEdit} className="p-2.5 rounded-xl bg-white border-2 border-[#e6d5bc] text-[#8b7355] hover:text-[#5c4a33] transition-all shadow-sm">
+            <div className="flex gap-2 ml-auto opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+              <button onClick={onEdit} className="p-2.5 rounded-xl bg-white border-2 border-[#e6d5bc] text-[#8b7355] hover:text-[#5c4a33] transition-all shadow-sm" aria-label="Редактировать">
                 <Edit3 size={14} />
               </button>
-              <button onClick={onDelete} className="p-2.5 rounded-xl bg-white border-2 border-red-100 text-red-300 hover:text-red-500 transition-all shadow-sm">
+              <button onClick={onDelete} className="p-2.5 rounded-xl bg-white border-2 border-red-100 text-red-300 hover:text-red-500 transition-all shadow-sm" aria-label="Удалить">
                 <Trash2 size={14} />
               </button>
             </div>
@@ -1148,15 +1163,15 @@ function JournalNoteCard({
           </div>
 
           {isEditing ? (
-            <div className="p-10 space-y-8">
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex gap-2">
+            <div className="p-4 sm:p-8 md:p-10 space-y-4 sm:space-y-6 pb-28 sm:pb-10">
+              <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                   {['🌿', '🌸', '🥧', '🧸', '❤️'].map(m => (
                     <button 
                       key={m} 
                       onClick={() => editState.setMood(m)}
                       className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center transition-all text-xl border-2 shadow-sm",
+                        "w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center transition-all text-lg sm:text-xl border-2 shadow-sm",
                         editState.mood === m ? "bg-[#5c4a33] border-[#5c4a33] text-white scale-110" : "bg-white border-[#e6d5bc] hover:bg-[#fdfaf3]"
                       )}
                     >
@@ -1164,11 +1179,11 @@ function JournalNoteCard({
                     </button>
                   ))}
                 </div>
-                <div className="flex gap-3">
-                  <button onClick={editState.onCancel} className="p-4 rounded-2xl bg-white border-2 border-[#e6d5bc] text-[#8b7355] hover:bg-[#f5e6d3] transition-all">
+                <div className="hidden sm:flex gap-3 shrink-0">
+                  <button onClick={editState.onCancel} className="p-4 rounded-2xl bg-white border-2 border-[#e6d5bc] text-[#8b7355] hover:bg-[#f5e6d3] transition-all" aria-label="Отмена">
                     <X size={20} />
                   </button>
-                  <button onClick={editState.onSave} className="p-4 rounded-2xl bg-[#5c4a33] text-white hover:scale-105 active:scale-95 transition-all shadow-xl border-2 border-[#e6d5bc]">
+                  <button onClick={editState.onSave} className="p-4 rounded-2xl bg-[#5c4a33] text-white hover:scale-105 active:scale-95 transition-all shadow-xl border-2 border-[#e6d5bc]" aria-label="Сохранить">
                     <Save size={20} />
                   </button>
                 </div>
@@ -1177,13 +1192,34 @@ function JournalNoteCard({
                 type="text" 
                 value={editState.title}
                 onChange={(e) => editState.setTitle(e.target.value)}
-                className="w-full bg-white border-4 border-[#e6d5bc] rounded-2xl px-8 py-4 focus:ring-0 focus:border-[#5c4a33] transition-all font-serif font-black text-2xl text-[#5c4a33]"
+                className="w-full min-w-0 bg-white border-4 border-[#e6d5bc] rounded-2xl px-4 sm:px-8 py-3 sm:py-4 focus:ring-0 focus:border-[#5c4a33] transition-all font-serif font-black text-lg sm:text-2xl text-[#5c4a33]"
               />
               <textarea 
                 value={editState.content}
                 onChange={(e) => editState.setContent(e.target.value)}
-                className="w-full h-56 bg-white border-4 border-[#e6d5bc] rounded-[2.5rem] px-8 py-8 focus:ring-0 focus:border-[#5c4a33] transition-all resize-none text-xl leading-relaxed font-serif italic text-[#5c4a33]"
+                className="w-full min-w-0 h-44 sm:h-56 bg-white border-4 border-[#e6d5bc] rounded-[1.5rem] sm:rounded-[2.5rem] px-4 sm:px-8 py-4 sm:py-8 focus:ring-0 focus:border-[#5c4a33] transition-all resize-none text-base sm:text-xl leading-relaxed font-serif italic text-[#5c4a33]"
               />
+
+              {/* Mobile: fixed save bar above bottom nav */}
+              <div className="fixed bottom-24 left-0 right-0 z-[90] px-4 sm:hidden pointer-events-none">
+                <div className="flex gap-3 max-w-lg mx-auto pointer-events-auto bg-[#fdfaf3] p-3 rounded-2xl border-4 border-[#e6d5bc] shadow-2xl">
+                  <button
+                    type="button"
+                    onClick={editState.onCancel}
+                    className="flex-1 py-3.5 rounded-xl bg-white border-2 border-[#e6d5bc] text-[#8b7355] font-black uppercase tracking-widest text-[10px]"
+                  >
+                    Отмена
+                  </button>
+                  <button
+                    type="button"
+                    onClick={editState.onSave}
+                    className="flex-1 py-3.5 rounded-xl bg-[#5c4a33] text-white font-black uppercase tracking-widest text-[10px] shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <Save size={16} />
+                    Сохранить
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 
 const CATEGORY_COLORS = [
@@ -293,6 +293,83 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refreshAll();
   }, [refreshAll]);
+
+  const refreshFnsRef = useRef({
+    refreshNotes,
+    refreshMoments,
+    refreshQuests,
+    refreshWhispers,
+    refreshCapsules,
+    refreshProfiles,
+    refreshArchi,
+    refreshGalleryCategories,
+    refreshPromocodes,
+    refreshUnlockedRewards,
+  });
+  refreshFnsRef.current = {
+    refreshNotes,
+    refreshMoments,
+    refreshQuests,
+    refreshWhispers,
+    refreshCapsules,
+    refreshProfiles,
+    refreshArchi,
+    refreshGalleryCategories,
+    refreshPromocodes,
+    refreshUnlockedRewards,
+  };
+
+  // Live sync: one channel per mount; refs avoid re-subscribe on callback identity changes
+  useEffect(() => {
+    const fns = () => refreshFnsRef.current;
+
+    const onGlobalStateChange = () => {
+      const r = fns();
+      r.refreshArchi();
+      r.refreshGalleryCategories();
+      r.refreshPromocodes();
+      r.refreshUnlockedRewards();
+    };
+
+    const syncVisibleData = () => {
+      if (document.visibilityState !== 'visible') return;
+      const r = fns();
+      r.refreshNotes();
+      r.refreshMoments();
+      r.refreshQuests();
+      r.refreshWhispers();
+      r.refreshCapsules();
+      r.refreshProfiles();
+      onGlobalStateChange();
+    };
+
+    const channel = supabase
+      .channel(`lumina-realtime-${crypto.randomUUID()}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'journal_notes' }, () => fns().refreshNotes())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gallery_moments' }, () => fns().refreshMoments())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bucket_list' }, () => fns().refreshQuests())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'whisper_history' }, () => fns().refreshWhispers())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'time_capsules' }, () => fns().refreshCapsules())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fns().refreshProfiles())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'global_state' }, onGlobalStateChange)
+      .subscribe();
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') syncVisibleData();
+    };
+    const onFocus = () => syncVisibleData();
+
+    const pollInterval = setInterval(syncVisibleData, 20000);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      void supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+      clearInterval(pollInterval);
+    };
+  }, []);
 
   useEffect(() => {
     if (!currentUser) return;
