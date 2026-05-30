@@ -361,7 +361,7 @@ export default function BucketListPage() {
     const totalPoints = quests.filter(q => q.completed).reduce((acc, q) => acc + (q.points || 0), 0);
     const unlockedIds = unlockedRewards[currentUser] || [];
     const spentPoints = calculateSpentPoints(unlockedIds, customReward);
-    const realXP = totalPoints - spentPoints;
+    const realXP = Math.max(0, totalPoints - spentPoints);
 
     if (realXP >= reward.cost) {
       const newUnlockedIds = [...unlockedIds, reward.id];
@@ -452,7 +452,7 @@ export default function BucketListPage() {
   const totalPoints = quests.filter(q => q.completed).reduce((acc, q) => acc + q.points, 0);
   const userUnlockedIds = unlockedRewards[currentUser || ''] || [];
   const spentPoints = calculateSpentPoints(userUnlockedIds, customReward);
-  const currentXP = totalPoints - spentPoints;
+  const currentXP = Math.max(0, totalPoints - spentPoints);
   const level = Math.floor(totalPoints / 1000) + 1;
 
   const pendingApprovals = quests.filter(q => !q.approvedByPartner && q.proposedBy !== currentUser && !q.isSinglePlayer);
