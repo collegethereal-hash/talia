@@ -79,6 +79,19 @@ function calculateSpentPoints(unlockedIds: string[], customReward?: Reward | nul
   return unlockedIds.reduce((acc, id) => acc + getRewardCostById(id, customReward), 0);
 }
 
+/** Одиночные квесты дают монеты только автору; совместные — обоим после полного выполнения */
+function questPointsForUser(quest: Quest, user: 'Grinch' | 'Cindy' | null): number {
+  if (!quest.completed || !user) return 0;
+  if (quest.isSinglePlayer) {
+    return quest.proposedBy === user ? (quest.points || 0) : 0;
+  }
+  return quest.points || 0;
+}
+
+function calculateEarnedPoints(quests: Quest[], user: 'Grinch' | 'Cindy' | null): number {
+  return quests.reduce((acc, q) => acc + questPointsForUser(q, user), 0);
+}
+
 const OWNER_LABELS: Record<'Grinch' | 'Cindy', string> = {
   Grinch: 'Гринча',
   Cindy: 'Синди Лу',
@@ -358,7 +371,7 @@ export default function BucketListPage() {
       return;
     }
 
-    const totalPoints = quests.filter(q => q.completed).reduce((acc, q) => acc + (q.points || 0), 0);
+    const totalPoints = calculateEarnedPoints(quests, currentUser);
     const unlockedIds = unlockedRewards[currentUser] || [];
     const spentPoints = calculateSpentPoints(unlockedIds, customReward);
     const realXP = Math.max(0, totalPoints - spentPoints);
@@ -449,7 +462,7 @@ export default function BucketListPage() {
     setPromoInput('');
   };
 
-  const totalPoints = quests.filter(q => q.completed).reduce((acc, q) => acc + q.points, 0);
+  const totalPoints = calculateEarnedPoints(quests, currentUser);
   const userUnlockedIds = unlockedRewards[currentUser || ''] || [];
   const spentPoints = calculateSpentPoints(userUnlockedIds, customReward);
   const currentXP = Math.max(0, totalPoints - spentPoints);
